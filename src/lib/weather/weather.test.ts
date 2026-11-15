@@ -76,3 +76,30 @@ test("venue time comes from the venue's offset, not the phone's", () => {
   // 17:20 UTC is 10:20 in the Rockies; the next whole hour is 11:00.
   assert.deepEqual(venueNow(-7 * 3600, new Date("2026-11-15T17:20:00Z")), { date: "2026-11-15", hour: "11:00" });
 });
+
+import { mergePlaces, searchVariants, type Place } from "./forecast";
+
+test("joined-up names are also searched with a space", () => {
+  assert.deepEqual(searchVariants("Silverstar"), ["Silverstar", "Silver Star"]);
+  assert.deepEqual(searchVariants("Sovereign Lake"), ["Sovereign Lake"]);
+  assert.deepEqual(searchVariants("Canmore"), ["Canmore"]);
+});
+
+test("the same spot from both gazetteers is listed once, ski places first", () => {
+  const p = (name: string, lat: number, kind: string | null, source: Place["source"], elevation_m: number | null = null): Place => ({
+    name,
+    detail: "",
+    kind,
+    latitude: lat,
+    longitude: -119,
+    elevation_m,
+    source,
+  });
+  const merged = mergePlaces([
+    [p("Vernon", 50.26, "City", "osm"), p("Sovereign Lake Nordic Centre", 50.35, "Nordic centre", "osm")],
+    [p("Vernon", 50.2601, "Town", "geonames", 383)],
+  ]);
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].name, "Sovereign Lake Nordic Centre");
+  assert.equal(merged[1].elevation_m, 383, "the elevation is taken from the duplicate");
+});

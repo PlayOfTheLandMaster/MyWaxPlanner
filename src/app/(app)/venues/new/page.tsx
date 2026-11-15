@@ -68,7 +68,10 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       {q && !error && results.length === 0 && (
-        <p className="text-sm text-muted">No places found. Try the nearest town, or enter the position below.</p>
+        <p className="text-sm text-muted">
+          No places found. Try the Nordic centre&apos;s full name (e.g. &ldquo;Sovereign Lake Nordic&rdquo;), the nearest town, or
+          enter the position below.
+        </p>
       )}
       {results.length > 0 && (
         <ul className="flex flex-col gap-2">
@@ -89,7 +92,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{r.name}</span>
                     <span className="block truncate text-sm text-muted">
-                      {[r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null].filter(Boolean).join(" · ")}
+                      {[r.kind, r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null].filter(Boolean).join(" · ")}
                     </span>
                   </span>
                   <span className="shrink-0 text-sm text-link">Use</span>
@@ -105,7 +108,8 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
         <VenueForm key={`${prefill.latitude},${prefill.longitude}`} prefill={prefill} back={back} />
       </section>
       <p className="text-xs text-muted">
-        Place search and forecasts: <a href="https://open-meteo.com/" className="underline">Open-Meteo</a> (GeoNames, CC BY 4.0).
+        Place search: <a href="https://www.openstreetmap.org/copyright" className="underline">© OpenStreetMap contributors</a> and{" "}
+        <a href="https://open-meteo.com/" className="underline">Open-Meteo</a> (GeoNames). Forecasts: Open-Meteo.
       </p>
     </>
   );
