@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { SkiInput } from "@/lib/skis/input";
+import { loadSkiers } from "@/lib/skiers/load";
 import { SkiForm } from "../ski-form";
 import { deleteSki, updateSki } from "../actions";
 
@@ -25,9 +26,10 @@ export default function EditSkiPage({ params }: PageProps<"/wax-box/skis/[id]">)
 async function Edit({ params }: { params: PageProps<"/wax-box/skis/[id]">["params"] }) {
   const { id } = await params;
   const supabase = await createClient();
+  const skiers = await loadSkiers(supabase);
   const { data, error } = await supabase
     .from("skis")
-    .select("name, technique, category, brand, model, base_material, grind, flex, grip_zone_cm, notes")
+    .select("name, skier_id, technique, category, brand, model, base_material, grind, flex, grip_zone_cm, notes")
     .eq("id", id)
     .maybeSingle();
   // 22P02: not a uuid, which is just another way of not being found.
@@ -38,7 +40,7 @@ async function Edit({ params }: { params: PageProps<"/wax-box/skis/[id]">["param
   return (
     <>
       <h1 className="text-2xl font-bold">{ski.name}</h1>
-      <SkiForm save={updateSki.bind(null, id)} initial={ski} submitLabel="Save changes" />
+      <SkiForm save={updateSki.bind(null, id)} initial={ski} submitLabel="Save changes" skiers={skiers} />
       <details className="rounded-lg border border-line">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">
           Delete these skis

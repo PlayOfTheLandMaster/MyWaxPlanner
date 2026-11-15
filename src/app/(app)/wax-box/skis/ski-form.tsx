@@ -20,10 +20,15 @@ export function SkiForm({
   save,
   initial,
   submitLabel,
+  skiers,
+  defaultSkier,
 }: {
   save: (prev: SkiFormState, data: FormData) => Promise<SkiFormState>;
   initial?: SkiInput;
   submitLabel: string;
+  /** The account's skiers; the owner pull-down only shows when there are any. */
+  skiers: { id: string; name: string }[];
+  defaultSkier?: string;
 }) {
   const [state, action, pending] = useActionState<SkiFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
@@ -46,6 +51,20 @@ export function SkiForm({
       }}
       className="flex flex-col gap-5"
     >
+      {skiers.length > 0 && (
+        <label className={label}>
+          Owner
+          <select name="skier_id" defaultValue={initial ? (initial.skier_id ?? "") : (defaultSkier ?? "")} className={field}>
+            <option value="">Me</option>
+            {skiers.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <label className={label}>
         Name
         <input

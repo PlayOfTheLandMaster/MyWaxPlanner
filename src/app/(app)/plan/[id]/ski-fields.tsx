@@ -16,11 +16,13 @@ const choice =
  */
 export function SkiFields({
   skis,
+  skiers,
   initialSki,
   initialTechnique,
   initialGrip,
 }: {
   skis: PlanSki[];
+  skiers: { id: string; name: string }[];
   initialSki: string;
   initialTechnique: Technique | null;
   initialGrip: string;
@@ -28,15 +30,40 @@ export function SkiFields({
   const [skiId, setSkiId] = useState(initialSki);
   const [technique, setTechnique] = useState<Technique | null>(initialTechnique);
   const ski = skis.find((k) => k.id === skiId);
+  // Whose skis: narrows the pair list. "" = everyone, "me" = the account holder.
+  const [owner, setOwner] = useState(ski ? (ski.skier_id ?? "me") : "");
+  const pairs = skis.filter((k) => owner === "" || (owner === "me" ? k.skier_id === null : k.skier_id === owner));
 
   return (
     <>
+      {skiers.length > 0 && (
+        <label className={label}>
+          Whose skis
+          <select
+            value={owner}
+            onChange={(e) => {
+              setOwner(e.target.value);
+              setSkiId("");
+            }}
+            className={field}
+          >
+            <option value="">Everyone</option>
+            <option value="me">Me</option>
+            {skiers.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className={label}>
         Skis
         <select name="ski" value={skiId} onChange={(e) => setSkiId(e.target.value)} className={field}>
-          <option value="">Not one of my pairs</option>
-          {skis.map((k) => (
+          <option value="">Not one of {owner === "" || owner === "me" ? "my" : "their"} pairs</option>
+          {pairs.map((k) => (
             <option key={k.id} value={k.id}>
+              {owner === "" && k.skier_id ? `${skiers.find((x) => x.id === k.skier_id)?.name ?? ""}: ` : ""}
               {k.name} — {TECHNIQUE_LABELS[k.technique]}
               {k.category ? `, ${SKI_CATEGORY_LABELS[k.category].split(" ")[0].toLowerCase()}` : ""}
             </option>

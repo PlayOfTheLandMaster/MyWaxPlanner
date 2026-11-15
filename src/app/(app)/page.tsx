@@ -23,8 +23,8 @@ export default function TodayPage({ searchParams }: PageProps<"/">) {
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Today</h1>
         <Link
-          href="/settings"
-          aria-label="Settings and account"
+          href="/account"
+          aria-label="Account"
           className="flex size-11 items-center justify-center rounded-full border border-line bg-surface active:bg-tile"
         >
           <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">

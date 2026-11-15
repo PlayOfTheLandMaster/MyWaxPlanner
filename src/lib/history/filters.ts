@@ -13,6 +13,8 @@ export type Filters = {
   /** "season" (this season), "30d", "all", or a season such as "2025-26". */
   period: string;
   technique?: string;
+  /** "me" (the account holder) or one of the account's skiers. */
+  skier?: string;
   ski?: string;
   venue?: string;
   mode?: string;
@@ -67,6 +69,7 @@ export function parseFilters(params: Params): Filters {
   return {
     period: period === "30d" || period === "all" || (period && seasonRange(period)) ? period : "season",
     technique: pick(TECHNIQUES, p("technique")),
+    skier: p("skier") === "me" ? "me" : uuid(p("skier")),
     ski: uuid(p("ski")),
     venue: uuid(p("venue")),
     mode: pick(MODES, p("mode")),
