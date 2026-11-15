@@ -197,30 +197,177 @@ export function venueNow(utcOffsetSeconds: number, now = new Date()): { date: st
   return { date: local.toISOString().slice(0, 10), hour: local.toISOString().slice(11, 13) + ":00" };
 }
 
-export type Place = { name: string; detail: string; latitude: number; longitude: number; elevation_m: number | null };
+export type Place = {
+  name: string;
+  detail: string; // "Vernon, British Columbia, Canada"
+  kind: string | null; // "Nordic centre", "Ski resort", "Town", "Peak"…
+  latitude: number;
+  longitude: number;
+  elevation_m: number | null;
+  source: "osm" | "geonames";
+};
 
-/** Places matching a name, for adding a venue. Open-Meteo's geocoder (GeoNames). */
-export async function searchPlaces(name: string): Promise<Place[]> {
+// Words a skier often types joined up ("Silverstar", "Sovereignlake"), split
+// so the gazetteers recognise them ("Silver Star", "Sovereign Lake").
+const JOINED = /(star|lakes?|creek|mountain|ridge|valley|park|hill|nordic|peak|pass|meadows?|basin|bowl)$/i;
+
+/** The search text plus, if it looks glued together, a spaced-out version. */
+export function searchVariants(text: string): string[] {
+  const t = text.trim().replace(/\s+/g, " ");
+  const out = [t];
+  const words = t.split(" ");
+  const spaced = words
+    .map((w) => {
+      const m = w.length > 6 ? JOINED.exec(w) : null;
+      if (!m || m.index <= 2) return w;
+      const tail = w.slice(m.index);
+      // Keep the writer's style: "Silverstar" → "Silver Star", "silverstar" → "silver star".
+      return `${w.slice(0, m.index)} ${w[0] === w[0].toUpperCase() ? tail[0].toUpperCase() + tail.slice(1) : tail}`;
+    })
+    .join(" ");
+  if (spaced.toLowerCase() !== t.toLowerCase()) out.push(spaced);
+  return out;
+}
+
+const KIND_WORDS: Record<string, string> = {
+  winter_sports: "Ski area",
+  ski: "Ski area",
+  ski_resort: "Ski resort",
+  sports_centre: "Sports centre",
+  park: "Park",
+  nature_reserve: "Nature reserve",
+  peak: "Peak",
+  lake: "Lake",
+  water: "Lake",
+  village: "Village",
+  town: "Town",
+  city: "City",
+  hamlet: "Hamlet",
+  locality: "Locality",
+  trailhead: "Trailhead",
+  alpine_hut: "Hut",
+  wilderness_hut: "Hut",
+  pitch: "Sports field",
+  track: "Track",
+};
+
+function kindOf(type: string, name: string): string | null {
+  if (/nordic|cross[- ]country|ski club|xc /i.test(name)) return "Nordic centre";
+  return KIND_WORDS[type] ?? null;
+}
+
+const kmBetween = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+  const dLat = (a.latitude - b.latitude) * 111;
+  const dLon = (a.longitude - b.longitude) * 111 * Math.cos((a.latitude * Math.PI) / 180);
+  return Math.hypot(dLat, dLon);
+};
+
+/** OpenStreetMap's gazetteer: knows ski areas, Nordic centres, trailheads and huts. */
+async function searchOsm(text: string): Promise<Place[]> {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", text);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("limit", "8");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("accept-language", "en");
+  // Nominatim's usage policy asks every app to identify itself.
+  const res = await fetch(url, {
+    headers: { "User-Agent": "MyWaxPlanner/1.0 (https://www.mywaxplanner.com)" },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as {
+    name?: string;
+    display_name: string;
+    lat: string;
+    lon: string;
+    type: string;
+    address?: Record<string, string>;
+  }[];
+  return data.map((r) => {
+    const a = r.address ?? {};
+    const name = r.name || r.display_name.split(",")[0];
+    return {
+      name,
+      detail: [a.city ?? a.town ?? a.village ?? a.county, a.state ?? a.province, a.country].filter(Boolean).join(", "),
+      kind: kindOf(r.type, name),
+      latitude: Math.round(Number(r.lat) * 1e5) / 1e5,
+      longitude: Math.round(Number(r.lon) * 1e5) / 1e5,
+      elevation_m: null,
+      source: "osm" as const,
+    };
+  });
+}
+
+/** Open-Meteo's gazetteer (GeoNames): towns, peaks and lakes, with elevations. */
+async function searchGeonames(text: string): Promise<Place[]> {
   const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
-  url.searchParams.set("name", name);
+  url.searchParams.set("name", text);
   url.searchParams.set("count", "8");
   url.searchParams.set("language", "en");
   url.searchParams.set("format", "json");
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  } catch {
-    throw new ForecastError("The place search did not answer. Try again in a minute.");
-  }
-  if (!res.ok) throw new ForecastError(`The place search refused the request (${res.status}).`);
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return [];
   const data = (await res.json()) as {
-    results?: { name: string; latitude: number; longitude: number; elevation?: number; admin1?: string; country?: string }[];
+    results?: { name: string; latitude: number; longitude: number; elevation?: number; admin1?: string; country?: string; feature_code?: string }[];
   };
+  const codes: Record<string, string> = { PPL: "Town", PPLA: "Town", PPLX: "Village", MT: "Peak", PK: "Peak", LK: "Lake", PRK: "Park", RSRT: "Resort" };
   return (data.results ?? []).map((r) => ({
     name: r.name,
     detail: [r.admin1, r.country].filter(Boolean).join(", "),
+    kind: kindOf("", r.name) ?? codes[r.feature_code ?? ""] ?? null,
     latitude: Math.round(r.latitude * 1e5) / 1e5,
     longitude: Math.round(r.longitude * 1e5) / 1e5,
     elevation_m: typeof r.elevation === "number" ? Math.round(r.elevation) : null,
+    source: "geonames" as const,
   }));
+}
+
+/** Ground elevation for places that came without one, in one request. */
+async function fillElevations(places: Place[]): Promise<void> {
+  const missing = places.filter((p) => p.elevation_m === null);
+  if (!missing.length) return;
+  const url = new URL("https://api.open-meteo.com/v1/elevation");
+  url.searchParams.set("latitude", missing.map((p) => p.latitude).join(","));
+  url.searchParams.set("longitude", missing.map((p) => p.longitude).join(","));
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return;
+    const data = (await res.json()) as { elevation?: number[] };
+    data.elevation?.forEach((e, i) => {
+      if (Number.isFinite(e)) missing[i].elevation_m = Math.round(e);
+    });
+  } catch {
+    // An elevation is a nicety here; the forecast uses its own map height if it is missing.
+  }
+}
+
+/** Places merged from both gazetteers; the same spot found twice (within 1 km) is listed once. */
+export function mergePlaces(lists: Place[][]): Place[] {
+  const out: Place[] = [];
+  for (const p of lists.flat()) {
+    const dupe = out.find((q) => kmBetween(p, q) < 1 && (q.name.toLowerCase() === p.name.toLowerCase() || kmBetween(p, q) < 0.2));
+    if (dupe) {
+      if (dupe.elevation_m === null) dupe.elevation_m = p.elevation_m;
+      if (!dupe.kind) dupe.kind = p.kind;
+      continue;
+    }
+    out.push({ ...p });
+  }
+  // Ski places first: they are what a skier is usually looking for.
+  const ski = (p: Place) => (p.kind === "Nordic centre" ? 0 : p.kind === "Ski area" || p.kind === "Ski resort" ? 1 : 2);
+  return out.sort((a, b) => ski(a) - ski(b)).slice(0, 12);
+}
+
+/** Places matching a name, for adding a venue: OpenStreetMap and GeoNames together. */
+export async function searchPlaces(text: string): Promise<Place[]> {
+  const variants = searchVariants(text);
+  const settled = await Promise.allSettled(variants.flatMap((v) => [searchOsm(v), searchGeonames(v)]));
+  const lists = settled.filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled").map((r) => r.value);
+  if (settled.every((r) => r.status === "rejected")) {
+    throw new ForecastError("The place search did not answer. Try again in a minute.");
+  }
+  const places = mergePlaces(lists);
+  await fillElevations(places);
+  return places;
 }
