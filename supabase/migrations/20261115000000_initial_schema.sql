@@ -1,9 +1,14 @@
 -- Initial schema for My Wax Planner (spec: Data model, Inventory, Conditions
 -- input, Waxing history).
 --
--- Two kinds of table:
---   * Catalogue (brands, products, tools, rules): shared, read-only to signed-in
---     users. Only the service role (the seed script, an admin) writes them.
+-- Three kinds of table:
+--   * Shared catalogue (tools, rules): read-only to signed-in users. Only the
+--     service role (a migration, the seed script, an admin) writes them.
+--   * Brands and products: a mix. A row with `created_by` null is part of the
+--     shared catalogue (loaded with `npm run seed`, optional). A row with
+--     `created_by` set was typed in by that user when adding a wax to their
+--     box, and only they can see or change it. A wax box is built one wax at
+--     a time in the app; the shared catalogue only saves typing.
 --   * Personal (everything else): one owner per row, `user_id`, and Row Level
 --     Security that compares it with auth.uid() on read and on write.
 --
@@ -83,14 +88,19 @@ $$;
 
 create table public.brands (
   id uuid primary key default gen_random_uuid(),
-  name text not null unique check (length(trim(name)) > 0),
+  -- null: shared catalogue. Otherwise the user who typed it in.
+  created_by uuid references auth.users (id) on delete cascade,
+  name text not null check (length(trim(name)) > 0),
   -- Whether the brand publishes its temperature ranges as air or snow
   -- temperature. Products store both the published range and a range
   -- normalized to snow temperature, so brands can be compared fairly.
   temperature_basis public.temperature_basis not null,
   website text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- One "Swix" in the shared catalogue and at most one per user. NULLS NOT
+  -- DISTINCT makes the shared rows (created_by null) one group too.
+  unique nulls not distinct (created_by, name)
 );
 
 -- ---------------------------------------------------------------------------
@@ -100,6 +110,8 @@ create table public.brands (
 create table public.products (
   id uuid primary key default gen_random_uuid(),
   brand_id uuid not null references public.brands (id) on delete restrict,
+  -- null: shared catalogue. Otherwise the user who typed it in.
+  created_by uuid references auth.users (id) on delete cascade,
   name text not null check (length(trim(name)) > 0),
   sku text,
   category text not null check (category in (
@@ -145,7 +157,7 @@ create table public.products (
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (brand_id, name),
+  unique nulls not distinct (brand_id, created_by, name),
   check (published_temp_min_c is null or published_temp_max_c is null
          or published_temp_min_c <= published_temp_max_c),
   check (temp_min_c is null or temp_max_c is null or temp_min_c <= temp_max_c)
@@ -276,22 +288,17 @@ create index skis_user_idx on public.skis (user_id);
 create table public.user_products (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  -- A catalogue product, or a custom entry for something the catalogue lacks.
-  product_id uuid references public.products (id) on delete restrict,
-  custom_brand text,
-  custom_name text,
-  custom_category text,
-  custom_details jsonb,
-  -- Custom entries the owner has asked to be added to the catalogue.
-  flagged_for_review boolean not null default false,
+  -- Always a products row: a wax the catalogue lacks is added to products
+  -- (as the user's own) rather than described here, so the recommendation
+  -- engine has one place to read a wax's ranges from.
+  product_id uuid not null references public.products (id) on delete restrict,
   amount_left public.amount_left not null default 'full',
   quantity smallint not null default 1 check (quantity >= 0),
   purchase_date date,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (id, user_id),
-  check (product_id is not null or length(trim(custom_name)) > 0)
+  unique (id, user_id)
 );
 
 create index user_products_user_idx on public.user_products (user_id);
@@ -495,16 +502,43 @@ alter table public.wax_sessions enable row level security;
 alter table public.wax_session_layers enable row level security;
 alter table public.wax_session_photos enable row level security;
 
--- Catalogue: any signed-in user may read. There are no insert/update/delete
--- policies, so only the service role (which bypasses RLS) can write.
-create policy "catalogue is readable" on public.brands
-  for select to authenticated using (true);
-create policy "catalogue is readable" on public.products
-  for select to authenticated using (true);
+-- Shared catalogue: any signed-in user may read. There are no insert/update/
+-- delete policies, so only the service role (which bypasses RLS) can write.
 create policy "catalogue is readable" on public.tools
   for select to authenticated using (true);
 create policy "catalogue is readable" on public.rules
   for select to authenticated using (true);
+
+-- Brands and products: the shared catalogue plus your own. You can write only
+-- your own, so a shared row cannot be edited or claimed, and nobody else's
+-- typing ever appears in your list.
+create policy "read shared and own brands" on public.brands
+  for select to authenticated
+  using (created_by is null or created_by = (select auth.uid()));
+create policy "add own brands" on public.brands
+  for insert to authenticated with check (created_by = (select auth.uid()));
+create policy "update own brands" on public.brands
+  for update to authenticated
+  using (created_by = (select auth.uid())) with check (created_by = (select auth.uid()));
+create policy "delete own brands" on public.brands
+  for delete to authenticated using (created_by = (select auth.uid()));
+
+create policy "read shared and own products" on public.products
+  for select to authenticated
+  using (created_by is null or created_by = (select auth.uid()));
+-- A product's brand must be one you can see: a shared brand or your own. The
+-- subquery runs under the brands policy, so someone else's brand is not found.
+create policy "add own products" on public.products
+  for insert to authenticated
+  with check (created_by = (select auth.uid())
+              and exists (select 1 from public.brands b where b.id = brand_id));
+create policy "update own products" on public.products
+  for update to authenticated
+  using (created_by = (select auth.uid()))
+  with check (created_by = (select auth.uid())
+              and exists (select 1 from public.brands b where b.id = brand_id));
+create policy "delete own products" on public.products
+  for delete to authenticated using (created_by = (select auth.uid()));
 
 -- Venues: your own plus the shared ones (user_id is null). You can only write
 -- your own, so a shared venue cannot be edited or claimed.
@@ -598,7 +632,9 @@ $$;
 
 revoke all on all tables in schema public from anon, authenticated;
 
-grant select on public.brands, public.products, public.tools, public.rules
+grant select on public.tools, public.rules to authenticated;
+
+grant select, insert, update, delete on public.brands, public.products
   to authenticated;
 
 grant select, insert, update, delete on

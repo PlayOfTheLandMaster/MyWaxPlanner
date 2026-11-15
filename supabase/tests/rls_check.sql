@@ -69,10 +69,30 @@ select pg_temp.expect((select count(*) from public.products
   'A can read the catalogue');
 select pg_temp.expect_error(
   $$insert into public.brands (name, temperature_basis) values ('Sneaky', 'air')$$,
-  'A cannot add a brand');
-select pg_temp.expect_error(
-  $$update public.products set price = 1 where id = '00000000-0000-0000-0000-0000000000c1'$$,
-  'A cannot change a product');
+  'A cannot add a brand to the shared catalogue');
+with t as (update public.products set price = 1
+           where id = '00000000-0000-0000-0000-0000000000c1' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'A cannot change a shared product');
+with t as (delete from public.brands where id = '00000000-0000-0000-0000-0000000000b1' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'A cannot delete a shared brand');
+
+-- Adding a wax the catalogue lacks: A's own brand and product.
+insert into public.brands (id, created_by, name, temperature_basis)
+  values ('00000000-0000-0000-0000-0000000000b2',
+          '00000000-0000-0000-0000-00000000000a', 'A Own Brand', 'air');
+insert into public.products (id, brand_id, created_by, name, category)
+  values ('00000000-0000-0000-0000-0000000000c2',
+          '00000000-0000-0000-0000-0000000000b2',
+          '00000000-0000-0000-0000-00000000000a', 'A Own Wax', 'klister');
+insert into public.products (id, brand_id, created_by, name, category)
+  values ('00000000-0000-0000-0000-0000000000c3',
+          '00000000-0000-0000-0000-0000000000b1',  -- a shared brand
+          '00000000-0000-0000-0000-00000000000a', 'A Wax Under Shared Brand', 'hardwax');
+with t as (update public.products set price = 9
+           where id = '00000000-0000-0000-0000-0000000000c2' returning 1)
+select pg_temp.expect((select count(*) from t) = 1, 'A can edit their own wax');
+select pg_temp.expect((select count(*) from public.brands) = 2,
+  'A sees the shared brand and their own');
 
 insert into public.skis (id, user_id, name, technique, category)
   values ('00000000-0000-0000-0000-0000000000e1',
@@ -133,6 +153,12 @@ select pg_temp.expect((select count(*) from public.wax_session_layers) = 0, 'B c
 select pg_temp.expect((select count(*) from public.conditions) = 0, 'B cannot see A''s conditions');
 select pg_temp.expect((select count(*) from public.user_products) = 0, 'B cannot see A''s wax box');
 select pg_temp.expect((select count(*) from public.profiles) = 1, 'B sees only their own profile');
+select pg_temp.expect(
+  (select array_agg(name order by name) from public.brands) = array['RLS Test Brand'],
+  'B sees the shared brand but not the one A typed in');
+select pg_temp.expect(
+  (select array_agg(name order by name) from public.products) = array['RLS Test Wax'],
+  'B sees the shared wax but not the ones A typed in');
 select pg_temp.expect((select count(*) from storage.objects) = 0, 'B cannot see A''s photos');
 select pg_temp.expect(
   (select array_agg(name order by name) from public.venues) = array['Shared Test Venue'],
@@ -147,6 +173,18 @@ with t as (update public.profiles set display_name = 'x'
            where id = '00000000-0000-0000-0000-00000000000a' returning 1)
 select pg_temp.expect((select count(*) from t) = 0, 'B cannot edit A''s profile');
 
+select pg_temp.expect_error(
+  $$insert into public.brands (created_by, name, temperature_basis)
+    values ('00000000-0000-0000-0000-00000000000a', 'Planted', 'snow')$$,
+  'B cannot add a brand in A''s name');
+select pg_temp.expect_error(
+  $$insert into public.products (brand_id, created_by, name, category)
+    values ('00000000-0000-0000-0000-0000000000b2',
+            '00000000-0000-0000-0000-00000000000b', 'Sneaky', 'hardwax')$$,
+  'B cannot add a wax under A''s own brand');
+with t as (update public.products set price = 0
+           where id = '00000000-0000-0000-0000-0000000000c2' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'B cannot edit A''s wax');
 select pg_temp.expect_error(
   $$insert into public.skis (user_id, name, technique)
     values ('00000000-0000-0000-0000-00000000000a', 'planted', 'skate')$$,
@@ -174,6 +212,9 @@ select pg_temp.expect_error(
 -- And B can do all of this with their own data.
 insert into public.skis (user_id, name, technique)
   values ('00000000-0000-0000-0000-00000000000b', 'B skate', 'skate');
+-- B may use the same brand name A typed: each person's own brands are separate.
+insert into public.brands (created_by, name, temperature_basis)
+  values ('00000000-0000-0000-0000-00000000000b', 'A Own Brand', 'snow');
 update public.profiles set units = 'f', home_venue_id = '00000000-0000-0000-0000-0000000000d0'
   where id = '00000000-0000-0000-0000-00000000000b';
 select pg_temp.expect((select units from public.profiles) = 'f',

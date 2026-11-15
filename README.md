@@ -12,11 +12,12 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 - **Sign in and create an account** (email and password, with Supabase's email confirmation). Every screen except sign-in needs an account.
 - **Every table in the spec's Data model**, plus `wax_session_layers` and `wax_session_photos` from the history section, in [`supabase/migrations/`](supabase/migrations/).
-- **Row Level Security on every table.** Your skis, wax box, venues, conditions, plans and history are visible only to you. The catalogue (`brands`, `products`, `tools`, `rules`) can be read by anyone signed in and changed by nobody but the seed script.
+- **Row Level Security on every table.** Your skis, wax box, venues, conditions, plans and history are visible only to you. So are any brands and waxes you type in. The shared `tools` and `rules` lists, and the optional shared brand and product catalogue, can be read by anyone signed in and changed by nobody but the seed script.
+- **Wax box, built one wax at a time.** *Add a wax* asks for the brand, name, type, temperature range, fluoro status and how much is left; snow types, humidity, iron temperature and notes are under *More details*. A brand you haven't used before asks once whether it rates by air or snow temperature. The wax box lists your waxes by Glide, Grip, Cleaners and Consumables.
 - **A private photo bucket** (`session-photos`) for session photos, where each user can only reach their own folder.
 - **The tools catalogue**, filled in from the spec's Tools checklist (28 tools).
-- **A catalogue loader**, `npm run seed`, that loads brands and products from CSV files and checks every row before writing anything.
-- A placeholder **Today** screen that shows who is signed in and how many brands, products and tools the catalogue holds, which proves the whole chain works.
+- **An optional catalogue loader**, `npm run seed`, for loading a shared list of brands and products from CSV. You don't need it: the wax box works without it.
+- A placeholder **Today** screen that shows who is signed in and links to the wax box.
 
 ## Set up
 
@@ -40,19 +41,27 @@ You need a free [Supabase](https://supabase.com) project and Node.js 22 or later
    ```
    The project ref is the part of the project URL before `.supabase.co`.
 5. **Supabase (website):** open **Authentication → URL Configuration**. Set **Site URL** to where the app runs (`http://localhost:3000` for now), and add `http://localhost:3000/auth/confirm` under **Redirect URLs**. Add your Vercel address in the same two places once you deploy.
-6. **Terminal:** load the catalogue (see [The catalogue CSVs](#the-catalogue-csvs)), then start the app:
+6. **Terminal:** start the app:
    ```bash
-   npm run seed -- --check
-   npm run seed
    npm run dev
    ```
-   Open http://localhost:3000 and create an account.
+   Open http://localhost:3000, create an account, then tap **Wax box → Add a wax**.
 
 ### Deploying to Vercel
 
 **Vercel (website):** import the GitHub repository, and under **Settings → Environment Variables** add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Do **not** add `SUPABASE_SECRET_KEY` to Vercel: only the seed script uses it, and the seed script runs on your computer.
 
-## The catalogue CSVs
+## Adding waxes
+
+Each wax you add is saved for you alone. The next time you add a wax, brands you've used before are suggested as you type, and adding the same wax twice tells you it's already in your box.
+
+**Air versus snow temperature.** Recommendations compare snow temperatures. If a brand rates its waxes by snow temperature, the range you type is used as it is. If it rates by air temperature, the form also offers a snow-temperature range. The app won't convert air to snow on its own, because the conversion depends on sun, humidity and the night before. Leave the snow range blank if you don't know it: the wax is still saved, the wax box says "no snow range yet", and it won't be recommended until it has one.
+
+Temperatures are entered in °C for now.
+
+## The optional catalogue CSVs
+
+You can skip this section. It is only for loading a ready-made list of brands and products that every user can pick from.
 
 The loader reads two files: `data/brands.csv` and `data/products.csv`. Both contain only their header row for now, ready for your data. `data/brands.example.csv` and `data/products.example.csv` show the format with invented products.
 
@@ -96,7 +105,7 @@ npm run seed -- --brands path/to/brands.csv --products path/to/products.csv
 
 Spellings are forgiving: `Fluoro-free`, `Fresh Set` and `fresh_set` all work, and so do minus signs pasted from a PDF (`–8`).
 
-**Air versus snow temperature.** Recommendations compare snow temperatures. For a brand rated by **snow** temperature, leave the `snow_temp_` columns blank and the published range is copied across. For a brand rated by **air** temperature, the loader will not guess the conversion, because it depends on sun, humidity and the night before. Fill in the `snow_temp_` columns yourself; if they are blank, the product still loads, a warning names it, and it will be left out of recommendations until it has a snow range.
+The same air-versus-snow rule applies here: for a brand rated by snow temperature leave the `snow_temp_` columns blank and the published range is copied across; for one rated by air temperature, fill them in or the product loads without a snow range and a warning names it.
 
 ## Commands
 
@@ -109,7 +118,7 @@ npm test            # the CSV loader's tests; no database needed
 npm run seed        # load the catalogue (see above)
 ```
 
-**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 28 rules: what each can do with their own data, and that neither can see or change the other's. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
+**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 36 rules: what each can do with their own data, and that neither can see or change the other's. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
 
 ```bash
 psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
@@ -124,5 +133,6 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=
 | `src/app/(app)/` | Screens that need an account. `layout.tsx` sends signed-out visitors to `/login` |
 | `src/app/login/`, `src/app/auth/confirm/` | Sign in, create account, and the email confirmation link |
 | `src/lib/supabase/` | The two Supabase connections: `client.ts` for the browser, `server.ts` for the server. Both obey the privacy rules; `createServiceClient()` in `server.ts` does not, and nothing in the app uses it yet |
-| `src/lib/catalogue/` | Reading and checking the catalogue CSVs |
+| `src/app/(app)/wax-box/` | The wax box list, *Add a wax*, and the action that saves it |
+| `src/lib/catalogue/` | The rules a wax must pass (shared by *Add a wax* and the CSV loader), the allowed values, and the words shown for them |
 | `scripts/seed-catalogue.mts` | The `npm run seed` command |

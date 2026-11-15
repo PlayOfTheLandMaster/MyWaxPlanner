@@ -141,8 +141,7 @@ function readList<T extends string>(
   raw: string,
   allowed: readonly T[],
   column: string,
-  line: number,
-  errors: Problem[],
+  errors: string[],
 ): T[] {
   if (raw.trim() === "") return [];
   const out: T[] = [];
@@ -152,10 +151,7 @@ function readList<T extends string>(
     if ((allowed as readonly string[]).includes(word)) {
       if (!out.includes(word as T)) out.push(word as T);
     } else {
-      errors.push({
-        line,
-        message: `${column}: "${part.trim()}" is not one of ${allowed.join(", ")}`,
-      });
+      errors.push(`${column}: "${part.trim()}" is not one of ${allowed.join(", ")}`);
     }
   }
   return out;
@@ -220,6 +216,137 @@ export function parseBrandsCsv(text: string): Parsed<BrandRow> {
   return { rows, errors, warnings };
 }
 
+export type ReadProduct = { row: ProductRow | null; errors: string[]; warnings: string[] };
+
+/**
+ * Checks one product, given as column name → text. Shared by the CSV loader
+ * and the app's "Add a wax" form, so a wax typed in by hand is held to exactly
+ * the rules a loaded one is.
+ *
+ * @param basis how the product's brand rates temperatures, or undefined when
+ *   the brand is not known (the caller reports that; no snow range is derived).
+ */
+export function readProduct(
+  record: { [column: string]: string },
+  basis: TemperatureBasis | undefined,
+): ReadProduct {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const get = (c: string) => record[c] ?? "";
+
+  const brand = get("brand").trim();
+  const name = get("name").trim();
+  if (brand === "") errors.push("brand is empty");
+  if (name === "") errors.push("name is empty");
+
+  const category = normalizeWord(get("category"));
+  if (!(PRODUCT_CATEGORIES as readonly string[]).includes(category)) {
+    errors.push(`category "${get("category")}" is not one of ${PRODUCT_CATEGORIES.join(", ")}`);
+  }
+
+  const formRaw = normalizeWord(get("form"));
+  if (formRaw !== "" && !(PRODUCT_FORMS as readonly string[]).includes(formRaw)) {
+    errors.push(`form "${get("form")}" is not one of ${PRODUCT_FORMS.join(", ")}`);
+  }
+
+  const num = (column: string): number | null => {
+    const v = readNumber(get(column));
+    if (v === "invalid") {
+      errors.push(`${column}: "${get(column)}" is not a number`);
+      return null;
+    }
+    return v;
+  };
+
+  const pubMin = num("published_temp_min_c");
+  const pubMax = num("published_temp_max_c");
+  let snowMin = num("snow_temp_min_c");
+  let snowMax = num("snow_temp_max_c");
+  const iron = num("iron_temp_c");
+  const price = num("price");
+
+  if (pubMin !== null && pubMax !== null && pubMin > pubMax) {
+    errors.push(`published range ${pubMin} to ${pubMax} °C runs backwards`);
+  }
+  if (snowMin !== null && snowMax !== null && snowMin > snowMax) {
+    errors.push(`snow range ${snowMin} to ${snowMax} °C runs backwards`);
+  }
+  if (iron !== null && (iron < 80 || iron > 180)) {
+    errors.push(`iron_temp_c ${iron} is outside 80–180 °C`);
+  }
+  if (price !== null && price < 0) {
+    errors.push(`price ${price} is negative`);
+  }
+
+  // Normalizing to snow temperature. A snow-rated brand's published range
+  // already is one. An air-rated brand's is not, and converting air to snow
+  // depends on sun, humidity and the night before — so the snow range is
+  // supplied or the product is left without one and named in a warning.
+  // Recommendations will skip it until it has one, rather than compare an
+  // air figure as if it were a snow figure.
+  if (snowMin === null && snowMax === null && (pubMin !== null || pubMax !== null)) {
+    if (basis === "snow") {
+      snowMin = pubMin;
+      snowMax = pubMax;
+    } else if (basis === "air") {
+      warnings.push(
+        `"${brand} ${name}" is rated by air temperature and has no snow_temp range yet; it will not be recommended until it has one`,
+      );
+    }
+  }
+
+  const snowTypes = readList(get("snow_types"), SNOW_TYPES, "snow_types", errors);
+  const humidity = readList(get("humidity_bands"), HUMIDITY_BANDS, "humidity_bands", errors);
+  const roles = readList(get("layer_roles"), LAYER_ROLES, "layer_roles", errors);
+
+  const fluoro = readFluoro(get("fluoro_status"));
+  if (fluoro === "invalid") {
+    errors.push(`fluoro_status "${get("fluoro_status")}" is not one of fluoro_free, low, high, unknown`);
+  }
+
+  const active = readActive(get("active"));
+  if (active === "invalid") {
+    errors.push(`active "${get("active")}" should be yes or no`);
+  }
+
+  const currency = blankToNull(get("currency"))?.toUpperCase() ?? null;
+  if (currency !== null && !/^[A-Z]{3}$/.test(currency)) {
+    errors.push(`currency "${get("currency")}" should be a 3-letter code such as CAD`);
+  }
+
+  const buyUrl = blankToNull(get("buy_url"));
+  if (buyUrl !== null && !/^https?:\/\//i.test(buyUrl)) {
+    errors.push(`buy_url "${buyUrl}" should start with https://`);
+  }
+
+  if (errors.length > 0) return { row: null, errors, warnings };
+
+  return {
+    row: {
+      brand,
+      name,
+      sku: blankToNull(get("sku")),
+      category: category as ProductCategory,
+      form: formRaw === "" ? null : (formRaw as ProductForm),
+      published_temp_min_c: pubMin,
+      published_temp_max_c: pubMax,
+      temp_min_c: snowMin,
+      temp_max_c: snowMax,
+      snow_types: snowTypes,
+      humidity_bands: humidity,
+      fluoro_status: fluoro as FluoroStatus,
+      layer_roles: roles,
+      iron_temp_c: iron,
+      price,
+      currency,
+      buy_url: buyUrl,
+      active: active as boolean,
+    },
+    errors,
+    warnings,
+  };
+}
+
 /**
  * @param brandBasis lower-cased brand name → that brand's temperature basis.
  *   Every product's brand must be in it.
@@ -245,137 +372,27 @@ export function parseProductsCsv(
   const seen = new Map<string, number>();
 
   for (const { line, record } of records) {
-    const before = errors.length;
-    const get = (c: string) => record[c] ?? "";
-
-    const brand = get("brand").trim();
-    const name = get("name").trim();
-    if (brand === "") errors.push({ line, message: "brand is empty" });
-    if (name === "") errors.push({ line, message: "name is empty" });
-
+    const brand = (record.brand ?? "").trim();
+    const name = (record.name ?? "").trim();
     const basis = brandBasis.get(brand.toLowerCase());
-    if (brand !== "" && !basis) {
-      errors.push({ line, message: `brand "${brand}" is not in brands.csv or the database` });
-    }
+    const result = readProduct(record, basis);
 
-    const key = `${brand.toLowerCase()}\u0000${name.toLowerCase()}`;
+    const lineErrors = [...result.errors];
+    if (brand !== "" && !basis) {
+      lineErrors.splice(0, 0, `brand "${brand}" is not in brands.csv or the database`);
+    }
     if (brand !== "" && name !== "") {
+      const key = `${brand.toLowerCase()}\u0000${name.toLowerCase()}`;
       if (seen.has(key)) {
-        errors.push({ line, message: `"${brand} ${name}" is already on line ${seen.get(key)}` });
+        lineErrors.splice(0, 0, `"${brand} ${name}" is already on line ${seen.get(key)}`);
       } else {
         seen.set(key, line);
       }
     }
 
-    const category = normalizeWord(get("category"));
-    if (!(PRODUCT_CATEGORIES as readonly string[]).includes(category)) {
-      errors.push({
-        line,
-        message: `category "${get("category")}" is not one of ${PRODUCT_CATEGORIES.join(", ")}`,
-      });
-    }
-
-    const formRaw = normalizeWord(get("form"));
-    if (formRaw !== "" && !(PRODUCT_FORMS as readonly string[]).includes(formRaw)) {
-      errors.push({ line, message: `form "${get("form")}" is not one of ${PRODUCT_FORMS.join(", ")}` });
-    }
-
-    const num = (column: string): number | null => {
-      const v = readNumber(get(column));
-      if (v === "invalid") {
-        errors.push({ line, message: `${column}: "${get(column)}" is not a number` });
-        return null;
-      }
-      return v;
-    };
-
-    const pubMin = num("published_temp_min_c");
-    const pubMax = num("published_temp_max_c");
-    let snowMin = num("snow_temp_min_c");
-    let snowMax = num("snow_temp_max_c");
-    const iron = num("iron_temp_c");
-    const price = num("price");
-
-    if (pubMin !== null && pubMax !== null && pubMin > pubMax) {
-      errors.push({ line, message: `published range ${pubMin} to ${pubMax} °C runs backwards` });
-    }
-    if (snowMin !== null && snowMax !== null && snowMin > snowMax) {
-      errors.push({ line, message: `snow range ${snowMin} to ${snowMax} °C runs backwards` });
-    }
-    if (iron !== null && (iron < 80 || iron > 180)) {
-      errors.push({ line, message: `iron_temp_c ${iron} is outside 80–180 °C` });
-    }
-    if (price !== null && price < 0) {
-      errors.push({ line, message: `price ${price} is negative` });
-    }
-
-    // Normalizing to snow temperature. A snow-rated brand's published range
-    // already is one. An air-rated brand's is not, and converting air to snow
-    // depends on sun, humidity and the night before — so the CSV supplies the
-    // snow range or the product is left without one and named in a warning.
-    // Recommendations will skip it until it has one, rather than compare an
-    // air figure as if it were a snow figure.
-    if (snowMin === null && snowMax === null && (pubMin !== null || pubMax !== null)) {
-      if (basis === "snow") {
-        snowMin = pubMin;
-        snowMax = pubMax;
-      } else if (basis === "air") {
-        warnings.push({
-          line,
-          message: `"${brand} ${name}" is rated by air temperature and has no snow_temp range yet; it will not be recommended until it has one`,
-        });
-      }
-    }
-
-    const snowTypes = readList(get("snow_types"), SNOW_TYPES, "snow_types", line, errors);
-    const humidity = readList(get("humidity_bands"), HUMIDITY_BANDS, "humidity_bands", line, errors);
-    const roles = readList(get("layer_roles"), LAYER_ROLES, "layer_roles", line, errors);
-
-    const fluoro = readFluoro(get("fluoro_status"));
-    if (fluoro === "invalid") {
-      errors.push({
-        line,
-        message: `fluoro_status "${get("fluoro_status")}" is not one of fluoro_free, low, high, unknown`,
-      });
-    }
-
-    const active = readActive(get("active"));
-    if (active === "invalid") {
-      errors.push({ line, message: `active "${get("active")}" should be yes or no` });
-    }
-
-    const currency = blankToNull(get("currency"))?.toUpperCase() ?? null;
-    if (currency !== null && !/^[A-Z]{3}$/.test(currency)) {
-      errors.push({ line, message: `currency "${get("currency")}" should be a 3-letter code such as CAD` });
-    }
-
-    const buyUrl = blankToNull(get("buy_url"));
-    if (buyUrl !== null && !/^https?:\/\//i.test(buyUrl)) {
-      errors.push({ line, message: `buy_url "${buyUrl}" should start with https://` });
-    }
-
-    if (errors.length > before) continue;
-
-    rows.push({
-      brand,
-      name,
-      sku: blankToNull(get("sku")),
-      category: category as ProductCategory,
-      form: formRaw === "" ? null : (formRaw as ProductForm),
-      published_temp_min_c: pubMin,
-      published_temp_max_c: pubMax,
-      temp_min_c: snowMin,
-      temp_max_c: snowMax,
-      snow_types: snowTypes,
-      humidity_bands: humidity,
-      fluoro_status: fluoro as FluoroStatus,
-      layer_roles: roles,
-      iron_temp_c: iron,
-      price,
-      currency,
-      buy_url: buyUrl,
-      active: active as boolean,
-    });
+    for (const message of lineErrors) errors.push({ line, message });
+    for (const message of result.warnings) warnings.push({ line, message });
+    if (lineErrors.length === 0 && result.row) rows.push(result.row);
   }
 
   return { rows, errors, warnings };

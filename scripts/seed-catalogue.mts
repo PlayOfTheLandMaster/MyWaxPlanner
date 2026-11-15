@@ -1,4 +1,7 @@
-// Loads the brand and product catalogue from CSV into Supabase.
+// Loads the SHARED brand and product catalogue from CSV into Supabase.
+// Optional: a wax box is built one wax at a time in the app, and this only
+// saves typing by pre-filling waxes everyone can pick from. It reads and
+// writes shared rows only (created_by null) and never touches a user's own.
 //
 //   npm run seed -- --check        validate the CSVs only; touches nothing
 //   npm run seed                   validate, then add or update every row
@@ -61,7 +64,10 @@ const basis = new Map<string, TemperatureBasis>();
 // brands.csv. Without it, brands already in the database count too.
 const supabase = checkOnly ? null : connect();
 if (supabase) {
-  const { data, error } = await supabase.from("brands").select("name, temperature_basis");
+  const { data, error } = await supabase
+    .from("brands")
+    .select("name, temperature_basis")
+    .is("created_by", null);
   if (error) fail(`Could not read brands: ${error.message}`);
   for (const b of data ?? []) basis.set(b.name.toLowerCase(), b.temperature_basis);
 }
@@ -88,24 +94,33 @@ if (checkOnly) {
 const db = supabase!;
 
 if (brands.rows.length > 0) {
-  const { error } = await db.from("brands").upsert(brands.rows, { onConflict: "name" });
+  const { error } = await db
+    .from("brands")
+    .upsert(
+      brands.rows.map((b) => ({ ...b, created_by: null })),
+      { onConflict: "created_by,name" },
+    );
   if (error) fail(`Could not save brands: ${error.message}`);
 }
 
-const { data: brandIds, error: idError } = await db.from("brands").select("id, name");
+const { data: brandIds, error: idError } = await db
+  .from("brands")
+  .select("id, name")
+  .is("created_by", null);
 if (idError) fail(`Could not read brands back: ${idError.message}`);
 const idByName = new Map((brandIds ?? []).map((b) => [b.name.toLowerCase(), b.id as string]));
 
 const toInsert = products.rows.map(({ brand, ...rest }: ProductRow) => ({
   ...rest,
   brand_id: idByName.get(brand.toLowerCase())!,
+  created_by: null,
 }));
 
 const CHUNK = 500;
 for (let i = 0; i < toInsert.length; i += CHUNK) {
   const { error } = await db
     .from("products")
-    .upsert(toInsert.slice(i, i + CHUNK), { onConflict: "brand_id,name" });
+    .upsert(toInsert.slice(i, i + CHUNK), { onConflict: "brand_id,created_by,name" });
   if (error) {
     fail(
       `Could not save products ${i + 1}–${Math.min(i + CHUNK, toInsert.length)}: ${error.message}` +

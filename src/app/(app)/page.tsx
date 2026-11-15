@@ -1,10 +1,10 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { currentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "../login/actions";
 
-// Today. For now it confirms the plumbing works end to end: who is signed in,
-// and that the catalogue is reachable through Row Level Security. The forecast,
+// Today. For now: who is signed in, and the way into the wax box. The forecast,
 // "Similar to today" and the Plan a wax button arrive with later build prompts.
 
 export default function TodayPage() {
@@ -13,7 +13,7 @@ export default function TodayPage() {
       <h1 className="text-2xl font-bold">Today</h1>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Account />
-        <Catalogue />
+        <WaxBox />
       </Suspense>
     </main>
   );
@@ -35,43 +35,30 @@ async function Account() {
   );
 }
 
-async function Catalogue() {
+async function WaxBox() {
   const supabase = await createClient();
-  const [brands, products, tools] = await Promise.all([
-    supabase.from("brands").select("*", { count: "exact", head: true }),
-    supabase.from("products").select("*", { count: "exact", head: true }),
-    supabase.from("tools").select("*", { count: "exact", head: true }),
-  ]);
-  const failed = brands.error ?? products.error ?? tools.error;
+  const { count, error } = await supabase
+    .from("user_products")
+    .select("id", { count: "exact", head: true });
 
   return (
-    <section className="rounded-xl border border-line bg-surface p-4">
-      <h2 className="font-semibold">Catalogue</h2>
-      {failed ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          Could not read the catalogue: {failed.message}
-        </p>
-      ) : (
-        <dl className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <Count label="Brands" value={brands.count ?? 0} />
-          <Count label="Products" value={products.count ?? 0} />
-          <Count label="Tools" value={tools.count ?? 0} />
-        </dl>
-      )}
-      {!failed && (products.count ?? 0) === 0 && (
-        <p className="mt-3 text-sm text-muted">
-          No products yet. Load them with <code>npm run seed</code> (see the README).
-        </p>
-      )}
-    </section>
-  );
-}
-
-function Count({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg bg-tile p-2">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="text-xl font-bold">{value}</dd>
-    </div>
+    <Link
+      href="/wax-box"
+      className="flex min-h-11 items-center justify-between gap-4 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+    >
+      <span>
+        <span className="block font-semibold">Wax box</span>
+        <span className="text-sm text-muted">
+          {error
+            ? "Could not count your waxes"
+            : count
+              ? `${count} ${count === 1 ? "wax" : "waxes"}`
+              : "Empty — add your first wax"}
+        </span>
+      </span>
+      <span aria-hidden className="text-muted">
+        →
+      </span>
+    </Link>
   );
 }
