@@ -20,7 +20,7 @@ export type Venue = { id: string; name: string; latitude: number; longitude: num
 
 export type ForecastWindow = {
   venue: Venue;
-  /** Venue-local start, "2026-11-15T11:00", and the exact moment it is. */
+  /** Venue-local start as given, "2026-11-15T09:03", and the exact moment it is. The hourly figures use the hour it falls in. */
   start: string;
   startIso: string;
   hours: Hour[]; // the session's hours
@@ -152,13 +152,17 @@ export function summarise(all: Hour[], venue: Venue, data: Pick<OpenMeteo, "utc_
   const snowfallDuring = round1(hours.reduce((s, h) => s + h.snowfall_cm, 0));
 
   // Venue-local start to an exact moment, using the offset Open-Meteo reports.
-  const [d, t] = startHour.split("T");
+  // The exact start the skier gave (minutes included), as a moment in time.
+  const exact = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(start) ? start.slice(0, 16) : startHour;
+  const [d, t] = exact.split("T");
   const [y, mo, da] = d.split("-").map(Number);
-  const startIso = new Date(Date.UTC(y, mo - 1, da, Number(t.slice(0, 2))) - data.utc_offset_seconds * 1000).toISOString();
+  const startIso = new Date(
+    Date.UTC(y, mo - 1, da, Number(t.slice(0, 2)), Number(t.slice(3, 5))) - data.utc_offset_seconds * 1000,
+  ).toISOString();
 
   return {
     venue,
-    start: startHour,
+    start: exact,
     startIso,
     hours,
     utcOffsetSeconds: data.utc_offset_seconds,

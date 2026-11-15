@@ -111,7 +111,7 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
         )}
         {/* A two-step remove that needs no JavaScript: open, then confirm. */}
         <details className="rounded-lg border border-line">
-          <summary className="flex min-h-11 cursor-pointer items-center justify-center px-4 text-danger">
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">
             Remove from wax box
           </summary>
           <form action={removeFromBox.bind(null, row.id)} className="flex flex-col gap-2 p-3 pt-0">

@@ -40,7 +40,7 @@ async function Edit({ params }: { params: PageProps<"/wax-box/skis/[id]">["param
       <h1 className="text-2xl font-bold">{ski.name}</h1>
       <SkiForm save={updateSki.bind(null, id)} initial={ski} submitLabel="Save changes" />
       <details className="rounded-lg border border-line">
-        <summary className="flex min-h-11 cursor-pointer items-center justify-center px-4 text-danger">
+        <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">
           Delete these skis
         </summary>
         <form action={deleteSki.bind(null, id)} className="flex flex-col gap-2 p-3 pt-0">

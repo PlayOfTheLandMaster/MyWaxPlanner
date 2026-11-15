@@ -156,16 +156,22 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
     <div className="flex flex-col gap-4">
       {(saved.data ?? []).length > 0 && (
         <nav aria-label="Saved filters" className="flex flex-wrap gap-2">
-          {(saved.data ?? []).map((s) => (
-            <Link
-              key={s.id}
-              href={`/history?${s.query}`}
-              aria-current={here === `?${s.query}` ? "true" : undefined}
-              className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${here === `?${s.query}` ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
-            >
-              ★ {s.name}
-            </Link>
-          ))}
+          {(saved.data ?? []).map((s) => {
+            // Tapping the active saved filter again turns it off.
+            const on = here === `?${s.query}`;
+            return (
+              <Link
+                key={s.id}
+                href={on ? "/history" : `/history?${s.query}`}
+                aria-current={on ? "true" : undefined}
+                aria-label={on ? `Turn off saved filter: ${s.name}` : `Saved filter: ${s.name}`}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm ${on ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
+              >
+                ★ {s.name}
+                {on && <span aria-hidden>✕</span>}
+              </Link>
+            );
+          })}
         </nav>
       )}
 
@@ -246,7 +252,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
       </details>
 
       {chips.length > 0 && (
-        <ul aria-label="Active filters" className="flex flex-wrap gap-2">
+        <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
           {chips.map((c) => (
             <li key={c.label}>
               <Link
@@ -258,6 +264,13 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
               </Link>
             </li>
           ))}
+          {chips.length > 1 && (
+            <li>
+              <Link href="/history" className="inline-flex min-h-11 items-center px-2 text-sm text-link underline">
+                Clear all filters
+              </Link>
+            </li>
+          )}
         </ul>
       )}
 

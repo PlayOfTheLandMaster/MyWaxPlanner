@@ -52,3 +52,37 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
 }
+
+/*
+ * Foldable cards: every <details> summary, and any button with .fold-toggle,
+ * gets the same small arrow at its left — pointing right when folded, down
+ * when open — so folding looks the same everywhere (and across Finn's apps).
+ */
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::before,
+.fold-toggle::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.75rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+}
+details[open] > summary::before,
+.fold-toggle[aria-expanded="true"]::before {
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  summary::before,
+  .fold-toggle::before {
+    transition: none;
+  }
+}

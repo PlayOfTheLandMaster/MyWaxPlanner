@@ -60,8 +60,9 @@ test("a session window at Lake Louise, read in venue time", () => {
     hours.push(hour(time, h < 8 ? -14 : -6, { snowfall_cm: h === 3 ? 2 : 0 }));
   }
   const w = summarise(hours, venue, { utc_offset_seconds: -7 * 3600, timezone: "America/Edmonton", elevation: 1540 }, "2026-11-15T11:30", 3);
-  assert.equal(w.start, "2026-11-15T11:00");
-  assert.equal(w.startIso, "2026-11-15T18:00:00.000Z");
+  assert.equal(w.start, "2026-11-15T11:30", "the skier's own start time is kept");
+  assert.equal(w.startIso, "2026-11-15T18:30:00.000Z");
+  assert.equal(w.hours[0].time, "2026-11-15T11:00", "the forecast uses the hour it falls in");
   assert.equal(w.hours.length, 3);
   assert.equal(w.overnight_low_c, -14);
   assert.equal(w.new_snow_cm, 2);
