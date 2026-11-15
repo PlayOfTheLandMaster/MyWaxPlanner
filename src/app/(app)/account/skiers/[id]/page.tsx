@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { SkierForm } from "../../skier-form";
+import { birthYears, describeBody } from "@/lib/skiers/body";
 import { deleteSkier, updateSkier } from "../../skier-actions";
 
 export const metadata: Metadata = { title: "Skier · My Wax Planner" };
@@ -25,7 +26,7 @@ async function Skier({ params }: { params: PageProps<"/account/skiers/[id]">["pa
   const { id } = await params;
   const supabase = await createClient();
   const [{ data: skier, error }, skis] = await Promise.all([
-    supabase.from("skiers").select("id, name, notes").eq("id", id).maybeSingle(),
+    supabase.from("skiers").select("id, name, notes, birth_year, birth_month, weight_kg").eq("id", id).maybeSingle(),
     supabase.from("skis").select("id, name").eq("skier_id", id).order("name"),
   ]);
   if (error && error.code !== "22P02") throw new Error(`Could not read the skier: ${error.message}`);
@@ -33,9 +34,12 @@ async function Skier({ params }: { params: PageProps<"/account/skiers/[id]">["pa
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{skier.name}</h1>
+      <div>
+        <h1 className="text-2xl font-bold">{skier.name}</h1>
+        {describeBody(skier) && <p className="text-muted">{describeBody(skier)}</p>}
+      </div>
       <section className="rounded-xl border border-line bg-surface p-4">
-        <SkierForm save={updateSkier.bind(null, id)} initial={skier} submitLabel="Save" />
+        <SkierForm save={updateSkier.bind(null, id)} initial={skier} submitLabel="Save" years={birthYears()} />
       </section>
       <section className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
         <h2 className="font-semibold">Skis</h2>

@@ -2,6 +2,8 @@
 
 import { startTransition, useActionState } from "react";
 import { saveSettings, type SettingsState } from "./actions";
+import { BodyFields } from "@/components/body-fields";
+import type { Body } from "@/lib/skiers/body";
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
@@ -13,11 +15,15 @@ export function SettingsForm({
   home,
   mode,
   displayName,
+  me,
+  years,
 }: {
   venues: { id: string; name: string }[];
   home: string | null;
   mode: string;
   displayName: string | null;
+  me: Body;
+  years: number[];
 }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettings, {});
   return (
@@ -33,6 +39,7 @@ export function SettingsForm({
         Your name (optional)
         <input name="display_name" defaultValue={displayName ?? ""} maxLength={60} className={field} />
       </label>
+      <BodyFields initial={me} years={years} />
       <label className={label}>
         Home venue — its forecast is on Today
         <select name="home_venue_id" defaultValue={home ?? ""} className={field}>
@@ -69,7 +76,7 @@ export function SettingsForm({
         </p>
       )}
       <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50">
-        {pending ? "Saving…" : "Save settings"}
+        {pending ? "Saving…" : "Save"}
       </button>
     </form>
   );
