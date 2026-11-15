@@ -4,13 +4,14 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
-import { SKI_CATEGORIES, SKI_CATEGORY_LABELS, TECHNIQUES, TECHNIQUE_LABELS } from "@/lib/skis/input";
+import { SKI_CATEGORIES } from "@/lib/skis/input";
 import { MODES, MODE_LABELS } from "@/lib/history/vocab";
 import { buildRecommendation, loadConditions, loadDefaultMode, loadSkis, type PlanChoice } from "@/lib/recommend/load";
 import { CATEGORY_TEXT, ROLE_TEXT, type Pick, type Recommendation } from "@/lib/recommend/engine";
 import { LocalTime } from "@/components/local-time";
 import { savePlan } from "./actions";
 import { SavePlanButton } from "./save-plan";
+import { SkiFields } from "./ski-fields";
 
 export const metadata: Metadata = { title: "Plan · My Wax Planner" };
 
@@ -96,39 +97,12 @@ async function Step({
 
       <form method="get" className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4">
         <input type="hidden" name="go" value="1" />
-        <label className={label}>
-          Skis
-          <select name="ski" defaultValue={ski?.id ?? ""} className={field}>
-            <option value="">Not one of my pairs</option>
-            {skis.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.name} — {TECHNIQUE_LABELS[k.technique]}
-                {k.category ? `, ${SKI_CATEGORY_LABELS[k.category].split(" ")[0].toLowerCase()}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset className="flex flex-col gap-1">
-          <legend className="mb-1 text-sm font-medium">Technique (if no pair is chosen)</legend>
-          <div className="grid grid-cols-2 gap-2">
-            {TECHNIQUES.map((t) => (
-              <label key={t} className={choice}>
-                <input type="radio" name="technique" value={t} defaultChecked={technique === t} className="sr-only" />
-                {TECHNIQUE_LABELS[t]}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <label className={label}>
-          Classic grip (if no pair is chosen)
-          <select name="grip" defaultValue={gripType ?? "waxable"} className={field}>
-            {SKI_CATEGORIES.map((g) => (
-              <option key={g} value={g}>
-                {SKI_CATEGORY_LABELS[g]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SkiFields
+          skis={skis}
+          initialSki={ski?.id ?? ""}
+          initialTechnique={technique}
+          initialGrip={gripType ?? "waxable"}
+        />
         <div className="grid grid-cols-2 gap-2">
           {MODES.map((m) => (
             <label key={m} className={choice}>
