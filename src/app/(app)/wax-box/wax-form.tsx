@@ -68,6 +68,12 @@ export function WaxForm({
   // Editing opens the details, so nothing already saved is out of sight.
   const [moreOpen, setMoreOpen] = useState(initial !== undefined);
 
+  // Glide, grip, cleaners or consumables first, so the type list stays short.
+  const initialGroup = CATEGORY_GROUPS.find((g) => (g.categories as string[]).includes(initial?.category ?? ""))?.key ?? "glide";
+  const [group, setGroup] = useState(initialGroup);
+  const [category, setCategory] = useState(initial?.category ?? "");
+  const shownGroup = CATEGORY_GROUPS.find((g) => g.key === group) ?? CATEGORY_GROUPS[0];
+
   const known = brands.find((b) => b.name.toLowerCase() === brand.trim().toLowerCase());
   const isNewBrand = brand.trim() !== "" && !known;
   const basis = known?.temperature_basis ?? (newBasis || undefined);
@@ -85,6 +91,31 @@ export function WaxForm({
       }}
       className="flex flex-col gap-5"
     >
+      <fieldset className="flex flex-col gap-1">
+        <legend className="mb-1 text-sm font-medium">What is it?</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {CATEGORY_GROUPS.map((g) => (
+            <label
+              key={g.key}
+              className="flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-2 text-center text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold"
+            >
+              <input
+                type="radio"
+                name="kind"
+                value={g.key}
+                checked={group === g.key}
+                onChange={() => {
+                  setGroup(g.key);
+                  if (!(g.categories as string[]).includes(category)) setCategory("");
+                }}
+                className="sr-only"
+              />
+              {g.key === "glide" ? "Glide wax" : g.key === "grip" ? "Grip wax" : g.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <label className={label}>
         Brand
         <input
@@ -142,18 +173,20 @@ export function WaxForm({
 
       <label className={label}>
         Type
-        <select name="category" required defaultValue={initial?.category ?? ""} className={field}>
+        <select
+          name="category"
+          required
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className={field}
+        >
           <option value="" disabled>
             Choose…
           </option>
-          {CATEGORY_GROUPS.map((g) => (
-            <optgroup key={g.key} label={g.label}>
-              {g.categories.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABELS[c]}
-                </option>
-              ))}
-            </optgroup>
+          {shownGroup.categories.map((c) => (
+            <option key={c} value={c}>
+              {CATEGORY_LABELS[c]}
+            </option>
           ))}
         </select>
       </label>

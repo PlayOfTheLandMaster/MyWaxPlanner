@@ -8,6 +8,27 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Build prompt 5** — the recommendation:
+
+- **Plan step 2** (`/plan/[conditions]`): pick a pair of skis (or technique and grip type), recreational or race, and a glide wax type, then **RECOMMEND**.
+- **The engine** (`src/lib/recommend/engine.ts`, pure and tested) reads the `rules` table to decide the layers and wax categories, scores every wax on snow temperature, snow type, humidity, category weight and your own past ratings in similar snow (brand never counts), picks the best from your box, offers up to three better ones from the shared catalogue, and writes the procedure using only tools you own. Race plans only use fluoro-free waxes. Classic waxable plans suggest a warmer and a colder kick wax to carry.
+- **Save as a planned session** stores the recommendation and a planned session in History, linked to the forecast conditions.
+- Default rules are seeded by `20261119000000_default_rules.sql`; tune them by editing rows.
+- *Add a wax* starts with Glide · Grip · Cleaners · Consumables, so the type list is short.
+
+**Build prompt 4** — forecasts for where and when you ski:
+
+- **Venues** (`/venues`): shared Calgary, Bow Valley and Kananaskis venues plus your own (place search, "I'm at the venue now", or coordinates), and a home venue.
+- **Plan step 1** (`/plan`): the venue's hourly forecast for your session window from [Open-Meteo](https://open-meteo.com) at the trail's elevation and in the venue's time zone — never the phone's location — with an estimated snow temperature, snowball-test and snow-type guesses you confirm, saved as forecast conditions.
+- **Today**: the home venue's forecast, *Plan a wax*, and *Similar to today* (History filtered to snow within 3 °C).
+- Open-Meteo is free for non-commercial use without a key; a paid version of the app needs their commercial plan.
+
+**Build prompt 3** — the waxing history:
+
+- Log, edit, delete and *repeat* sessions: layers from your box (or typed), finish steps, actual conditions with the snowball test, ratings, race details and photos (private `session-photos` bucket).
+- Saved in one transaction by the `save_wax_session()` database function, which runs as the signed-in user so Row Level Security applies.
+- History list (`/history`) with filters in the address bar, chips, sorting, seasons and saved filters, read from the `wax_session_list` view.
+
 **Build prompt 2** — the Wax box and the tab bar:
 
 - **A five-tab bar** along the bottom: Today, Plan, History, Wax box, Learn. Plan, History and Learn say what they will hold; they arrive with later build prompts.
