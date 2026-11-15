@@ -92,12 +92,12 @@ details[open] > summary::before,
  * Dark mode needs a little more to show at all.
  */
 .background-photo {
-  opacity: 0.08;
+  opacity: 0.11;
   animation: background-fade 600ms ease-out;
 }
 @media (prefers-color-scheme: dark) {
   .background-photo {
-    opacity: 0.12;
+    opacity: 0.16;
   }
 }
 @keyframes background-fade {
