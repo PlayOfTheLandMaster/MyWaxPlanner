@@ -50,7 +50,7 @@ async function Edit({ params }: { params: PageProps<"/history/[id]/edit">["param
         </Link>
         <h1 className="text-2xl font-bold">Edit session</h1>
       </div>
-      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" />
+      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} />
     </>
   );
 }

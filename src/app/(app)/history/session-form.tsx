@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
 import type { FormOptions } from "@/lib/history/load";
@@ -111,11 +112,14 @@ export function SessionForm({
   save,
   initial,
   submitLabel,
+  cancelHref,
 }: {
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
   initial?: SessionInitial;
   submitLabel: string;
+  /** Where Cancel goes: back to the session, or to History. */
+  cancelHref: string;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
@@ -453,13 +457,22 @@ export function SessionForm({
           {state.error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
-      >
-        {pending ? "Saving…" : submitLabel}
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        {/* Leaving saves nothing: a repeated prep or a new session only exists once saved. */}
+        <Link
+          href={cancelHref}
+          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+        >
+          Cancel
+        </Link>
+        <button
+          type="submit"
+          disabled={pending}
+          className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }
