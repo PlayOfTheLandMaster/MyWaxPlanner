@@ -86,3 +86,27 @@ details[open] > summary::before,
     transition: none;
   }
 }
+
+/*
+ * Background photos: faint enough that the page stays calm and readable.
+ * Dark mode needs a little more to show at all.
+ */
+.background-photo {
+  opacity: 0.16;
+  animation: background-fade 600ms ease-out;
+}
+@media (prefers-color-scheme: dark) {
+  .background-photo {
+    opacity: 0.22;
+  }
+}
+@keyframes background-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .background-photo {
+    animation: none;
+  }
+}
