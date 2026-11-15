@@ -129,6 +129,16 @@ select pg_temp.expect((select air_humidity_band from public.conditions
 select pg_temp.expect((select count(*) from public.wax_session_layers) = 1,
   'A can read their own session layers');
 select pg_temp.expect_error(
+  $$insert into public.user_products (user_id, product_id)
+    values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000c1')$$,
+  'the same wax cannot be in a box twice');
+insert into public.user_tools (user_id, tool_id)
+  select '00000000-0000-0000-0000-00000000000a', id from public.tools order by name limit 1;
+select pg_temp.expect_error(
+  $$insert into public.user_tools (user_id, tool_id)
+    select '00000000-0000-0000-0000-00000000000a', id from public.tools order by name limit 1$$,
+  'the same tool cannot be ticked twice');
+select pg_temp.expect_error(
   $$insert into public.conditions (user_id, source, snow_temp_c)
     values ('00000000-0000-0000-0000-00000000000a', 'observed', 1)$$,
   'snow warmer than 0 °C is refused');
@@ -152,6 +162,7 @@ select pg_temp.expect((select count(*) from public.wax_sessions) = 0, 'B cannot 
 select pg_temp.expect((select count(*) from public.wax_session_layers) = 0, 'B cannot see A''s layers');
 select pg_temp.expect((select count(*) from public.conditions) = 0, 'B cannot see A''s conditions');
 select pg_temp.expect((select count(*) from public.user_products) = 0, 'B cannot see A''s wax box');
+select pg_temp.expect((select count(*) from public.user_tools) = 0, 'B cannot see A''s tools');
 select pg_temp.expect((select count(*) from public.profiles) = 1, 'B sees only their own profile');
 select pg_temp.expect(
   (select array_agg(name order by name) from public.brands) = array['RLS Test Brand'],

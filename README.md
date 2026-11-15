@@ -8,6 +8,14 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Build prompt 2** — the Wax box and the tab bar:
+
+- **A five-tab bar** along the bottom: Today, Plan, History, Wax box, Learn. Plan, History and Learn say what they will hold; they arrive with later build prompts.
+- **Wax box** has three sections, switched at the top: **Waxes**, **Tools** and **Skis**.
+- **Waxes:** your waxes grouped by Glide, Grip, Cleaners and Consumables, with anything low or empty gathered under **Running low** at the top. Tap a wax to change how much is left (one tap), add notes, edit it, or remove it from the box. A wax you remove stays saved, and **Add a wax → Find a wax you've added before** puts it back without retyping. Waxes from a shared catalogue, if you ever load one, can be found there too, but not edited.
+- **Tools:** the checklist from the spec, grouped as scrapers, hand brushes, roto brushes, irons, cork and fibertex, and bench tools. Tick what you own and, if you like, how worn it is. Later, waxing plans will only use ticked tools.
+- **Skis:** add, edit and delete your pairs: name, classic or skate, grip type (classic only), grip zone length (waxable only), brand, model, base, grind, flex and notes. Deleting a pair keeps its waxing history.
+
 **Build prompt 1** — the foundation:
 
 - **Sign in and create an account** (email and password, with Supabase's email confirmation). Every screen except sign-in needs an account.
@@ -118,7 +126,7 @@ npm test            # the CSV loader's tests; no database needed
 npm run seed        # load the catalogue (see above)
 ```
 
-**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 36 rules: what each can do with their own data, and that neither can see or change the other's. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
+**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 39 rules: what each can do with their own data, and that neither can see or change the other's. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
 
 ```bash
 psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
@@ -133,6 +141,9 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=
 | `src/app/(app)/` | Screens that need an account. `layout.tsx` sends signed-out visitors to `/login` |
 | `src/app/login/`, `src/app/auth/confirm/` | Sign in, create account, and the email confirmation link |
 | `src/lib/supabase/` | The two Supabase connections: `client.ts` for the browser, `server.ts` for the server. Both obey the privacy rules; `createServiceClient()` in `server.ts` does not, and nothing in the app uses it yet |
-| `src/app/(app)/wax-box/` | The wax box list, *Add a wax*, and the action that saves it |
+| `src/components/` | The bottom tab bar and the Waxes / Tools / Skis switcher |
+| `src/app/(app)/wax-box/` | Waxes (list, add, a wax's page, edit), `tools/` and `skis/`, each with its own `actions.ts` |
+| `src/lib/wax-box/` | Reading the wax box, the wax search, and the temperature line on each wax |
+| `src/lib/skis/` | What a ski save may contain |
 | `src/lib/catalogue/` | The rules a wax must pass (shared by *Add a wax* and the CSV loader), the allowed values, and the words shown for them |
 | `scripts/seed-catalogue.mts` | The `npm run seed` command |

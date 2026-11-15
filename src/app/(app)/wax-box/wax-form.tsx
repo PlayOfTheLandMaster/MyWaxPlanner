@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { addWax, type AddWaxState } from "../actions";
+import type { WaxFormState } from "./actions";
 import {
   CATEGORY_GROUPS,
   CATEGORY_LABELS,
@@ -23,14 +23,50 @@ import {
 
 export type KnownBrand = { name: string; temperature_basis: TemperatureBasis };
 
+/** What an existing wax fills the form with when it is being edited. */
+export type WaxInitial = {
+  brand: string;
+  name: string;
+  category: string;
+  form: string | null;
+  published_temp_min_c: number | null;
+  published_temp_max_c: number | null;
+  temp_min_c: number | null;
+  temp_max_c: number | null;
+  snow_types: string[];
+  humidity_bands: string[];
+  layer_roles: string[];
+  fluoro_status: string;
+  iron_temp_c: number | null;
+  amount_left: string;
+  notes: string | null;
+};
+
+const num = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n));
+
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
 
-export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
-  const [state, action, pending] = useActionState<AddWaxState, FormData>(addWax, {});
-  const [brand, setBrand] = useState("");
+/**
+ * Adding a wax and editing one are the same form: `initial` fills it in, and
+ * `save` is the server action that receives it.
+ */
+export function WaxForm({
+  brands,
+  save,
+  initial,
+  submitLabel,
+}: {
+  brands: KnownBrand[];
+  save: (prev: WaxFormState, data: FormData) => Promise<WaxFormState>;
+  initial?: WaxInitial;
+  submitLabel: string;
+}) {
+  const [state, action, pending] = useActionState<WaxFormState, FormData>(save, {});
+  const [brand, setBrand] = useState(initial?.brand ?? "");
   const [newBasis, setNewBasis] = useState<TemperatureBasis | "">("");
-  const [moreOpen, setMoreOpen] = useState(false);
+  // Editing opens the details, so nothing already saved is out of sight.
+  const [moreOpen, setMoreOpen] = useState(initial !== undefined);
 
   const known = brands.find((b) => b.name.toLowerCase() === brand.trim().toLowerCase());
   const isNewBrand = brand.trim() !== "" && !known;
@@ -94,12 +130,19 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
 
       <label className={label}>
         Wax name
-        <input name="name" required autoComplete="off" className={field} placeholder="e.g. the colour or code on the label" />
+        <input
+          name="name"
+          required
+          autoComplete="off"
+          defaultValue={initial?.name}
+          className={field}
+          placeholder="e.g. the colour or code on the label"
+        />
       </label>
 
       <label className={label}>
         Type
-        <select name="category" required defaultValue="" className={field}>
+        <select name="category" required defaultValue={initial?.category ?? ""} className={field}>
           <option value="" disabled>
             Choose…
           </option>
@@ -122,11 +165,23 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
         <div className="grid grid-cols-2 gap-3">
           <label className={label}>
             <span className="font-normal text-muted">From</span>
-            <input name="published_temp_min_c" inputMode="decimal" placeholder="−12" className={field} />
+            <input
+              name="published_temp_min_c"
+              inputMode="decimal"
+              placeholder="−12"
+              defaultValue={num(initial?.published_temp_min_c)}
+              className={field}
+            />
           </label>
           <label className={label}>
             <span className="font-normal text-muted">To</span>
-            <input name="published_temp_max_c" inputMode="decimal" placeholder="−6" className={field} />
+            <input
+              name="published_temp_max_c"
+              inputMode="decimal"
+              placeholder="−6"
+              defaultValue={num(initial?.published_temp_max_c)}
+              className={field}
+            />
           </label>
         </div>
       </fieldset>
@@ -142,11 +197,11 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
           <div className="grid grid-cols-2 gap-3">
             <label className={label}>
               <span className="font-normal text-muted">From</span>
-              <input name="snow_temp_min_c" inputMode="decimal" className={field} />
+              <input name="snow_temp_min_c" inputMode="decimal" defaultValue={num(initial?.temp_min_c)} className={field} />
             </label>
             <label className={label}>
               <span className="font-normal text-muted">To</span>
-              <input name="snow_temp_max_c" inputMode="decimal" className={field} />
+              <input name="snow_temp_max_c" inputMode="decimal" defaultValue={num(initial?.temp_max_c)} className={field} />
             </label>
           </div>
         </fieldset>
@@ -154,7 +209,7 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
 
       <label className={label}>
         Fluoro
-        <select name="fluoro_status" defaultValue="fluoro_free" className={field}>
+        <select name="fluoro_status" defaultValue={initial?.fluoro_status ?? "fluoro_free"} className={field}>
           {FLUORO_STATUSES.map((f) => (
             <option key={f} value={f}>
               {FLUORO_LABELS[f]}
@@ -171,7 +226,7 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
               key={a}
               className="flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold"
             >
-              <input type="radio" name="amount_left" value={a} defaultChecked={a === "full"} className="sr-only" />
+              <input type="radio" name="amount_left" value={a} defaultChecked={a === (initial?.amount_left ?? "full")} className="sr-only" />
               {AMOUNT_LABELS[a]}
             </label>
           ))}
@@ -189,13 +244,32 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
 
       {/* Hidden rather than unmounted, so folding it away keeps what was typed. */}
       <div hidden={!moreOpen} className="flex flex-col gap-5">
-        <CheckGroup legend="Snow types it suits" name="snow_types" values={SNOW_TYPES} labels={SNOW_TYPE_LABELS} />
-        <CheckGroup legend="Snow humidity" name="humidity_bands" values={HUMIDITY_BANDS} labels={HUMIDITY_LABELS} columns />
-        <CheckGroup legend="Used as" name="layer_roles" values={LAYER_ROLES} labels={LAYER_ROLE_LABELS} />
+        <CheckGroup
+          legend="Snow types it suits"
+          name="snow_types"
+          values={SNOW_TYPES}
+          labels={SNOW_TYPE_LABELS}
+          checked={initial?.snow_types}
+        />
+        <CheckGroup
+          legend="Snow humidity"
+          name="humidity_bands"
+          values={HUMIDITY_BANDS}
+          labels={HUMIDITY_LABELS}
+          checked={initial?.humidity_bands}
+          columns
+        />
+        <CheckGroup
+          legend="Used as"
+          name="layer_roles"
+          values={LAYER_ROLES}
+          labels={LAYER_ROLE_LABELS}
+          checked={initial?.layer_roles}
+        />
 
         <label className={label}>
           Form
-          <select name="form" defaultValue="" className={field}>
+          <select name="form" defaultValue={initial?.form ?? ""} className={field}>
             <option value="">—</option>
             {PRODUCT_FORMS.map((f) => (
               <option key={f} value={f}>
@@ -207,12 +281,18 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
 
         <label className={label}>
           Iron temperature, °C
-          <input name="iron_temp_c" inputMode="numeric" placeholder="e.g. 130" className={field} />
+          <input
+            name="iron_temp_c"
+            inputMode="numeric"
+            placeholder="e.g. 130"
+            defaultValue={num(initial?.iron_temp_c)}
+            className={field}
+          />
         </label>
 
         <label className={label}>
           Notes
-          <textarea name="notes" rows={3} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
+          <textarea name="notes" rows={3} defaultValue={initial?.notes ?? ""} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
         </label>
       </div>
 
@@ -227,7 +307,7 @@ export function AddWaxForm({ brands }: { brands: KnownBrand[] }) {
         disabled={pending}
         className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
       >
-        {pending ? "Adding…" : "Add to wax box"}
+        {pending ? "Saving…" : submitLabel}
       </button>
     </form>
   );
@@ -238,12 +318,14 @@ function CheckGroup<T extends string>({
   name,
   values,
   labels,
+  checked = [],
   columns = false,
 }: {
   legend: string;
   name: string;
   values: readonly T[];
   labels: Record<T, string>;
+  checked?: string[];
   columns?: boolean;
 }) {
   return (
@@ -252,7 +334,13 @@ function CheckGroup<T extends string>({
       <div className={columns ? "grid grid-cols-3 gap-2" : "flex flex-col"}>
         {values.map((v) => (
           <label key={v} className="flex min-h-11 items-center gap-3 text-sm">
-            <input type="checkbox" name={name} value={v} className="size-5 shrink-0" />
+            <input
+              type="checkbox"
+              name={name}
+              value={v}
+              defaultChecked={checked.includes(v)}
+              className="size-5 shrink-0"
+            />
             {labels[v]}
           </label>
         ))}
