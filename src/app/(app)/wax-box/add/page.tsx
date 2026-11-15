@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABELS } from "@/lib/catalogue/labels";
@@ -15,9 +15,7 @@ export default function AddWaxPage({ searchParams }: PageProps<"/wax-box/add">) 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-6">
       <div>
-        <Link href="/wax-box" className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Wax box
-        </Link>
+        <BackLink fallback="/wax-box" />
         <h1 className="text-2xl font-bold">Add a wax</h1>
       </div>
 

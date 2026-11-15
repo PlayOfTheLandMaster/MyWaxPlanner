@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { currentUser } from "@/lib/auth/current-user";
@@ -19,9 +20,7 @@ export default function AccountPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
-        <Link href="/" className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Today
-        </Link>
+        <BackLink fallback="/" />
         <h1 className="text-2xl font-bold">Account</h1>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>

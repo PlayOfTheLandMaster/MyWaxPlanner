@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -25,9 +26,7 @@ export const metadata: Metadata = { title: "Session · My Wax Planner" };
 export default function SessionPage({ params, searchParams }: PageProps<"/history/[id]">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
-      <Link href="/history" className="inline-flex min-h-11 items-center self-start text-sm text-link underline">
-        ← History
-      </Link>
+      <BackLink fallback="/history" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Detail params={params} searchParams={searchParams} />
       </Suspense>

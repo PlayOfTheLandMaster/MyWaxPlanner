@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadHomeVenueId, loadVenues } from "@/lib/venues/load";
@@ -11,9 +12,7 @@ export default function VenuesPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
-        <Link href="/" className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Today
-        </Link>
+        <BackLink fallback="/" />
         <h1 className="text-2xl font-bold">Venues</h1>
         <p className="text-sm text-muted">Forecasts are always for the venue you pick, at its trail height — never for where your phone is.</p>
       </div>
