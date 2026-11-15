@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -13,9 +13,7 @@ export const metadata: Metadata = { title: "Edit skis · My Wax Planner" };
 export default function EditSkiPage({ params }: PageProps<"/wax-box/skis/[id]">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-6">
-      <Link href="/wax-box/skis" className="inline-flex min-h-11 items-center self-start text-sm text-link underline">
-        ← Skis
-      </Link>
+      <BackLink fallback="/wax-box/skis" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Edit params={params} />
       </Suspense>

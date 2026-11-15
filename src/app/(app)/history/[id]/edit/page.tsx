@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -45,9 +45,7 @@ async function Edit({ params }: { params: PageProps<"/history/[id]/edit">["param
   return (
     <>
       <div>
-        <Link href={`/history/${id}`} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Session
-        </Link>
+        <BackLink fallback={`/history/${id}`} />
         <h1 className="text-2xl font-bold">Edit session</h1>
       </div>
       <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} />

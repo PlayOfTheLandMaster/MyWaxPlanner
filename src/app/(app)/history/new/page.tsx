@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
@@ -72,9 +72,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   return (
     <>
       <div>
-        <Link href={source ? `/history/${source.id}` : "/history"} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          {source ? "✕ Cancel" : "← History"}
-        </Link>
+        <BackLink fallback={source ? `/history/${source.id}` : "/history"}>{source ? "✕ Cancel" : undefined}</BackLink>
         <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Log a session"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>

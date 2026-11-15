@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useMemo, useState } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
 import type { FormOptions } from "@/lib/history/load";
@@ -118,7 +118,7 @@ export function SessionForm({
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
   initial?: SessionInitial;
   submitLabel: string;
-  /** Where Cancel goes: back to the session, or to History. */
+  /** Where Cancel goes when the page was opened directly; otherwise it returns to the page the person came from. */
   cancelHref: string;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
@@ -459,12 +459,9 @@ export function SessionForm({
       )}
       <div className="grid grid-cols-2 gap-2">
         {/* Leaving saves nothing: a repeated prep or a new session only exists once saved. */}
-        <Link
-          href={cancelHref}
-          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
-        >
+        <BackLink fallback={cancelHref} className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
           Cancel
-        </Link>
+        </BackLink>
         <button
           type="submit"
           disabled={pending}

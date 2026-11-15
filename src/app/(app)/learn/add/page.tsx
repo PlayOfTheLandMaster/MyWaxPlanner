@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -13,9 +13,7 @@ export default function AddVideoPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
-        <Link href="/learn" className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Learn
-        </Link>
+        <BackLink fallback="/learn" />
         <h1 className="text-2xl font-bold">Add a video</h1>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>

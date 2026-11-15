@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BackgroundPhoto } from "@/components/background-photo";
+import { NavTrail } from "@/components/nav-trail";
 
 export const metadata: Metadata = {
   title: "My Wax Planner",
@@ -22,6 +23,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Suspense fallback={null}>
           <BackgroundPhoto />
+        </Suspense>
+        <Suspense fallback={null}>
+          <NavTrail />
         </Suspense>
         {children}
       </body>

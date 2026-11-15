@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadSkiers } from "@/lib/skiers/load";
@@ -12,9 +12,7 @@ export default function NewSkiPage({ searchParams }: PageProps<"/wax-box/skis/ne
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-6">
       <div>
-        <Link href="/wax-box/skis" className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Skis
-        </Link>
+        <BackLink fallback="/wax-box/skis" />
         <h1 className="text-2xl font-bold">Add skis</h1>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>

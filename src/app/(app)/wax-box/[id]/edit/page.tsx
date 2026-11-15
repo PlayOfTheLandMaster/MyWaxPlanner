@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -30,9 +30,7 @@ async function Edit({ params }: { params: PageProps<"/wax-box/[id]/edit">["param
   return (
     <>
       <div>
-        <Link href={`/wax-box/${row.id}`} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← {p.brand.name} {p.name}
-        </Link>
+        <BackLink fallback={`/wax-box/${row.id}`} fallbackLabel={`${p.brand.name} ${p.name}`} />
         <h1 className="text-2xl font-bold">Edit wax</h1>
       </div>
       {p.created_by !== user?.id ? (

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { ForecastError, searchPlaces } from "@/lib/weather/forecast";
 import { VenueForm } from "../venue-form";
@@ -44,9 +45,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
   return (
     <>
       <div>
-        <Link href={back} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← {back === "/plan" ? "Plan" : "Venues"}
-        </Link>
+        <BackLink fallback={back} fallbackLabel={`${back === "/plan" ? "Plan" : "Venues"}`} />
         <h1 className="text-2xl font-bold">Add a venue</h1>
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
       </div>

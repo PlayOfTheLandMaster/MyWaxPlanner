@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import Link from "next/link";
+import { BackLink } from "@/components/nav-trail";
 import type { VideoFormState } from "./actions";
 import { LEVELS, LEVEL_LABELS, TOPICS, TOPIC_LABELS, formatTime, parseYouTube, thumbnailUrl, type Video } from "@/lib/learn/videos";
 
@@ -125,9 +125,9 @@ export function VideoForm({
         </p>
       )}
       <div className="grid grid-cols-2 gap-2">
-        <Link href={cancelHref} className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
+        <BackLink fallback={cancelHref} className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
           Cancel
-        </Link>
+        </BackLink>
         <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50">
           {pending ? "Saving…" : submitLabel}
         </button>
