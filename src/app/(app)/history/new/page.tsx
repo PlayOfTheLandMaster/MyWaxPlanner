@@ -73,12 +73,15 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
     <>
       <div>
         <Link href={source ? `/history/${source.id}` : "/history"} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← {source ? "Session" : "History"}
+          {source ? "✕ Cancel" : "← History"}
         </Link>
         <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Log a session"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>
-      <SessionForm options={options} save={saveSession.bind(null, null)} initial={initial} submitLabel="Save session" />
+      <SessionForm options={options} save={saveSession.bind(null, null)} initial={initial}
+        submitLabel="Save session"
+        cancelHref={source ? `/history/${source.id}` : "/history"}
+      />
     </>
   );
 }
