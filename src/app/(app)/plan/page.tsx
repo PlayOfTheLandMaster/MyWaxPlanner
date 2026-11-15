@@ -6,6 +6,7 @@ import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { ConditionsForm } from "./conditions-form";
+import { WhereWhenForm } from "./where-when-form";
 
 export const metadata: Metadata = { title: "Plan · My Wax Planner" };
 
@@ -40,7 +41,7 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
   return (
     <>
       {/* GET, so the chosen venue and time are in the address and survive a reload. */}
-      <form method="get" className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <WhereWhenForm className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <label className={label}>
           Where you&apos;ll ski
           <select name="venue" defaultValue={venue?.id ?? ""} required className={field}>
@@ -82,7 +83,7 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
         <button type="submit" className="min-h-11 rounded-lg border border-line px-4 font-semibold active:bg-tile">
           {venue ? "Update forecast" : "Get forecast"}
         </button>
-      </form>
+      </WhereWhenForm>
 
       {!venue && usable.length === 0 && (
         <p className="rounded-xl border border-line bg-surface p-4 text-muted">Add a venue to get its forecast.</p>
