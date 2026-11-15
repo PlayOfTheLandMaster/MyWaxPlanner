@@ -89,7 +89,7 @@ async function Detail({
         </p>
         <h1 className="text-2xl font-bold">{s.event_name ?? s.venue?.name ?? `${TECHNIQUE_LABELS[s.technique]} session`}</h1>
         <p className="text-muted">
-          {[TECHNIQUE_LABELS[s.technique], MODE_LABELS[s.mode], s.ski?.name, s.event_name ? s.venue?.name : null]
+          {[s.skier ? `${s.skier.name}'s skis` : null, TECHNIQUE_LABELS[s.technique], MODE_LABELS[s.mode], s.ski?.name, s.event_name ? s.venue?.name : null]
             .filter(Boolean)
             .join(" · ")}
         </p>

@@ -12,6 +12,7 @@ import { LocalTime } from "@/components/local-time";
 import { savePlan } from "./actions";
 import { SavePlanButton } from "./save-plan";
 import { SkiFields } from "./ski-fields";
+import { loadSkiers } from "@/lib/skiers/load";
 
 export const metadata: Metadata = { title: "Plan · My Wax Planner" };
 
@@ -51,7 +52,12 @@ async function Step({
   const { id } = await params;
   const p = await searchParams;
   const supabase = await createClient();
-  const [c, skis, defaultMode] = await Promise.all([loadConditions(supabase, id), loadSkis(supabase), loadDefaultMode(supabase)]);
+  const [c, skis, defaultMode, skiers] = await Promise.all([
+    loadConditions(supabase, id),
+    loadSkis(supabase),
+    loadDefaultMode(supabase),
+    loadSkiers(supabase),
+  ]);
   if (!c) notFound();
 
   const ski = skis.find((k) => k.id === one(p.ski)) ?? null;
@@ -99,6 +105,7 @@ async function Step({
         <input type="hidden" name="go" value="1" />
         <SkiFields
           skis={skis}
+          skiers={skiers.map((k) => ({ id: k.id, name: k.name }))}
           initialSki={ski?.id ?? ""}
           initialTechnique={technique}
           initialGrip={gripType ?? "waxable"}

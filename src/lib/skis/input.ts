@@ -35,6 +35,8 @@ export const SKI_BRANDS = [
 
 export type SkiInput = {
   name: string;
+  /** Whose skis: one of the account's skiers, or null for the account holder ("Me"). */
+  skier_id: string | null;
   technique: Technique;
   category: SkiCategory | null;
   brand: string | null;
@@ -84,9 +86,11 @@ export function readSki(form: FormData): SkiResult {
     gripZone = Math.round(n * 10) / 10;
   }
 
+  const skier = text(form.get("skier_id"));
   return {
     ski: {
       name,
+      skier_id: skier && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(skier) ? skier : null,
       technique: technique as Technique,
       category,
       brand: text(form.get("brand")),

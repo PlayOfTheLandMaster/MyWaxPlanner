@@ -24,6 +24,7 @@ export type PlanConditions = Conditions & {
 
 export type PlanSki = {
   id: string;
+  skier_id: string | null;
   name: string;
   technique: Technique;
   category: SkiCategory | null;
@@ -49,7 +50,7 @@ export async function loadConditions(supabase: SupabaseClient, id: string): Prom
 }
 
 export async function loadSkis(supabase: SupabaseClient): Promise<PlanSki[]> {
-  const { data } = await supabase.from("skis").select("id, name, technique, category, grind, grip_zone_cm").order("name");
+  const { data } = await supabase.from("skis").select("id, skier_id, name, technique, category, grind, grip_zone_cm").order("name");
   return (data ?? []) as PlanSki[];
 }
 

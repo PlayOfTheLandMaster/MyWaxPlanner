@@ -27,6 +27,7 @@ type Row = {
   status: "planned" | "completed";
   technique: "classic" | "skate";
   mode: "recreational" | "race";
+  skier_name: string | null;
   ski_name: string | null;
   venue_name: string | null;
   event_name: string | null;
@@ -77,13 +78,15 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   let query = supabase
     .from("wax_session_list")
     .select(
-      "id, occurred_at, status, technique, mode, ski_name, venue_name, event_name, glide_rating, grip_rating, kick_feel, snow_temp_c, air_temp_c, snow_type, snow_humidity_band, waxes, fluoro_free",
+      "id, occurred_at, status, technique, mode, skier_name, ski_name, venue_name, event_name, glide_rating, grip_rating, kick_feel, snow_temp_c, air_temp_c, snow_type, snow_humidity_band, waxes, fluoro_free",
     )
     .limit(300);
   const range = periodRange(f.period, now);
   if (range?.from) query = query.gte("occurred_at", range.from);
   if (range?.to) query = query.lt("occurred_at", range.to);
   if (f.technique) query = query.eq("technique", f.technique);
+  if (f.skier === "me") query = query.is("skier_id", null);
+  else if (f.skier) query = query.eq("skier_id", f.skier);
   if (f.ski) query = query.eq("ski_id", f.ski);
   if (f.venue) query = query.eq("venue_id", f.venue);
   if (f.mode) query = query.eq("mode", f.mode);
@@ -104,9 +107,10 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   if (f.sort === "snow_temp") query = query.order("snow_temp_c", { ascending: true, nullsFirst: false });
   query = query.order("occurred_at", { ascending: false });
 
-  const [list, skis, venues, brands, saved] = await Promise.all([
+  const [list, skis, skiers, venues, brands, saved] = await Promise.all([
     query,
     supabase.from("skis").select("id, name").order("name"),
+    supabase.from("skiers").select("id, name").order("name"),
     supabase.from("venues").select("id, name").order("name"),
     supabase.from("wax_session_list").select("brand_names"),
     supabase.from("saved_filters").select("id, name, query").order("name"),
@@ -129,6 +133,10 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const chips = (
     [
     f.technique && { label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
+    f.skier && {
+      label: f.skier === "me" ? "My skis" : `${(skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? "Skier"}'s skis`,
+      without: { skier: undefined },
+    },
     f.ski && { label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
     f.venue && { label: venueName.get(f.venue) ?? "Venue", without: { venue: undefined } },
     f.mode && { label: MODE_LABELS[f.mode as "race"], without: { mode: undefined } },
@@ -213,6 +221,16 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
           <div className="grid grid-cols-2 gap-3">
             <Select name="technique" label="Technique" value={f.technique} options={TECHNIQUES.map((t) => [t, TECHNIQUE_LABELS[t]])} />
             <Select name="mode" label="Mode" value={f.mode} options={MODES.map((m) => [m, MODE_LABELS[m]])} />
+            {(skiers.data ?? []).length > 0 && (
+              <div className="col-span-2">
+                <Select
+                  name="skier"
+                  label="Whose skis"
+                  value={f.skier}
+                  options={[["me", "Me"], ...(skiers.data ?? []).map((k): [string, string] => [k.id, k.name])]}
+                />
+              </div>
+            )}
             <Select name="ski" label="Skis" value={f.ski} options={(skis.data ?? []).map((k) => [k.id, k.name])} />
             <Select name="venue" label="Venue" value={f.venue} options={(venues.data ?? []).map((v) => [v.id, v.name])} />
             <label className={label}>
@@ -383,7 +401,11 @@ function SessionRow({ row: r }: { row: Row }) {
               {r.event_name ?? r.venue_name ?? "Session"}
               <span className="font-normal text-muted"> · {TECHNIQUE_LABELS[r.technique]}{r.mode === "race" ? " race" : ""}</span>
             </p>
-            {r.ski_name && <p className="truncate text-sm text-muted">{r.ski_name}</p>}
+            {(r.skier_name || r.ski_name) && (
+              <p className="truncate text-sm text-muted">
+                {[r.skier_name, r.ski_name].filter(Boolean).join(" · ")}
+              </p>
+            )}
             {conditions.length > 0 && <p className="text-sm">{conditions.join(" · ")}</p>}
             {r.waxes && <p className="truncate text-sm text-muted">{r.waxes}</p>}
           </div>
