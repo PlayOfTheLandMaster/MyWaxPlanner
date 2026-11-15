@@ -9,6 +9,7 @@ import { signOut } from "../../login/actions";
 import { SettingsForm } from "./settings-form";
 import { SkierForm } from "./skier-form";
 import { addSkier } from "./skier-actions";
+import { birthYears, describeBody, type Body } from "@/lib/skiers/body";
 
 export const metadata: Metadata = { title: "Account · My Wax Planner" };
 
@@ -36,11 +37,17 @@ async function Account() {
     currentUser(),
     loadVenues(supabase),
     loadSkiers(supabase),
-    supabase.from("profiles").select("home_venue_id, default_mode, display_name").maybeSingle(),
+    supabase.from("profiles").select("home_venue_id, default_mode, display_name, birth_year, birth_month, weight_kg").maybeSingle(),
     supabase.from("skis").select("skier_id"),
   ]);
   const pairs = (id: string | null) => (skis.data ?? []).filter((k) => k.skier_id === id).length;
   const plural = (n: number) => `${n} ${n === 1 ? "pair" : "pairs"}`;
+  const me: Body = {
+    birth_year: (profile.data?.birth_year as number | null) ?? null,
+    birth_month: (profile.data?.birth_month as number | null) ?? null,
+    weight_kg: profile.data?.weight_kg == null ? null : Number(profile.data.weight_kg),
+  };
+  const years = birthYears();
 
   return (
     <>
@@ -55,7 +62,7 @@ async function Account() {
         <ul className="my-3 flex flex-col divide-y divide-line">
           <li className="flex min-h-11 items-center justify-between gap-3">
             <span>
-              Me <span className="text-sm text-muted">· {plural(pairs(null))}</span>
+              Me <span className="text-sm text-muted">· {[plural(pairs(null)), describeBody(me)].filter(Boolean).join(" · ")}</span>
             </span>
             <Link href="/wax-box/skis?skier=me" className="text-sm text-link underline">
               Skis
@@ -65,7 +72,7 @@ async function Account() {
             <li key={k.id} className="flex min-h-11 items-center justify-between gap-3">
               <Link href={`/account/skiers/${k.id}`} className="min-w-0 py-2">
                 <span className="block truncate font-medium">{k.name}</span>
-                <span className="block truncate text-sm text-muted">{[plural(pairs(k.id)), k.notes].filter(Boolean).join(" · ")}</span>
+                <span className="block truncate text-sm text-muted">{[plural(pairs(k.id)), describeBody(k), k.notes].filter(Boolean).join(" · ")}</span>
               </Link>
               <Link href={`/wax-box/skis?skier=${k.id}`} className="shrink-0 text-sm text-link underline">
                 Skis
@@ -76,20 +83,22 @@ async function Account() {
         <details>
           <summary className="flex min-h-11 cursor-pointer items-center font-medium">Add a skier</summary>
           <div className="pt-2">
-            <SkierForm save={addSkier} submitLabel="Add skier" />
+            <SkierForm save={addSkier} submitLabel="Add skier" years={years} />
           </div>
         </details>
       </section>
 
       <section className={card} aria-labelledby="prefs">
         <h2 id="prefs" className="mb-3 font-semibold">
-          Preferences
+          You and preferences
         </h2>
         <SettingsForm
           venues={venues.map((v) => ({ id: v.id, name: v.name }))}
           home={(profile.data?.home_venue_id as string | null) ?? null}
           mode={(profile.data?.default_mode as string) ?? "recreational"}
           displayName={(profile.data?.display_name as string | null) ?? null}
+          me={me}
+          years={years}
         />
       </section>
 

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { readBody, type Body } from "@/lib/skiers/body";
 
 export type SkierFormState = { error?: string; added?: string };
 
@@ -13,13 +14,15 @@ async function signedIn() {
   return { supabase, userId: data.user.id };
 }
 
-function read(form: FormData): { name: string; notes: string | null } | { error: string } {
+function read(form: FormData): ({ name: string; notes: string | null } & Body) | { error: string } {
   const name = String(form.get("name") ?? "").trim().replace(/\s+/g, " ");
   if (!name) return { error: "Give the skier a name." };
   if (name.length > 60) return { error: "Keep the name under 60 characters." };
   if (name.toLowerCase() === "me") return { error: "“Me” is you already; pick another name." };
   const notes = String(form.get("notes") ?? "").trim().slice(0, 500) || null;
-  return { name, notes };
+  const body = readBody(form);
+  if ("error" in body) return body;
+  return { name, notes, ...body };
 }
 
 export async function addSkier(_prev: SkierFormState, form: FormData): Promise<SkierFormState> {

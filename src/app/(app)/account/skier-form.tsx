@@ -2,6 +2,8 @@
 
 import { startTransition, useActionState, useRef } from "react";
 import type { SkierFormState } from "./skier-actions";
+import { BodyFields } from "@/components/body-fields";
+import type { Body } from "@/lib/skiers/body";
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 
@@ -10,10 +12,12 @@ export function SkierForm({
   save,
   initial,
   submitLabel,
+  years,
 }: {
   save: (prev: SkierFormState, data: FormData) => Promise<SkierFormState>;
-  initial?: { name: string; notes: string | null };
+  initial?: { name: string; notes: string | null } & Body;
   submitLabel: string;
+  years: number[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, action, pending] = useActionState<SkierFormState, FormData>(async (prev, data) => {
@@ -44,6 +48,7 @@ export function SkierForm({
         aria-label="Notes"
         className={field}
       />
+      <BodyFields initial={initial} years={years} />
       <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50">
         {pending ? "Saving…" : submitLabel}
       </button>
