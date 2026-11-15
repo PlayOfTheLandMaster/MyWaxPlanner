@@ -91,7 +91,10 @@ insert into public.products (id, brand_id, created_by, name, category)
 with t as (update public.products set price = 9
            where id = '00000000-0000-0000-0000-0000000000c2' returning 1)
 select pg_temp.expect((select count(*) from t) = 1, 'A can edit their own wax');
-select pg_temp.expect((select count(*) from public.brands) = 2,
+-- Counted among the test's own rows: the shared catalogue holds real brands too.
+select pg_temp.expect(
+  (select count(*) from public.brands
+     where id in ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000b2')) = 2,
   'A sees the shared brand and their own');
 
 insert into public.skis (id, user_id, name, technique, category)
@@ -164,15 +167,22 @@ select pg_temp.expect((select count(*) from public.conditions) = 0, 'B cannot se
 select pg_temp.expect((select count(*) from public.user_products) = 0, 'B cannot see A''s wax box');
 select pg_temp.expect((select count(*) from public.user_tools) = 0, 'B cannot see A''s tools');
 select pg_temp.expect((select count(*) from public.profiles) = 1, 'B sees only their own profile');
+-- Only shared rows (created_by null) may be visible to B so far: B has typed
+-- nothing in yet, and none of A's may show. The test's shared rows must be there.
 select pg_temp.expect(
-  (select array_agg(name order by name) from public.brands) = array['RLS Test Brand'],
+  not exists (select 1 from public.brands where created_by is not null)
+  and exists (select 1 from public.brands where id = '00000000-0000-0000-0000-0000000000b1'),
   'B sees the shared brand but not the one A typed in');
 select pg_temp.expect(
-  (select array_agg(name order by name) from public.products) = array['RLS Test Wax'],
+  not exists (select 1 from public.products where created_by is not null)
+  and exists (select 1 from public.products where id = '00000000-0000-0000-0000-0000000000c1'),
   'B sees the shared wax but not the ones A typed in');
 select pg_temp.expect((select count(*) from storage.objects) = 0, 'B cannot see A''s photos');
+-- Shared venues (Calgary, Bow Valley, Kananaskis) are seeded too, so check the
+-- test's own rows rather than the whole list.
 select pg_temp.expect(
-  (select array_agg(name order by name) from public.venues) = array['Shared Test Venue'],
+  not exists (select 1 from public.venues where user_id is not null)
+  and exists (select 1 from public.venues where id = '00000000-0000-0000-0000-0000000000d0'),
   'B sees the shared venue but not A''s private one');
 
 -- Writing into A's rows: RLS makes them invisible, so updates touch nothing.
