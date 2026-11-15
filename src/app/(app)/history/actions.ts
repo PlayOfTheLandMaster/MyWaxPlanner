@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { claimForCurrentSkier } from "@/lib/skiers/current";
 import { readSession } from "@/lib/history/input";
 
 export type SessionFormState = { error?: string };
@@ -34,6 +35,8 @@ export async function saveSession(
     if (saveError.code === "P0002") return { error: "That session is no longer in your history." };
     return { error: `Could not save the session: ${saveError.message}` };
   }
+  // A new session with no skis is for the skier picked on Today.
+  if (!id) await claimForCurrentSkier(supabase, data as string);
   revalidatePath("/history");
   redirect(`/history/${data as string}${id ? "" : "?saved=1"}`);
 }

@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { SkierBanner } from "@/components/skier-banner";
+import { loadSkierContext } from "@/lib/skiers/current";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -74,6 +76,9 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const f = parseFilters(await searchParams);
   const supabase = await createClient();
   const now = new Date();
+  // No skier in the address means the one picked on Today.
+  const who = await loadSkierContext();
+  const skier = f.skier ?? (who.skiers.length > 0 ? who.key : undefined);
 
   let query = supabase
     .from("wax_session_list")
@@ -85,8 +90,8 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   if (range?.from) query = query.gte("occurred_at", range.from);
   if (range?.to) query = query.lt("occurred_at", range.to);
   if (f.technique) query = query.eq("technique", f.technique);
-  if (f.skier === "me") query = query.is("skier_id", null);
-  else if (f.skier) query = query.eq("skier_id", f.skier);
+  if (skier === "me") query = query.is("skier_id", null);
+  else if (skier && skier !== "all") query = query.eq("skier_id", skier);
   if (f.ski) query = query.eq("ski_id", f.ski);
   if (f.venue) query = query.eq("venue_id", f.venue);
   if (f.mode) query = query.eq("mode", f.mode);
@@ -134,7 +139,12 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
     [
     f.technique && { label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
     f.skier && {
-      label: f.skier === "me" ? "My skis" : `${(skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? "Skier"}'s skis`,
+      label:
+        f.skier === "me"
+          ? "My skis"
+          : f.skier === "all"
+            ? "Everyone's skis"
+            : `${(skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? "Skier"}'s skis`,
       without: { skier: undefined },
     },
     f.ski && { label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
@@ -162,6 +172,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
 
   return (
     <div className="flex flex-col gap-4">
+      <SkierBanner everyone={skier === "all"} override={f.skier && f.skier !== "all" ? (f.skier === "me" ? "Me" : (skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? null) : null} />
       {(saved.data ?? []).length > 0 && (
         <nav aria-label="Saved filters" className="flex flex-wrap gap-2">
           {(saved.data ?? []).map((s) => {
@@ -227,7 +238,8 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
                   name="skier"
                   label="Whose skis"
                   value={f.skier}
-                  options={[["me", "Me"], ...(skiers.data ?? []).map((k): [string, string] => [k.id, k.name])]}
+                  anyLabel={`${who.current?.name ?? "Me"} (who you're waxing for)`}
+                  options={[["all", "Everyone"], ["me", "Me"], ...(skiers.data ?? []).map((k): [string, string] => [k.id, k.name])]}
                 />
               </div>
             )}
@@ -360,17 +372,19 @@ function Select({
   label: text,
   value,
   options,
+  anyLabel = "Any",
 }: {
   name: string;
   label: string;
   value?: string;
   options: [string, string][];
+  anyLabel?: string;
 }) {
   return (
     <label className={label}>
       {text}
       <select name={name} defaultValue={value ?? ""} className={field}>
-        <option value="">Any</option>
+        <option value="">{anyLabel}</option>
         {options.map(([v, l]) => (
           <option key={v} value={v}>
             {l}

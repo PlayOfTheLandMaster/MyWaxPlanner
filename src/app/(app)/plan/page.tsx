@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { SkierBanner } from "@/components/skier-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +22,9 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         <h1 className="text-2xl font-bold">Plan a wax</h1>
         <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
       </div>
+      <Suspense fallback={null}>
+        <SkierBanner />
+      </Suspense>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Plan searchParams={searchParams} />
       </Suspense>

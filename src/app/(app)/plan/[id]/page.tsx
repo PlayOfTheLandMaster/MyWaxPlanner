@@ -12,7 +12,8 @@ import { LocalTime } from "@/components/local-time";
 import { savePlan } from "./actions";
 import { SavePlanButton } from "./save-plan";
 import { SkiFields } from "./ski-fields";
-import { loadSkiers } from "@/lib/skiers/load";
+import { SkierBanner } from "@/components/skier-banner";
+import { loadSkierContext } from "@/lib/skiers/current";
 
 export const metadata: Metadata = { title: "Plan · My Wax Planner" };
 
@@ -52,15 +53,24 @@ async function Step({
   const { id } = await params;
   const p = await searchParams;
   const supabase = await createClient();
-  const [c, skis, defaultMode, skiers] = await Promise.all([
+  const [c, skis, defaultMode, who] = await Promise.all([
     loadConditions(supabase, id),
     loadSkis(supabase),
     loadDefaultMode(supabase),
-    loadSkiers(supabase),
+    loadSkierContext(),
   ]);
+  const skiers = who.skiers;
   if (!c) notFound();
 
   const ski = skis.find((k) => k.id === one(p.ski)) ?? null;
+  // Whose skis: the pair's owner, else the pull-down, else the skier picked on Today.
+  const ownerParam = one(p.owner);
+  const owner = ski
+    ? (ski.skier_id ?? "me")
+    : ownerParam === "" || ownerParam === "me" || skiers.some((k) => k.id === ownerParam)
+      ? (ownerParam as string)
+      : who.key;
+  const ownerName = owner === "me" ? "Me" : (skiers.find((k) => k.id === owner)?.name ?? null);
   const technique = ski?.technique ?? (one(p.technique) === "classic" ? "classic" : one(p.technique) === "skate" ? "skate" : null);
   const gripParam = one(p.grip);
   const gripType = ski ? ski.category : (SKI_CATEGORIES as readonly string[]).includes(gripParam ?? "") ? (gripParam as PlanChoice["gripType"]) : null;
@@ -81,6 +91,7 @@ async function Step({
         <h1 className="text-2xl font-bold">Plan a wax</h1>
         <p className="text-sm text-muted">Step 2 of 2: your skis, then RECOMMEND.</p>
       </div>
+      <SkierBanner everyone={owner === ""} override={ownerName} />
 
       <section className="rounded-xl border border-line bg-surface p-4 text-sm" aria-label="Conditions">
         <p className="font-semibold">
@@ -107,6 +118,7 @@ async function Step({
           skis={skis}
           skiers={skiers.map((k) => ({ id: k.id, name: k.name }))}
           initialSki={ski?.id ?? ""}
+          initialOwner={owner}
           initialTechnique={technique}
           initialGrip={gripType ?? "waxable"}
         />
@@ -144,6 +156,7 @@ async function Step({
               mode,
               family,
               skiId: ski?.id ?? null,
+              owner,
             })}
           />
         </>

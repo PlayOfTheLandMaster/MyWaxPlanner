@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { SessionForm, type SessionInitial } from "../session-form";
 import { saveSession } from "../actions";
+import { SkierBanner } from "@/components/skier-banner";
 
 export const metadata: Metadata = { title: "Log a session · My Wax Planner" };
 
@@ -76,6 +77,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Log a session"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>
+      {!source && <SkierBanner />}
       <SessionForm options={options} save={saveSession.bind(null, null)} initial={initial}
         submitLabel="Save session"
         cancelHref={source ? `/history/${source.id}` : "/history"}

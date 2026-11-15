@@ -3,7 +3,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { WaxBoxNav } from "@/components/wax-box-nav";
-import { ME, loadSkiers } from "@/lib/skiers/load";
+import { ME } from "@/lib/skiers/load";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { SkierBanner } from "@/components/skier-banner";
 import { SKI_CATEGORY_LABELS, TECHNIQUE_LABELS, type SkiCategory, type Technique } from "@/lib/skis/input";
 
 export const metadata: Metadata = { title: "Skis · My Wax Planner" };
@@ -40,8 +42,8 @@ export default function SkisPage({ searchParams }: PageProps<"/wax-box/skis">) {
 async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/skis">["searchParams"] }) {
   const wanted = (await searchParams).skier;
   const supabase = await createClient();
-  const [skiers, { data, error }] = await Promise.all([
-    loadSkiers(supabase),
+  const [who, { data, error }] = await Promise.all([
+    loadSkierContext(),
     supabase
       .from("skis")
       .select("id, skier_id, name, technique, category, brand, model, grind")
@@ -55,6 +57,7 @@ async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/ski
       </p>
     );
   }
+  const skiers = who.skiers;
   const all = (data ?? []) as Ski[];
   if (all.length === 0) {
     return (
@@ -65,20 +68,24 @@ async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/ski
   }
 
   // Grouped by owner: me first, then each skier A–Z. A chip shows one owner.
-  const owners = [{ id: "me", name: ME }, ...skiers].filter((o) =>
-    all.some((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id)),
+  // Everyone who has skis, plus the picked skier even before their first pair.
+  const owners = [{ id: "me", name: ME }, ...skiers].filter(
+    (o) => o.id === who.key || all.some((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id)),
   );
-  const pick = typeof wanted === "string" ? wanted : undefined;
+  // No choice in the address: the skier picked on Today ("all" shows everyone).
+  const asked = typeof wanted === "string" && owners.some((o) => o.id === wanted) ? wanted : undefined;
+  const pick = wanted === "all" || skiers.length === 0 ? undefined : (asked ?? who.key);
   const shown = owners.filter((o) => !pick || o.id === pick);
 
   return (
     <div className="flex flex-col gap-5">
+      <SkierBanner everyone={!pick} override={asked ? owners.find((o) => o.id === asked)?.name : null} />
       {owners.length > 1 && (
         <nav aria-label="Owner" className="flex flex-wrap gap-2">
           {[{ id: undefined as string | undefined, name: "Everyone" }, ...owners].map((o) => (
             <Link
               key={o.id ?? "all"}
-              href={o.id ? `/wax-box/skis?skier=${o.id}` : "/wax-box/skis"}
+              href={`/wax-box/skis?skier=${o.id ?? "all"}`}
               aria-current={pick === o.id ? "true" : undefined}
               className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${pick === o.id ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
             >
@@ -90,7 +97,16 @@ async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/ski
       {shown.map((o) => (
         <section key={o.id}>
           {owners.length > 1 && <h2 className="mb-2 font-semibold">{o.name}</h2>}
-          <SkiRows skis={all.filter((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id))} />
+          {all.some((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id)) ? (
+            <SkiRows skis={all.filter((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id))} />
+          ) : (
+            <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+              No skis for {o.name} yet.{" "}
+              <Link href={`/wax-box/skis/new?skier=${o.id}`} className="text-link underline">
+                Add skis
+              </Link>
+            </p>
+          )}
         </section>
       ))}
     </div>
