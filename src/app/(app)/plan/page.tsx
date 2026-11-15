@@ -65,7 +65,7 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
           </label>
           <label className={label}>
             Start
-            <input type="time" name="time" step={3600} defaultValue={result?.time ?? one(p.time)} className={field} />
+            <input type="time" name="time" defaultValue={result?.time ?? one(p.time)} className={field} />
           </label>
           <label className={label}>
             Out for
@@ -78,7 +78,7 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
             </select>
           </label>
         </div>
-        <p className="text-xs text-muted">Times are the venue&apos;s local time.</p>
+        <p className="text-xs text-muted">Times are the venue&apos;s local time. Any minute is fine; the forecast is hourly.</p>
         <button type="submit" className="min-h-11 rounded-lg border border-line px-4 font-semibold active:bg-tile">
           {venue ? "Update forecast" : "Get forecast"}
         </button>

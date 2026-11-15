@@ -8,8 +8,7 @@ const hhmm = (local: string) => local.slice(11, 16);
 /** The forecast for a session window, as the skier will meet it. */
 export function ForecastCard({ w, compact = false }: { w: ForecastWindow; compact?: boolean }) {
   const [cold, warm] = w.snow_temp_range;
-  const end = w.hours[w.hours.length - 1];
-  const endLabel = `${String((Number(end.time.slice(11, 13)) + 1) % 24).padStart(2, "0")}:00`;
+  const endLabel = `${String((Number(w.start.slice(11, 13)) + w.hours.length) % 24).padStart(2, "0")}:${w.start.slice(14, 16)}`;
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4" aria-label={`Forecast for ${w.venue.name}`}>
