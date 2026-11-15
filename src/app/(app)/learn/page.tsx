@@ -121,15 +121,15 @@ async function Library({ searchParams }: { searchParams: PageProps<"/learn">["se
                   <h2 className="font-semibold">
                     {TOPIC_LABELS[t]} <span className="font-normal text-muted">({list.length})</span>
                   </h2>
-                  <ul className="flex flex-col gap-2">
+                  <ul className="flex flex-col gap-1">
                     {list.map((v) => (
                       <li key={v.id}>
-                        <Link href={`/learn/${v.id}`} className="flex gap-3 rounded-xl border border-line bg-surface p-2 active:bg-tile">
+                        <Link href={`/learn/${v.id}`} className="flex min-h-11 items-center gap-3 rounded-lg border border-line bg-surface p-1.5 active:bg-tile">
                           {/* eslint-disable-next-line @next/next/no-img-element -- YouTube's own thumbnail */}
-                          <img src={thumbnailUrl(v.youtube_id)} alt="" className="aspect-video w-32 shrink-0 rounded-lg object-cover" loading="lazy" />
-                          <span className="min-w-0 py-1">
-                            <span className="line-clamp-2 font-medium">{v.title}</span>
-                            <span className="block truncate text-sm text-muted">
+                          <img src={thumbnailUrl(v.youtube_id)} alt="" className="aspect-video w-20 shrink-0 rounded-md object-cover" loading="lazy" />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium">{v.title}</span>
+                            <span className="block truncate text-xs text-muted">
                               {[v.channel, v.technique ? (v.technique === "classic" ? "Classic" : "Skate") : null, v.level ? LEVEL_LABELS[v.level] : null]
                                 .filter(Boolean)
                                 .join(" · ")}

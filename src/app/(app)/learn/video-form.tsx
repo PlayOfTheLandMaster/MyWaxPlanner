@@ -48,7 +48,7 @@ export function VideoForm({
       </label>
       {link && (
         // eslint-disable-next-line @next/next/no-img-element -- YouTube's own thumbnail
-        <img src={thumbnailUrl(link.id)} alt="" className="aspect-video w-full rounded-lg object-cover" />
+        <img src={thumbnailUrl(link.id)} alt="" className="-mt-2 aspect-video w-32 rounded-md object-cover" />
       )}
       {url && !link && <p className="-mt-2 text-sm text-danger">Not a YouTube link yet.</p>}
       <label className={label}>
