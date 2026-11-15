@@ -270,7 +270,7 @@ export function WaxForm({
         type="button"
         aria-expanded={moreOpen}
         onClick={() => setMoreOpen(!moreOpen)}
-        className="min-h-11 self-start text-sm text-link underline active:opacity-70"
+        className="fold-toggle inline-flex min-h-11 items-center self-start text-sm text-link underline active:opacity-70"
       >
         {moreOpen ? "Fewer details" : "More details (snow types, humidity, iron temperature…)"}
       </button>
