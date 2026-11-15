@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BackgroundPhoto } from "@/components/background-photo";
 
 export const metadata: Metadata = {
   title: "My Wax Planner",
@@ -17,7 +19,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Suspense fallback={null}>
+          <BackgroundPhoto />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }
