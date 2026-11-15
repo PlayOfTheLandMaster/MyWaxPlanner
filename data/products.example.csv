@@ -1,0 +1,4 @@
+brand,name,sku,category,form,published_temp_min_c,published_temp_max_c,snow_temp_min_c,snow_temp_max_c,snow_types,humidity_bands,fluoro_status,layer_roles,iron_temp_c,price,currency,buy_url,active
+Example Snow Wax Co,Cold Glide,ESW-1,hydrocarbon,block,–12,–6,,,fresh_set;fine_grained,dry;mid,fluoro_free,base;temperature,135,24.95,CAD,https://example.com/cold-glide,yes
+Example Air Wax Co,Warm Kick,EAW-7,hardwax,block,–2,+2,–4,0,transformed;wet,mid;wet,fluoro_free,kick,,18.50,CAD,,yes
+Example Air Wax Co,Old Fluoro Top,EAW-9,top_coat,powder,–10,0,,,,,high,top_coat,,,,,discontinued

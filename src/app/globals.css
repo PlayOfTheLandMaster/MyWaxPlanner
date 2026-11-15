@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+ * Colours are tokens with a light and a dark value, exposed to Tailwind below.
+ * Use the token classes (bg-surface, text-muted, border-line …) rather than
+ * Tailwind's palette, so every screen follows the theme.
+ */
+:root {
+  --page: #f4f6f9;
+  --surface: #ffffff;
+  --tile: #e9edf3;
+  --ink: #14202e;
+  --muted: #5a6675;
+  --line: #d3dae3;
+  --accent: #1d4f91; /* a cold-wax blue */
+  --on-accent: #ffffff;
+  --link: #1d4f91;
+  --danger: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d131b;
+    --surface: #151e29;
+    --tile: #1f2a37;
+    --ink: #e8edf3;
+    --muted: #9aa7b6;
+    --line: #2c3a4a;
+    --accent: #7fb0f0;
+    --on-accent: #0d131b;
+    --link: #9cc2f5;
+    --danger: #f97066;
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-tile: var(--tile);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-danger: var(--danger);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
