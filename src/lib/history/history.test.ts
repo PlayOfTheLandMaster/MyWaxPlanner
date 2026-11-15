@@ -115,3 +115,11 @@ test("history vocabularies match the database", () => {
   assert.deepEqual(words("track text check (track in ("), [...TRACKS]);
   assert.deepEqual(words("create type public.kick_feel as enum ("), [...KICK_FEELS]);
 });
+
+test("whose skis: me, everyone, a skier, or unset (the skier picked on Today)", () => {
+  assert.equal(parseFilters({ skier: "me" }).skier, "me");
+  assert.equal(parseFilters({ skier: "all" }).skier, "all");
+  assert.equal(parseFilters({ skier: "0b7c2c1e-1111-4222-8333-944455556666" }).skier, "0b7c2c1e-1111-4222-8333-944455556666");
+  assert.equal(parseFilters({ skier: "nobody" }).skier, undefined);
+  assert.equal(parseFilters({}).skier, undefined);
+});

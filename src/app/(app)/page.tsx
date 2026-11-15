@@ -7,6 +7,9 @@ import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { setCurrentSkier } from "@/lib/skiers/actions";
+import { ME } from "@/lib/skiers/load";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -53,15 +56,16 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
   const p = await searchParams;
   const supabase = await createClient();
   const now = new Date();
+  const who = await loadSkierContext();
+  let plannedQuery = supabase
+    .from("wax_session_list")
+    .select("id, occurred_at, technique, mode, venue_name, event_name")
+    .eq("status", "planned");
+  plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
   const [venues, home, planned, skiCount, box, toolCount, recent] = await Promise.all([
     loadVenues(supabase),
     loadHomeVenueId(supabase),
-    supabase
-      .from("wax_session_list")
-      .select("id, occurred_at, technique, mode, venue_name, event_name")
-      .eq("status", "planned")
-      .order("occurred_at", { ascending: true })
-      .limit(20),
+    plannedQuery.order("occurred_at", { ascending: true }).limit(20),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
@@ -95,6 +99,32 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
 
   return (
     <>
+      {who.skiers.length > 0 && (
+        <section id="skier" aria-labelledby="skier-h" className="scroll-mt-4">
+          <h2 id="skier-h" className="mb-2 text-sm font-medium text-muted">
+            Waxing for
+          </h2>
+          {/* One tap picks the skier; Plan, History, Log a session and Skis all start with them. */}
+          <form action={setCurrentSkier} className="flex flex-wrap gap-2">
+            {[{ id: "me", name: ME }, ...who.skiers].map((k) => {
+              const on = who.key === k.id;
+              return (
+                <button
+                  key={k.id}
+                  type="submit"
+                  name="skier"
+                  value={k.id}
+                  aria-pressed={on}
+                  className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm ${on ? "border-accent bg-accent font-semibold text-on-accent" : "border-line bg-surface active:bg-tile"}`}
+                >
+                  {k.name}
+                </button>
+              );
+            })}
+          </form>
+        </section>
+      )}
+
       {todo > 0 && (
         <section className={card} aria-labelledby="start">
           <h2 id="start" className="font-semibold">
@@ -123,7 +153,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
         href={venue ? `/plan?venue=${venue.id}` : "/plan"}
         className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
       >
-        Plan today&apos;s wax
+        {who.current ? `Plan ${who.current.name}'s wax` : "Plan today\u2019s wax"}
       </Link>
 
       {waiting && (

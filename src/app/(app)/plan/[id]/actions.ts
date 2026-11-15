@@ -16,7 +16,7 @@ export type SavePlanState = { error?: string };
  */
 export async function savePlan(
   conditionsId: string,
-  choice: { technique: string; gripType: string | null; mode: string; family: string; skiId: string | null },
+  choice: { technique: string; gripType: string | null; mode: string; family: string; skiId: string | null; owner: string },
   prev: SavePlanState,
 ): Promise<SavePlanState> {
   void prev; // useActionState passes the last result; a save starts fresh
@@ -93,6 +93,11 @@ export async function savePlan(
     p_layers: layers,
   });
   if (error) return { error: `Saved the plan, but not the session: ${error.message}` };
+  // No pair chosen: the session is for whoever the plan was for. (A pair's
+  // owner is filled in by the database.) The foreign key refuses anyone else's skier.
+  if (!ski && /^[0-9a-f-]{36}$/i.test(choice.owner)) {
+    await supabase.from("wax_sessions").update({ skier_id: choice.owner }).eq("id", sessionId as string);
+  }
   revalidatePath("/history");
   redirect(`/history/${sessionId as string}?saved=1`);
 }

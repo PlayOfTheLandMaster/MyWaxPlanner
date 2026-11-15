@@ -18,12 +18,15 @@ export function SkiFields({
   skis,
   skiers,
   initialSki,
+  initialOwner,
   initialTechnique,
   initialGrip,
 }: {
   skis: PlanSki[];
   skiers: { id: string; name: string }[];
   initialSki: string;
+  /** "" = everyone, "me", or a skier id. */
+  initialOwner: string;
   initialTechnique: Technique | null;
   initialGrip: string;
 }) {
@@ -31,7 +34,7 @@ export function SkiFields({
   const [technique, setTechnique] = useState<Technique | null>(initialTechnique);
   const ski = skis.find((k) => k.id === skiId);
   // Whose skis: narrows the pair list. "" = everyone, "me" = the account holder.
-  const [owner, setOwner] = useState(ski ? (ski.skier_id ?? "me") : "");
+  const [owner, setOwner] = useState(ski ? (ski.skier_id ?? "me") : initialOwner);
   const pairs = skis.filter((k) => owner === "" || (owner === "me" ? k.skier_id === null : k.skier_id === owner));
 
   return (
@@ -40,6 +43,7 @@ export function SkiFields({
         <label className={label}>
           Whose skis
           <select
+            name="owner"
             value={owner}
             onChange={(e) => {
               setOwner(e.target.value);

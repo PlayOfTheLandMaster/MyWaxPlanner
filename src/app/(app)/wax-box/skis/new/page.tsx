@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { loadSkiers } from "@/lib/skiers/load";
+import { loadSkierContext } from "@/lib/skiers/current";
 import { SkiForm } from "../ski-form";
 import { createSki } from "../actions";
 
@@ -23,15 +22,16 @@ export default function NewSkiPage({ searchParams }: PageProps<"/wax-box/skis/ne
 }
 
 async function Form({ searchParams }: { searchParams: PageProps<"/wax-box/skis/new">["searchParams"] }) {
-  // ?skier=<id> (from a skier's page) picks the owner in advance.
+  // ?skier=<id> (from a skier's page) picks the owner in advance; otherwise
+  // the skier picked on Today.
   const skier = (await searchParams).skier;
-  const skiers = await loadSkiers(await createClient());
+  const { skiers, current } = await loadSkierContext();
   return (
     <SkiForm
       save={createSki}
       submitLabel="Save skis"
       skiers={skiers}
-      defaultSkier={typeof skier === "string" && skiers.some((k) => k.id === skier) ? skier : undefined}
+      defaultSkier={typeof skier === "string" && skiers.some((k) => k.id === skier) ? skier : skier === "me" ? undefined : current?.id}
     />
   );
 }
