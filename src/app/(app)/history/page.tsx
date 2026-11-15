@@ -188,7 +188,8 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         ))}
       </nav>
 
-      <details className="rounded-xl border border-line bg-surface" open={n > 0 || undefined}>
+      {/* Folded after applying: the chips below show what is active. */}
+      <details className="rounded-xl border border-line bg-surface">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
           Filters{n > 0 ? ` (${n})` : ""}
         </summary>
