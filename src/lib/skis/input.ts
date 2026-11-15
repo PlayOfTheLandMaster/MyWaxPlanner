@@ -17,6 +17,22 @@ export const SKI_CATEGORY_LABELS: Record<SkiCategory, string> = {
   hairies: "Hairies / crown",
 };
 
+// Cross-country ski makers offered in the Brand pull-down, A to Z. Anything
+// else is typed in under "Other", so this list never blocks a save; the
+// column stays plain text.
+export const SKI_BRANDS = [
+  "Alpina",
+  "Atomic",
+  "Fischer",
+  "Kästle",
+  "Madshus",
+  "Peltonen",
+  "Rossignol",
+  "Salomon",
+  "Sporten",
+  "Yoko",
+] as const;
+
 export type SkiInput = {
   name: string;
   technique: Technique;

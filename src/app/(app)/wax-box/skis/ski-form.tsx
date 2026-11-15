@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useState } from "react";
 import type { SkiFormState } from "./actions";
 import {
+  SKI_BRANDS,
   SKI_CATEGORIES,
   SKI_CATEGORY_LABELS,
   TECHNIQUES,
@@ -13,6 +14,7 @@ import {
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
+const OTHER = "__other";
 
 export function SkiForm({
   save,
@@ -26,6 +28,12 @@ export function SkiForm({
   const [state, action, pending] = useActionState<SkiFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
   const [category, setCategory] = useState(initial?.category ?? "");
+  // A saved brand that is not in the list (typed under "Other" before) opens
+  // on "Other…" with its name in the box, so editing a ski never loses it.
+  const initialIsListed = (SKI_BRANDS as readonly string[]).includes(initial?.brand ?? "");
+  const [brandChoice, setBrandChoice] = useState<string>(
+    !initial?.brand ? "" : initialIsListed ? initial.brand : OTHER,
+  );
 
   return (
     <form
@@ -105,10 +113,35 @@ export function SkiForm({
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <label className={label}>
-          Brand
-          <input name="brand" defaultValue={initial?.brand ?? ""} className={field} />
-        </label>
+        <div className="flex flex-col gap-2">
+          <label className={label}>
+            Brand
+            <select
+              value={brandChoice}
+              onChange={(e) => setBrandChoice(e.target.value)}
+              className={field}
+            >
+              <option value="">Choose…</option>
+              {SKI_BRANDS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+              <option value={OTHER}>Other…</option>
+            </select>
+          </label>
+          {brandChoice === OTHER ? (
+            <input
+              name="brand"
+              aria-label="Brand name"
+              defaultValue={initialIsListed ? "" : (initial?.brand ?? "")}
+              placeholder="Type the brand"
+              className={field}
+            />
+          ) : (
+            <input type="hidden" name="brand" value={brandChoice} />
+          )}
+        </div>
         <label className={label}>
           Model
           <input name="model" defaultValue={initial?.model ?? ""} className={field} />
