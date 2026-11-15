@@ -1,0 +1,23 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "My Wax Planner",
+  description: "Brand-neutral cross-country ski waxing plans from your own wax box.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+// System fonts on purpose: next/font/google downloads from Google while the
+// build runs, so a build can fail for a reason no code change explains.
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html lang="en" className="h-full antialiased">
+      <body className="flex min-h-full flex-col">{children}</body>
+    </html>
+  );
+}
