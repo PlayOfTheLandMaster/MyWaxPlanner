@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BackgroundPhoto } from "@/components/background-photo";
 import { NavTrail } from "@/components/nav-trail";
+import { ReaderZone } from "@/components/reader-zone";
 
 export const metadata: Metadata = {
   title: "My Wax Planner",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <NavTrail />
         </Suspense>
+        <ReaderZone />
         {children}
       </body>
     </html>
