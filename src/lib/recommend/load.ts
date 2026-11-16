@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Candidate, Conditions, HistoryRow, Mode, Request, Rule, GripType } from "./engine";
 import { recommend, toolKey } from "./engine";
 import type { SkiCategory, Technique } from "@/lib/skis/input";
+import { loadSnowRanges } from "@/lib/wax-box/load";
+import { applySnowRanges } from "@/lib/wax-box/snow-range";
 
 // Everything the engine needs, read as the signed-in skier (Row Level
 // Security limits it to their box, tools, skis and history plus the shared
@@ -82,7 +84,7 @@ export type PlanChoice = {
 
 /** Load the data and run the engine. Used both to show a plan and to save it, so a saved plan is the one shown. */
 export async function buildRecommendation(supabase: SupabaseClient, conditions: PlanConditions, choice: PlanChoice) {
-  const [rules, box, catalogue, tools, history] = await Promise.all([
+  const [rules, box, catalogue, tools, history, snowRanges] = await Promise.all([
     supabase
       .from("rules")
       .select("technique, mode, layer_role, snow_temp_min_c, snow_temp_max_c, snow_types, snow_humidity_bands, product_category, weight, notes")
@@ -95,20 +97,29 @@ export async function buildRecommendation(supabase: SupabaseClient, conditions: 
       .select("snow_temp_c, product_ids, glide_rating, grip_rating")
       .eq("status", "completed")
       .not("snow_temp_c", "is", null),
+    // The skier's own snow ranges: the only way an air-rated wax (every
+    // shared-catalogue wax) gets a snow range the engine can compare.
+    loadSnowRanges(supabase),
   ]);
   const failed = rules.error ?? box.error ?? catalogue.error ?? tools.error ?? history.error;
   if (failed) throw new Error(`Could not read the data for a plan: ${failed.message}`);
 
-  const boxCandidates: Candidate[] = (box.data ?? []).map((r) => ({
-    ...normalise(r.product as unknown as Record<string, unknown>),
-    user_product_id: r.id as string,
-    amount_left: r.amount_left as Candidate["amount_left"],
-  }));
-  const catalogueCandidates: Candidate[] = (catalogue.data ?? []).map((p) => ({
-    ...normalise(p as unknown as Record<string, unknown>),
-    user_product_id: null,
-    amount_left: null,
-  }));
+  const boxCandidates: Candidate[] = applySnowRanges(
+    (box.data ?? []).map((r) => ({
+      ...normalise(r.product as unknown as Record<string, unknown>),
+      user_product_id: r.id as string,
+      amount_left: r.amount_left as Candidate["amount_left"],
+    })),
+    snowRanges,
+  );
+  const catalogueCandidates: Candidate[] = applySnowRanges(
+    (catalogue.data ?? []).map((p) => ({
+      ...normalise(p as unknown as Record<string, unknown>),
+      user_product_id: null,
+      amount_left: null,
+    })),
+    snowRanges,
+  );
   const owned = new Set(
     (tools.data ?? []).map((t) => {
       const tool = t.tool as unknown as { type: string; sub_type: string | null };

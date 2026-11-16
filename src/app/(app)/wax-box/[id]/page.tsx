@@ -18,8 +18,9 @@ import {
 import type { HumidityBand, LayerRole, ProductForm, SnowType } from "@/lib/catalogue/vocab";
 import { loadBoxRow } from "@/lib/wax-box/load";
 import { rangeText } from "@/lib/wax-box/describe";
-import { removeFromBox, saveNotes, setAmount } from "../actions";
+import { clearSnowRange, removeFromBox, saveNotes, saveSnowRange, setAmount } from "../actions";
 import { NotesForm } from "./notes-form";
+import { SnowRangeForm } from "./snow-range-form";
 
 export const metadata: Metadata = { title: "Wax · My Wax Planner" };
 
@@ -96,6 +97,17 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
             </div>
           ))}
       </dl>
+
+      {/* A shared wax can't be edited, so the skier keeps their own snow range
+          for it; a wax they typed in has its snow range on its Edit form. */}
+      {!own && (
+        <SnowRangeForm
+          printed={printed}
+          yours={p.snow_range_is_yours ? { temp_min_c: p.temp_min_c, temp_max_c: p.temp_max_c } : null}
+          save={saveSnowRange.bind(null, p.id)}
+          clear={clearSnowRange.bind(null, p.id)}
+        />
+      )}
 
       <NotesForm initial={row.notes} save={saveNotes.bind(null, row.id)} />
 

@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { readProduct, type ProductRow } from "@/lib/catalogue/csv";
 import { TEMPERATURE_BASES, type TemperatureBasis } from "@/lib/catalogue/vocab";
+import { readSnowRange } from "@/lib/wax-box/snow-range";
 
 export type WaxFormState = { error?: string };
 
@@ -256,4 +257,28 @@ export async function removeFromBox(boxId: string) {
   const { supabase } = await signedIn();
   await supabase.from("user_products").delete().eq("id", boxId);
   redirect("/wax-box");
+}
+
+/**
+ * Saves the skier's own snow range for a wax (user_snow_ranges), so plans can
+ * compare it with the snow. The shared catalogue row is never changed; Row
+ * Level Security keeps the range to this skier and to waxes they can see.
+ */
+export async function saveSnowRange(productId: string, _prev: WaxFormState, formData: FormData): Promise<WaxFormState> {
+  const { supabase, userId } = await signedIn();
+  const { range, error } = readSnowRange(formData);
+  if (error !== undefined) return { error };
+  const { error: saveError } = await supabase
+    .from("user_snow_ranges")
+    .upsert({ user_id: userId, product_id: productId, ...range }, { onConflict: "user_id,product_id" });
+  if (saveError) return { error: `Could not save the snow range: ${saveError.message}` };
+  refresh();
+  return {};
+}
+
+/** Removes the skier's own snow range for a wax; the wax goes back to having none. */
+export async function clearSnowRange(productId: string) {
+  const { supabase } = await signedIn();
+  await supabase.from("user_snow_ranges").delete().eq("product_id", productId);
+  refresh();
 }
