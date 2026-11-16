@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { KnownBrand } from "@/app/(app)/wax-box/wax-form";
 import type { FluoroStatus, ProductCategory, TemperatureBasis } from "@/lib/catalogue/vocab";
 import type { AMOUNT_LABELS } from "@/lib/catalogue/labels";
+import { applySnowRanges, type SnowRange } from "./snow-range";
 
 // The wax box's reads. Every one runs through the signed-in user's client, so
 // Row Level Security decides what comes back: the shared catalogue plus the
@@ -25,6 +26,8 @@ export type Product = {
   fluoro_status: FluoroStatus;
   iron_temp_c: number | null;
   brand: { name: string; temperature_basis: TemperatureBasis };
+  /** True when temp_min_c / temp_max_c are the skier's own snow range (user_snow_ranges). */
+  snow_range_is_yours?: boolean;
 };
 
 export type BoxRow = {
@@ -38,27 +41,53 @@ const PRODUCT_COLUMNS = `id, created_by, name, category, category_group, form, p
   published_temp_max_c, temp_min_c, temp_max_c, snow_types, humidity_bands, layer_roles,
   fluoro_status, iron_temp_c, brand:brands!inner (name, temperature_basis)`;
 
+/** The skier's own snow ranges, by wax id. Row Level Security returns only theirs. */
+export async function loadSnowRanges(supabase: SupabaseClient): Promise<Map<string, SnowRange>> {
+  const { data, error } = await supabase.from("user_snow_ranges").select("product_id, temp_min_c, temp_max_c");
+  if (error) throw new Error(`Could not read your snow ranges: ${error.message}`);
+  const num = (n: unknown) => (n === null || n === undefined ? null : Number(n));
+  return new Map(
+    (data ?? []).map((r) => [r.product_id as string, { temp_min_c: num(r.temp_min_c), temp_max_c: num(r.temp_max_c) }]),
+  );
+}
+
+/** Each box row's wax with the skier's own snow range applied where they have one. */
+function withSnowRanges(rows: BoxRow[], ranges: Map<string, SnowRange>): BoxRow[] {
+  const products = applySnowRanges(
+    rows.map((r) => r.product),
+    ranges,
+  );
+  return rows.map((r, i) => ({ ...r, product: products[i] }));
+}
+
 export async function loadBox(supabase: SupabaseClient): Promise<BoxRow[]> {
-  const { data, error } = await supabase
-    .from("user_products")
-    .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
-    .order("created_at", { ascending: false });
+  const [{ data, error }, ranges] = await Promise.all([
+    supabase
+      .from("user_products")
+      .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
+      .order("created_at", { ascending: false }),
+    loadSnowRanges(supabase),
+  ]);
   if (error) throw new Error(`Could not read your wax box: ${error.message}`);
-  return (data ?? []) as unknown as BoxRow[];
+  return withSnowRanges((data ?? []) as unknown as BoxRow[], ranges);
 }
 
 export async function loadBoxRow(supabase: SupabaseClient, id: string): Promise<BoxRow | null> {
-  const { data, error } = await supabase
-    .from("user_products")
-    .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data, error }, ranges] = await Promise.all([
+    supabase
+      .from("user_products")
+      .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
+      .eq("id", id)
+      .maybeSingle(),
+    loadSnowRanges(supabase),
+  ]);
   if (error) {
     // An id that is not a uuid is simply not found.
     if (error.code === "22P02") return null;
     throw new Error(`Could not read the wax: ${error.message}`);
   }
-  return data as unknown as BoxRow | null;
+  if (!data) return null;
+  return withSnowRanges([data as unknown as BoxRow], ranges)[0];
 }
 
 /** Every wax the user can see, for the search on Add a wax. */

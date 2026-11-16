@@ -38,6 +38,11 @@ These hold for future refreshes unless the owner changes them.
 | Toko | **air** | the text says "fluor-free" or "PFC free" | Toko's own pages give no prices. Plant-based Natural waxes are filed as paraffin. Express Grip & Glide is a glide liquid. Kits are left out. |
 | Rex | **air** | the text says "fluor free", "non-fluor" or "non-fluorinated"; NF/NFX names alone don't count | Price is the lowest-priced size, in USD. |
 
+Every brand is air-rated, so no shared wax carries a snow range. A skier
+enters their own on a catalogue wax's page in the wax box ("Your snow range",
+table `user_snow_ranges`, `20261129000000`). Plans use it for that skier
+only, and the shared row is never changed.
+
 Rules for every brand:
 - Facts only, in our own words.
 - A value the source doesn't state is left empty or `unknown`, never guessed.

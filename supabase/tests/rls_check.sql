@@ -141,6 +141,18 @@ select pg_temp.expect_error(
   $$insert into public.user_tools (user_id, tool_id)
     select '00000000-0000-0000-0000-00000000000a', id from public.tools order by name limit 1$$,
   'the same tool cannot be ticked twice');
+insert into public.user_snow_ranges (user_id, product_id, temp_min_c, temp_max_c)
+  values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000c1', -6, 0);
+select pg_temp.expect((select count(*) from public.user_snow_ranges) = 1,
+  'A can keep their own snow range for a shared wax');
+with t as (select temp_max_c from public.products where id = '00000000-0000-0000-0000-0000000000c1')
+select pg_temp.expect((select temp_max_c from t) = -2 and
+  (select count(*) from public.user_snow_ranges where product_id = '00000000-0000-0000-0000-0000000000c1') = 1,
+  'the shared wax itself is unchanged by A''s snow range');
+select pg_temp.expect_error(
+  $$insert into public.user_snow_ranges (user_id, product_id, temp_min_c, temp_max_c)
+    values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000c1', -2, -8)$$,
+  'a snow range cannot run backwards');
 select pg_temp.expect_error(
   $$insert into public.conditions (user_id, source, snow_temp_c)
     values ('00000000-0000-0000-0000-00000000000a', 'observed', 1)$$,
@@ -166,6 +178,17 @@ select pg_temp.expect((select count(*) from public.wax_session_layers) = 0, 'B c
 select pg_temp.expect((select count(*) from public.conditions) = 0, 'B cannot see A''s conditions');
 select pg_temp.expect((select count(*) from public.user_products) = 0, 'B cannot see A''s wax box');
 select pg_temp.expect((select count(*) from public.user_tools) = 0, 'B cannot see A''s tools');
+select pg_temp.expect((select count(*) from public.user_snow_ranges) = 0, 'B cannot see A''s snow ranges');
+with t as (update public.user_snow_ranges set temp_min_c = -20 returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'B cannot change A''s snow range');
+select pg_temp.expect_error(
+  $$insert into public.user_snow_ranges (user_id, product_id, temp_min_c)
+    values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000c1', -5)$$,
+  'B cannot add a snow range in A''s name');
+select pg_temp.expect_error(
+  $$insert into public.user_snow_ranges (user_id, product_id, temp_min_c)
+    values ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000c2', -5)$$,
+  'B cannot add a snow range for a wax only A can see');
 select pg_temp.expect((select count(*) from public.profiles) = 1, 'B sees only their own profile');
 -- Only shared rows (created_by null) may be visible to B so far: B has typed
 -- nothing in yet, and none of A's may show. The test's shared rows must be there.
