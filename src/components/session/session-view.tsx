@@ -294,7 +294,7 @@ export async function SessionView({
           )}
           {s.actual && (
             <div>
-              <h2 className="font-semibold">Actual conditions</h2>
+              <h2 className="font-semibold">What you recorded on the day</h2>
               <ul className="text-sm">
                 {conditionsLines(s.actual).map((x) => (
                   <li key={x}>{x}</li>
