@@ -8,7 +8,7 @@ import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
-import { SkierPicker } from "@/components/skier-picker";
+import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
@@ -106,14 +106,11 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
           <span aria-hidden className="text-link">→</span>
         </Link>
       )}
-      {who.skiers.length > 0 && (
-        <section id="skier" aria-labelledby="skier-h" className="scroll-mt-4">
-          <h2 id="skier-h" className="mb-2 text-sm font-medium text-muted">
-            Waxing for
-          </h2>
-          <SkierPicker skiers={who.skiers} current={who.key} me={who.me} />
-        </section>
-      )}
+      {/* One line, as on every other screen: a coach's squad would push the
+          forecast off the screen as a row of buttons. "Change" opens the picker here. */}
+      <div id="skier" className="scroll-mt-4">
+        <SkierBanner />
+      </div>
 
       {todo > 0 && (
         <section className={card} aria-labelledby="start">
