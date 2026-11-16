@@ -204,9 +204,9 @@ export async function SessionView({
             </div>
           </details>
 
-          {/* "Done": skied, rating later. Offered once the waxing is over. */}
-          {stage !== "wax" &&
-            (s.done_at ? (
+          {/* "Done": skied, rating later. Always offered: wax-along and Done
+              waxing are optional, and a coach with a dozen pairs skips them. */}
+          {s.done_at ? (
               <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   Marked done <LocalTime iso={s.done_at} />. Rate it when you&apos;re ready.
@@ -216,13 +216,13 @@ export async function SessionView({
                 </button>
               </form>
             ) : (
-              <form action={markDone.bind(null, s.id)} className={card}>
+              <form action={markDone.bind(null, s.id, "session")} className={card}>
                 <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
                 <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
                   Done
                 </button>
               </form>
-            ))}
+            )}
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">

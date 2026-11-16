@@ -6,6 +6,7 @@ import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { stageOf } from "@/lib/history/stage";
 import { deleteSession } from "@/app/(app)/history/actions";
 import { DeletePlanned } from "./delete-planned";
+import { markDone } from "@/app/(app)/session/actions";
 import { splitByDay } from "@/lib/history/groups";
 import { readerTimeZone } from "@/lib/reader-zone";
 
@@ -42,7 +43,7 @@ export async function ContinueList() {
   return (
     <>
       {current.length > 0 && (
-        <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to wax, ski or rate it." rows={current} now={now} />
+        <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done when it's skied." rows={current} now={now} offerDone />
       )}
       {unrated.length > 0 && (
         <Group id="unrated-h" title="Unrated sessions" note="From an earlier day and not rated yet. Rate them, or delete the ones that never happened." rows={unrated} now={now} />
@@ -53,7 +54,7 @@ export async function ContinueList() {
 
 type Row = { id: string; occurred_at: string; technique: "classic" | "skate"; event_name: string | null; waxed_at: string | null; done_at: string | null; venue_name: string | null };
 
-function Group({ id, title, note, rows, now }: { id: string; title: string; note: string; rows: Row[]; now: Date }) {
+function Group({ id, title, note, rows, now, offerDone = false }: { id: string; title: string; note: string; rows: Row[]; now: Date; offerDone?: boolean }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
       <div>
@@ -82,6 +83,18 @@ function Group({ id, title, note, rows, now }: { id: string; title: string; note
                 </span>
                 <span className={`shrink-0 text-sm ${stage === "rate" ? "font-semibold text-link" : "text-muted"}`}>{NEXT[stage]} →</span>
               </Link>
+              {/* One tap, no opening the session: a coach marks a dozen pairs in a row. */}
+              {offerDone && (
+                <form action={markDone.bind(null, r.id, "list")} className="shrink-0">
+                  <button
+                    type="submit"
+                    aria-label={`Mark ${r.event_name ?? r.venue_name ?? "this session"} done`}
+                    className="min-h-11 rounded-lg border border-accent px-3 text-sm font-semibold text-link active:bg-tile"
+                  >
+                    Done
+                  </button>
+                </form>
+              )}
               <DeletePlanned
                 action={deleteSession.bind(null, r.id, "/plan")}
                 label={r.event_name ?? r.venue_name ?? "this planned session"}
