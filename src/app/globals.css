@@ -163,10 +163,17 @@ details[open] > summary::before,
 select.min-h-11 {
   -webkit-appearance: none;
   appearance: none;
-  height: 2.75rem;
+  height: 2.5rem;
   padding-right: 2.25rem;
   background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
+}
+
+/* Text boxes match the pull-downs: 40 px, the owner's choice for form fields.
+   (Buttons keep their 44 px.) */
+input.min-h-11:not([type="checkbox"]):not([type="radio"]) {
+  min-height: 2.5rem;
+  height: 2.5rem;
 }
