@@ -295,7 +295,15 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </nav>
       </div>
 
-      {rows.length > 0 && <ExportLink href={`/history/export${toQuery(f, { skier })}`} />}
+      <div className="flex flex-wrap gap-2">
+        <Link href="/history/compare" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
+          Compare sessions
+        </Link>
+        <Link href="/history/insights" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
+          Insights
+        </Link>
+        {rows.length > 0 && <ExportLink href={`/history/export${toQuery(f, { skier })}`} />}
+      </div>
 
       {rows.length === 0 ? (
         <p className="rounded-xl border border-line bg-surface p-4 text-muted">
