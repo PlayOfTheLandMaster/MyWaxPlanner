@@ -36,7 +36,7 @@ async function Account() {
     currentUser(),
     loadVenues(supabase),
     loadSkiers(supabase),
-    supabase.from("profiles").select("home_venue_id, default_mode, display_name, birth_year, birth_month, weight_kg").maybeSingle(),
+    supabase.from("profiles").select("home_venue_id, default_mode, first_name, last_initial, birth_year, birth_month, weight_kg").maybeSingle(),
     supabase.from("skis").select("skier_id"),
   ]);
   const pairs = (id: string | null) => (skis.data ?? []).filter((k) => k.skier_id === id).length;
@@ -95,7 +95,8 @@ async function Account() {
           venues={venues.map((v) => ({ id: v.id, name: v.name }))}
           home={(profile.data?.home_venue_id as string | null) ?? null}
           mode={(profile.data?.default_mode as string) ?? "recreational"}
-          displayName={(profile.data?.display_name as string | null) ?? null}
+          firstName={(profile.data?.first_name as string | null) ?? null}
+          lastInitial={(profile.data?.last_initial as string | null) ?? null}
           me={me}
           years={years}
         />

@@ -1,5 +1,5 @@
 import { loadSkierContext } from "@/lib/skiers/current";
-import { ME } from "@/lib/skiers/load";
+import { FALLBACK } from "@/lib/profile/name";
 import { SkierPicker } from "./skier-picker";
 
 /**
@@ -18,9 +18,9 @@ export async function SkierBanner({
   /** Where to land after picking, when this page's address names a skier of its own. */
   returnTo?: string;
 }) {
-  const { skiers, current, key } = await loadSkierContext();
+  const { skiers, current, key, me } = await loadSkierContext();
   if (skiers.length === 0) return null;
-  const picked = current?.name ?? ME;
+  const picked = current?.name ?? me;
   const name = everyone ? "Everyone" : (override ?? picked);
   return (
     // Keyed on the picked skier, so the picker folds shut again once a pick lands.
@@ -31,15 +31,15 @@ export async function SkierBanner({
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
           </svg>
-          {name === ME ? "My skis" : name === "Everyone" ? "Everyone" : `For ${name}`}
+          {name === FALLBACK ? "My skis" : name === "Everyone" ? "Everyone" : `For ${name}`}
         </span>
-        {name !== picked && <span className="text-muted">(you&apos;re waxing for {picked === ME ? "yourself" : picked})</span>}
+        {name !== picked && <span className="text-muted">(you&apos;re waxing for {current ? picked : "yourself"})</span>}
         <span className="text-link underline group-open:hidden">Change</span>
         <span className="hidden text-link underline group-open:inline">Close</span>
       </summary>
       <div className="flex flex-col gap-2 pt-2">
         <p className="text-sm text-muted">Waxing for</p>
-        <SkierPicker skiers={skiers} current={key} returnTo={returnTo} />
+        <SkierPicker skiers={skiers} current={key} me={me} returnTo={returnTo} />
       </div>
     </details>
   );

@@ -39,7 +39,7 @@ async function Compare({ searchParams }: { searchParams: PageProps<"/history/com
   if (sessions.length < 2) return <Picker chosen={sessions.map((s) => s.id)} note="Some of those sessions are no longer in your history." />;
 
   // Dates are drawn by LocalTime in the reader's zone, so the table carries the raw moment.
-  const sections = compareSections(sessions, (iso) => iso);
+  const sections = compareSections(sessions, (iso) => iso, (await loadSkierContext()).me);
   const pickAgain = `/history/compare?${sessions.map((s) => `ids=${s.id}`).join("&")}&pick=1`;
 
   return (

@@ -3,6 +3,7 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { loadSkiers, type Skier } from "./load";
+import { displayName } from "@/lib/profile/name";
 
 // The skier being waxed for, picked on Today. Other screens start with that
 // skier chosen; each can still look at someone else for the moment.
@@ -14,6 +15,8 @@ export type SkierContext = {
   current: Skier | null;
   /** "me" or the skier's id, the value filters and pull-downs use. */
   key: string;
+  /** The account holder's own name ("Finn P."), shown where the app once said "Me". */
+  me: string;
 };
 
 /** Read once per request, however many parts of the page ask. */
@@ -21,11 +24,12 @@ export const loadSkierContext = cache(async (): Promise<SkierContext> => {
   const supabase = await createClient();
   const [skiers, profile] = await Promise.all([
     loadSkiers(supabase),
-    supabase.from("profiles").select("current_skier_id").maybeSingle(),
+    supabase.from("profiles").select("current_skier_id, first_name, last_initial").maybeSingle(),
   ]);
   const id = (profile.data?.current_skier_id as string | null) ?? null;
   const current = skiers.find((k) => k.id === id) ?? null;
-  return { skiers, current, key: current?.id ?? "me" };
+  const me = displayName(profile.data?.first_name as string | null, profile.data?.last_initial as string | null);
+  return { skiers, current, key: current?.id ?? "me", me };
 });
 
 /**

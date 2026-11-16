@@ -9,6 +9,7 @@ import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierPicker } from "@/components/skier-picker";
+import { FALLBACK } from "@/lib/profile/name";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -98,12 +99,19 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
 
   return (
     <>
+      {who.me === FALLBACK && (
+        // Accounts made before names were asked for: the app says "Me" until one is added.
+        <Link href="/account" className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-accent bg-tile px-4 py-2 text-sm active:opacity-70">
+          <span>Add your first name and last initial, so the app can name your skis and sessions.</span>
+          <span aria-hidden className="text-link">→</span>
+        </Link>
+      )}
       {who.skiers.length > 0 && (
         <section id="skier" aria-labelledby="skier-h" className="scroll-mt-4">
           <h2 id="skier-h" className="mb-2 text-sm font-medium text-muted">
             Waxing for
           </h2>
-          <SkierPicker skiers={who.skiers} current={who.key} />
+          <SkierPicker skiers={who.skiers} current={who.key} me={who.me} />
         </section>
       )}
 

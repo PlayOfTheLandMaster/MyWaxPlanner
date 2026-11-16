@@ -58,7 +58,7 @@ function layerRows(sessions: Session[], zone: "glide" | "grip"): CompareRow[] {
 
 const rating = (n: number | null) => (n ? `${n}/5` : null);
 
-export function compareSections(sessions: Session[], dateOf: (iso: string) => string): CompareSection[] {
+export function compareSections(sessions: Session[], dateOf: (iso: string) => string, me = "Me"): CompareSection[] {
   const cond = (s: Session) => s.actual ?? s.forecast;
   const forecastOnly = (s: Session) => !s.actual && Boolean(s.forecast);
   const anyClassic = sessions.some((s) => s.technique === "classic");
@@ -69,7 +69,7 @@ export function compareSections(sessions: Session[], dateOf: (iso: string) => st
       rows: [
         { ...row("Date", sessions.map((s) => dateOf(s.occurred_at))), differs: false },
         row("Venue", sessions.map((s) => s.venue?.name ?? null)),
-        row("Skier", sessions.map((s) => s.skier?.name ?? "Me")),
+        row("Skier", sessions.map((s) => s.skier?.name ?? me)),
         row("Skis", sessions.map((s) => s.ski?.name ?? null)),
         row("Technique", sessions.map((s) => TECHNIQUE_LABELS[s.technique as "classic"] ?? s.technique)),
         row("Kind", sessions.map((s) => MODE_LABELS[s.mode])),

@@ -25,12 +25,13 @@ async function Form({ searchParams }: { searchParams: PageProps<"/wax-box/skis/n
   // ?skier=<id> (from a skier's page) picks the owner in advance; otherwise
   // the skier picked on Today.
   const skier = (await searchParams).skier;
-  const { skiers, current } = await loadSkierContext();
+  const { skiers, current, me } = await loadSkierContext();
   return (
     <SkiForm
       save={createSki}
       submitLabel="Save skis"
       skiers={skiers}
+      me={me}
       defaultSkier={typeof skier === "string" && skiers.some((k) => k.id === skier) ? skier : skier === "me" ? undefined : current?.id}
     />
   );

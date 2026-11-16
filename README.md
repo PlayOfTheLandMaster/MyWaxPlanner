@@ -8,6 +8,8 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Your name:** creating an account asks for a first name and the initial of your last name, so two people called Anna show as "Anna S." and "Anna K.". The name is shown wherever the app used to say "Me": the skier picker, the banners, whose skis, History's filters, Compare and the spreadsheet (`src/lib/profile/name.ts`, tested). It is stored in `profiles.first_name` and `profiles.last_initial`, filled in from the sign-up form by `handle_new_user()` (migration `20261202000000_user_names.sql`, which also split older accounts' optional display name). It can be changed on Account. An account with no name yet still says "Me", and Today asks for one.
+
 **Learn from history** (phase 3):
 
 - **Download as spreadsheet** on History (`/history/export`): the sessions the list shows, with the same filters and sort (`src/lib/history/query.ts` builds both), as a CSV file that opens in Numbers, Google Sheets or Excel. One row per session: date and time in your own time zone, skier, technique, skis, venue, event and result, snow and air temperature, snow type and humidity, the glide and grip waxes by layer, the ratings and the notes (`src/lib/history/csv.ts`, tested). Temperatures stay numbers so they sort and chart; text a spreadsheet would run as a formula is defused.

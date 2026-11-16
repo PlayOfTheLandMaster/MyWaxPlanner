@@ -126,13 +126,13 @@ export function dateAndTime(iso: string, timeZone: string): [string, string] {
   return [`${get("year")}-${get("month")}-${get("day")}`, `${get("hour")}:${get("minute")}`];
 }
 
-export function sessionRow(s: ExportSession, d: ExportDetails | undefined, timeZone: string): Cell[] {
+export function sessionRow(s: ExportSession, d: ExportDetails | undefined, timeZone: string, me = "Me"): Cell[] {
   const [date, time] = dateAndTime(s.occurred_at, timeZone);
   return [
     date,
     time,
     STATUS_LABELS[s.status] ?? s.status,
-    s.skier_name ?? "Me",
+    s.skier_name ?? me,
     TECHNIQUE_LABELS[s.technique] ?? s.technique,
     MODE_LABELS[s.mode] ?? s.mode,
     s.ski_name,
@@ -164,8 +164,9 @@ export function historyCsv(
   sessions: ExportSession[],
   details: Map<string, ExportDetails>,
   timeZone: string,
+  me = "Me",
 ): string {
-  const lines = [csvLine([...CSV_HEADERS]), ...sessions.map((s) => csvLine(sessionRow(s, details.get(s.id), timeZone)))];
+  const lines = [csvLine([...CSV_HEADERS]), ...sessions.map((s) => csvLine(sessionRow(s, details.get(s.id), timeZone, me)))];
   return `﻿${lines.join("\r\n")}\r\n`;
 }
 
