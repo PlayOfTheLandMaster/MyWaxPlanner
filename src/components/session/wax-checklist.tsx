@@ -1,56 +1,38 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useState, useTransition } from "react";
+import { setWaxStep } from "@/app/(app)/session/actions";
 
 /**
- * The plan's steps as a tick-off list while waxing. Ticks are kept on this
- * device only (a convenience, like a remembered fold): if storage is blocked
- * the list still works, it just forgets on reload. Recording the wax against
- * the session is step 3's wax-along mode.
+ * The plan's steps as a tick-off list. Ticks are saved on the session
+ * (wax_steps_done), so the list, the wax-along mode and every device agree.
+ * A tick shows at once and is saved behind it; if the save fails it is taken
+ * back and the list says why, so it never claims a step is saved when it is not.
  */
-
-const CHANGED = "wax-steps-changed";
-
-function read(key: string): string {
-  try {
-    return localStorage.getItem(key) ?? "[]";
-  } catch {
-    return "[]"; // storage blocked
-  }
-}
-
-function subscribe(onChange: () => void) {
-  // Another tab, or this list after a tick.
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGED, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGED, onChange);
-  };
-}
-
-export function WaxChecklist({ sessionId, steps }: { sessionId: string; steps: { section: string; text: string }[] }) {
-  const key = `wax-steps:${sessionId}`;
-  // The server and the first render see nothing ticked; the device's ticks
-  // follow straight after, without a mismatch.
-  const raw = useSyncExternalStore(subscribe, () => read(key), () => "[]");
-  const done = useMemo<number[]>(() => {
-    try {
-      const v = JSON.parse(raw);
-      return Array.isArray(v) ? v.filter((n): n is number => typeof n === "number") : [];
-    } catch {
-      return [];
-    }
-  }, [raw]);
+export function WaxChecklist({
+  sessionId,
+  steps,
+  initialDone,
+}: {
+  sessionId: string;
+  steps: { section: string; text: string }[];
+  initialDone: number[];
+}) {
+  const [done, setDone] = useState<number[]>(initialDone);
+  const [error, setError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   const toggle = (i: number) => {
-    const next = done.includes(i) ? done.filter((n) => n !== i) : [...done, i];
-    try {
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {
-      // Not remembered on this device.
-    }
-    window.dispatchEvent(new Event(CHANGED));
+    const on = !done.includes(i);
+    setDone((d) => (on ? [...d, i] : d.filter((n) => n !== i)));
+    setError(null);
+    startTransition(async () => {
+      const failed = await setWaxStep(sessionId, i, on);
+      if (failed) {
+        setDone((d) => (on ? d.filter((n) => n !== i) : [...d, i]));
+        setError(failed);
+      }
+    });
   };
 
   const sections = [...new Set(steps.map((s) => s.section))];
@@ -59,6 +41,11 @@ export function WaxChecklist({ sessionId, steps }: { sessionId: string; steps: {
       <p className="text-sm text-muted" aria-live="polite">
         {done.length} of {steps.length} steps done
       </p>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       {sections.map((section) => (
         <div key={section || "steps"} className="flex flex-col gap-1">
           {section && <h3 className="text-sm font-semibold">{section}</h3>}

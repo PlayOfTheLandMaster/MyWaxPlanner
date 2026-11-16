@@ -5,7 +5,7 @@ import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { stageOf } from "@/lib/history/stage";
 
-const NEXT: Record<string, string> = { wax: "Wax it", ski: "Out skiing", rate: "Rate it" };
+const NEXT: Record<string, string> = { wax: "Wax it", ski: "Ready to ski", rate: "Rate it" };
 
 /**
  * Sessions under way for the skier picked on Today: planned and not yet
@@ -15,12 +15,19 @@ export async function ContinueList() {
   const supabase = await createClient();
   const who = await loadSkierContext();
   let q = supabase
-    .from("wax_session_list")
-    .select("id, occurred_at, technique, venue_name, event_name")
+    .from("wax_sessions")
+    .select("id, occurred_at, technique, event_name, waxed_at, venue:venues (name)")
     .eq("status", "planned");
   q = who.current ? q.eq("skier_id", who.current.id) : q.is("skier_id", null);
   const { data } = await q.order("occurred_at", { ascending: false }).limit(5);
-  const rows = (data ?? []) as { id: string; occurred_at: string; technique: "classic" | "skate"; venue_name: string | null; event_name: string | null }[];
+  const rows = (data ?? []).map((r) => ({
+    id: r.id as string,
+    occurred_at: r.occurred_at as string,
+    technique: r.technique as "classic" | "skate",
+    event_name: r.event_name as string | null,
+    waxed_at: r.waxed_at as string | null,
+    venue_name: (r.venue as unknown as { name: string } | null)?.name ?? null,
+  }));
   if (rows.length === 0) return null;
 
   const now = new Date();
@@ -31,7 +38,7 @@ export async function ContinueList() {
       </h2>
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
-          const stage = stageOf({ status: "planned", occurred_at: r.occurred_at }, now);
+          const stage = stageOf({ status: "planned", occurred_at: r.occurred_at, waxed_at: r.waxed_at }, now);
           return (
             <li key={r.id}>
               <Link

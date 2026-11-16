@@ -21,6 +21,8 @@ import { Photos } from "@/app/(app)/history/[id]/photos";
 import { RateForm } from "./rate-form";
 import { deleteSession, rateSession } from "@/app/(app)/history/actions";
 import { WaxChecklist } from "./wax-checklist";
+import { comparePlan, type LayerComparison } from "@/lib/history/plan-compare";
+import { changeLayer, finishWaxing, unfinishWaxing } from "@/app/(app)/session/actions";
 
 // One page for a waxing session, from plan to rating: Plan → Wax → Ski → Rate.
 // The Session tab opens it while a session is under way (/session/[id]) and
@@ -68,6 +70,21 @@ export async function SessionView({
   const planned = stage !== "done";
   const classic = s.technique === "classic";
   const steps = s.plan?.steps ?? [];
+  const compare = comparePlan(s.plan?.picks ?? [], s.layers);
+
+  // The waxes in the box, for swapping a layer while the session is under way.
+  const box: BoxWax[] = [];
+  if (planned) {
+    const { data } = await supabase
+      .from("user_products")
+      .select("id, product:products!inner (name, category_group, brand:brands (name))")
+      .neq("amount_left", "empty");
+    for (const r of data ?? []) {
+      const p = r.product as unknown as { name: string; category_group: string; brand: { name: string } | null };
+      box.push({ id: r.id as string, group: p.category_group, name: p.brand ? `${p.brand.name} ${p.name}` : p.name });
+    }
+    box.sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   const rateForm = (
     <RateForm
@@ -93,7 +110,9 @@ export async function SessionView({
             ? "Plan saved. Wax with the steps below; after skiing, rate it here."
             : saved === "rated"
               ? "Thanks — your ratings are saved."
-              : "Session saved."}
+              : saved === "waxed"
+                ? "Waxed and ready. After skiing, rate it here."
+                : "Session saved."}
         </p>
       )}
 
@@ -132,18 +151,42 @@ export async function SessionView({
               The plan{s.layers.length ? ` · ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              <Layers layers={s.layers} plan={s.plan} />
+              <Layers layers={s.layers} plan={s.plan} compare={compare} change={{ sessionId: s.id, box }} />
             </div>
           </details>
 
-          {steps.length > 0 && (
-            <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
-              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Wax · step by step</summary>
-              <div className="px-4 pb-4">
-                <WaxChecklist sessionId={s.id} steps={steps} />
-              </div>
-            </details>
-          )}
+          <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
+            <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+              Wax{s.waxed_at ? " ✓" : steps.length > 0 ? " · step by step" : ""}
+            </summary>
+            <div className="flex flex-col gap-4 px-4 pb-4">
+              {steps.length > 0 && !s.waxed_at && (
+                <Link
+                  href={`/session/${s.id}/wax`}
+                  className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+                >
+                  {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
+                </Link>
+              )}
+              {steps.length > 0 && <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />}
+              {s.waxed_at ? (
+                <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
+                  <span>
+                    Waxed <LocalTime iso={s.waxed_at} />
+                  </span>
+                  <button type="submit" className="min-h-11 px-2 text-link underline">
+                    Undo
+                  </button>
+                </form>
+              ) : (
+                <form action={finishWaxing.bind(null, s.id)}>
+                  <button type="submit" className="min-h-11 w-full rounded-lg border border-line px-4 font-semibold active:bg-tile">
+                    Done waxing
+                  </button>
+                </form>
+              )}
+            </div>
+          </details>
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">
@@ -186,7 +229,7 @@ export async function SessionView({
 
           {s.layers.length > 0 && (
             <section className={card} aria-label="What went on the skis">
-              <Layers layers={s.layers} plan={null} />
+              <Layers layers={s.layers} plan={s.plan} compare={compare} change={null} />
             </section>
           )}
         </>
@@ -280,20 +323,40 @@ export function StageStrip({ stage }: { stage: Stage }) {
   );
 }
 
-/** The layers by zone; with a plan, each shows why the app picked it. */
-function Layers({ layers, plan }: { layers: SessionLayer[]; plan: SessionPlan | null }) {
-  if (layers.length === 0) return <p className="text-sm text-muted">No layers recorded.</p>;
+type BoxWax = { id: string; group: string; name: string };
+
+/**
+ * The layers by zone. With a plan, each shows why the app picked it and, when
+ * a different wax was used, the planned one beside it; planned layers that
+ * were left out are listed as skipped. While the session is under way
+ * (`change` given) each layer can be swapped for a wax from the box, or skipped.
+ */
+function Layers({
+  layers,
+  plan,
+  compare,
+  change,
+}: {
+  layers: SessionLayer[];
+  plan: SessionPlan | null;
+  compare: LayerComparison;
+  change: { sessionId: string; box: BoxWax[] } | null;
+}) {
+  if (layers.length === 0 && compare.skipped.length === 0) return <p className="text-sm text-muted">No layers recorded.</p>;
   return (
     <>
       {(["glide", "grip"] as const).map((zone) => {
         const inZone = layers.filter((l) => l.zone === zone);
-        if (inZone.length === 0) return null;
+        const skipped = compare.skipped.filter((p) => p.zone === zone);
+        if (inZone.length === 0 && skipped.length === 0) return null;
+        const options = change?.box.filter((b) => b.group === zone) ?? [];
         return (
           <div key={zone} className="flex flex-col gap-2">
             <h3 className="font-semibold">{ZONE_LABELS[zone]}</h3>
-            <ol className="flex flex-col gap-2">
+            <ol className="flex flex-col gap-3">
               {inZone.map((l) => {
                 const why = plan?.reasons.find((r) => r.zone === zone && r.layer_role === l.layer_role);
+                const plannedName = compare.swapped.get(l.id);
                 return (
                   <li key={l.id} className="text-sm">
                     <p className="font-medium">
@@ -301,8 +364,9 @@ function Layers({ layers, plan }: { layers: SessionLayer[]; plan: SessionPlan | 
                       {l.product && l.product.fluoro_status !== "fluoro_free" && l.product.fluoro_status !== "unknown" && (
                         <span className="ml-2 rounded-full bg-tile px-2 text-xs text-danger">fluoro</span>
                       )}
-                      {why?.fit && <span className="ml-2 rounded-full bg-tile px-2 text-xs">{FIT_LABELS[why.fit] ?? why.fit}</span>}
+                      {!plannedName && why?.fit && <span className="ml-2 rounded-full bg-tile px-2 text-xs">{FIT_LABELS[why.fit] ?? why.fit}</span>}
                     </p>
+                    {plannedName && <p className="text-link">Planned: {plannedName}</p>}
                     <p className="text-muted">
                       {[
                         l.layer_role ? LAYER_ROLE_LABELS[l.layer_role as keyof typeof LAYER_ROLE_LABELS] : null,
@@ -313,11 +377,47 @@ function Layers({ layers, plan }: { layers: SessionLayer[]; plan: SessionPlan | 
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    {why?.reason && <p className="text-muted">Why: {why.reason}</p>}
+                    {!plannedName && why?.reason && <p className="text-muted">Why: {why.reason}</p>}
                     {l.scrape_brush_steps && <p className="text-muted">{l.scrape_brush_steps}</p>}
+                    {change && (
+                      <details className="mt-1">
+                        <summary className="flex min-h-11 cursor-pointer items-center text-link">Change</summary>
+                        <form action={changeLayer.bind(null, change.sessionId, l.id)} className="flex flex-col gap-2 pb-1">
+                          <label className="flex flex-col gap-1 text-sm font-medium">
+                            Use instead
+                            <select
+                              name="wax"
+                              defaultValue={l.user_product_id ?? ""}
+                              required
+                              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
+                            >
+                              <option value="" disabled>
+                                Choose a wax from your box…
+                              </option>
+                              {options.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                  {b.name}
+                                </option>
+                              ))}
+                              <option value="skip">Skip this layer</option>
+                            </select>
+                          </label>
+                          <button type="submit" className="min-h-11 rounded-lg border border-line px-4 font-semibold active:bg-tile">
+                            Save
+                          </button>
+                        </form>
+                      </details>
+                    )}
                   </li>
                 );
               })}
+              {skipped.map((p, i) => (
+                <li key={`skipped-${i}`} className="text-sm text-muted">
+                  <p>
+                    Skipped: {p.name} <span className="text-xs">({LAYER_ROLE_LABELS[p.layer_role as keyof typeof LAYER_ROLE_LABELS] ?? p.layer_role})</span>
+                  </p>
+                </li>
+              ))}
             </ol>
           </div>
         );
