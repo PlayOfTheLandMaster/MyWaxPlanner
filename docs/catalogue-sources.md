@@ -12,7 +12,7 @@ Each brand's change says what it added and why; this file is the index.
 
 | Brand | Source | How it was read | Read | Database change | Rows |
 |---|---|---|---|---|---|
-| Vauhti | [Racing waxes and how to apply those – Cross-Country (PDF)](https://vauhti.fi/wp-content/uploads/VAUHTI-RACING-WAXES-AND-HOW-TO-APPLY-THOSE-%E2%80%93-Cross-Country-1.pdf) | PDF, page by page as images; ranges confirmed on the packaging photos | 2026-11-15 | `20261124000000_vauhti_catalogue.sql` | 42 |
+| Vauhti | [Racing waxes and how to apply those – Cross-Country (PDF)](https://vauhti.fi/wp-content/uploads/VAUHTI-RACING-WAXES-AND-HOW-TO-APPLY-THOSE-%E2%80%93-Cross-Country-1.pdf) | PDF, page by page as images; ranges confirmed on the packaging photos | 2026-11-15 | `20261124000000_vauhti_catalogue.sql`, then `20261128000000_vauhti_air_temperatures.sql` | 42 |
 | Swix | [Pro series](https://swixsport.com/us/article/wax-manual/pro-series) | web page text | 2026-11-15 | `20261125000000_swix_catalogue.sql` | 17 + 4 |
 | Swix | [Application of liquid glide waxes](https://swixsport.com/us/article/wax-manual/application-of-liquid-glide-waxes) | web page text | 2026-11-15 | same | (fluoro status of the liquids) |
 | Swix | [Klister application guide](https://swixsport.com/us/article/wax-manual/klister-application-guide) | web page text | 2026-11-15 | same | 12 |
@@ -33,7 +33,7 @@ These hold for future refreshes unless the owner changes them.
 
 | Brand | Ranges are | Fluoro-free when | Notes |
 |---|---|---|---|
-| Vauhti | **snow** temperatures, so its waxes can be recommended | the grip section is titled fluorocarbon-free; glide waxes stay `unknown` | Iron temperatures are kept in the recipes notes, not the catalogue. Grip recipes are numbered 1–9. |
+| Vauhti | **air** (changed from snow in `20261128000000`): no snow range, so not recommended | the grip section is titled fluorocarbon-free; glide waxes stay `unknown` | Iron temperatures are kept in the recipes notes, not the catalogue. Grip recipes are numbered 1–9. |
 | Swix | **air** temperatures: no snow range, so not recommended | the Pro system (TSP, TS Turbo, PS, HS, TSL/HSL/PSL), as stated | One row per wax, whatever the package size. Waxes only named in passing are left out. |
 | Toko | **air** | the text says "fluor-free" or "PFC free" | Toko's own pages give no prices. Plant-based Natural waxes are filed as paraffin. Express Grip & Glide is a glide liquid. Kits are left out. |
 | Rex | **air** | the text says "fluor free", "non-fluor" or "non-fluorinated"; NF/NFX names alone don't count | Price is the lowest-priced size, in USD. |
