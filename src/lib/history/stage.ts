@@ -6,10 +6,14 @@ export type Stage = "wax" | "ski" | "rate" | "done";
 /** How long a session is assumed to last before it is time to rate it (Today uses the same). */
 export const SKI_HOURS = 3;
 
-export function stageOf(s: { status: "planned" | "completed"; occurred_at: string }, now: Date): Stage {
+export function stageOf(
+  s: { status: "planned" | "completed"; occurred_at: string; waxed_at?: string | null },
+  now: Date,
+): Stage {
   if (s.status === "completed") return "done";
   const start = Date.parse(s.occurred_at);
-  if (Number.isNaN(start) || now.getTime() < start) return "wax";
+  // Waxed already ("Done waxing"): next is skiing, even before the start time.
+  if (Number.isNaN(start) || now.getTime() < start) return s.waxed_at ? "ski" : "wax";
   if (now.getTime() < start + SKI_HOURS * 3600_000) return "ski";
   return "rate";
 }

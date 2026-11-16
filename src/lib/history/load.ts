@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkiCategory, Technique } from "@/lib/skis/input";
+import type { PlannedLayer } from "./plan-compare";
 
 // The history's reads. All run as the signed-in user, so Row Level Security
 // limits them to that skier's own sessions, skis, venues and wax box.
@@ -55,6 +56,7 @@ export type SessionLayer = {
   zone: "glide" | "grip";
   position: number;
   layer_role: string | null;
+  product_id: string | null;
   user_product_id: string | null;
   custom_product: string | null;
   method: string | null;
@@ -108,9 +110,15 @@ export type Session = {
   photos: { id: string; storage_path: string; caption: string | null }[];
   /** What the app recommended, when the session came from a plan. */
   plan: SessionPlan | null;
+  /** Procedure steps ticked (0-based positions in plan.steps). */
+  wax_steps_done: number[];
+  /** When the skier finished waxing, if they have. */
+  waxed_at: string | null;
 };
 
 export type SessionPlan = {
+  /** The wax the plan picked for each layer (by zone and role), for comparing with what was used. */
+  picks: PlannedLayer[];
   /** The procedure, in order, grouped by section ("Glide", "Grip", "Finish"…). */
   steps: { section: string; text: string }[];
   /** Why each layer was picked, by zone and role. */
@@ -127,9 +135,9 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
       `id, occurred_at, status, technique, mode, ski_id, venue_id, event_name, event_distance_km,
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
-       recommendation_id,
+       recommendation_id, wax_steps_done, waxed_at,
        ski:skis (name), skier:skiers (name), venue:venues (name),
-       layers:wax_session_layers (id, zone, position, layer_role, user_product_id, custom_product,
+       layers:wax_session_layers (id, zone, position, layer_role, product_id, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,
          product:products (name, fluoro_status, brand:brands (name))),
        photos:wax_session_photos (id, storage_path, caption)`,
@@ -161,7 +169,23 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
     if (rec) {
       const steps = Array.isArray(rec.procedure_steps) ? rec.procedure_steps : [];
       const layers = Array.isArray(rec.layers) ? rec.layers : [];
+      // Names of the waxes the plan picked; one read for all of them.
+      const pickIds = [...new Set(layers.map((l: Record<string, unknown>) => l.product_id).filter((x: unknown): x is string => typeof x === "string"))];
+      const names = new Map<string, string>();
+      if (pickIds.length) {
+        const { data: prods } = await supabase.from("products").select("id, name, brand:brands (name)").in("id", pickIds);
+        for (const p of prods ?? []) {
+          const brand = (p.brand as unknown as { name: string } | null)?.name;
+          names.set(p.id as string, brand ? `${brand} ${p.name}` : (p.name as string));
+        }
+      }
       plan = {
+        picks: layers.map((l: Record<string, unknown>) => ({
+          zone: String(l.zone ?? ""),
+          layer_role: String(l.layer_role ?? ""),
+          product_id: typeof l.product_id === "string" ? l.product_id : null,
+          name: typeof l.product_id === "string" ? (names.get(l.product_id) ?? null) : null,
+        })),
         steps: steps
           .filter((x: { text?: unknown }) => typeof x?.text === "string")
           .map((x: { section?: unknown; text: string }) => ({ section: typeof x.section === "string" ? x.section : "", text: x.text })),
@@ -186,5 +210,6 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
     actual: session.actual_conditions_id ? (conds.get(session.actual_conditions_id) ?? null) : null,
     forecast: session.forecast_conditions_id ? (conds.get(session.forecast_conditions_id) ?? null) : null,
     plan,
+    wax_steps_done: (session.wax_steps_done ?? []).map(Number),
   };
 }

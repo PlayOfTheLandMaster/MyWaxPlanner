@@ -26,3 +26,15 @@ test("a rated session is done whenever it was", () => {
 test("an unreadable time is treated as not started yet", () => {
   assert.equal(stageOf({ status: "planned", occurred_at: "soon" }, now("2026-11-21T07:00:00Z")), "wax");
 });
+
+test("once waxed, the next step is skiing, even before the start", () => {
+  assert.equal(
+    stageOf({ status: "planned", occurred_at: at, waxed_at: "2026-11-21T06:30:00Z" }, now("2026-11-21T07:00:00Z")),
+    "ski",
+  );
+  // After skiing it is still time to rate, waxed or not.
+  assert.equal(
+    stageOf({ status: "planned", occurred_at: at, waxed_at: "2026-11-21T06:30:00Z" }, now("2026-11-21T20:00:00Z")),
+    "rate",
+  );
+});
