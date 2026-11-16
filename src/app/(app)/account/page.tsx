@@ -102,7 +102,7 @@ async function Account() {
 
       <section className={card} aria-labelledby="prefs">
         <h2 id="prefs" className="mb-3 scroll-mt-4 font-semibold">
-          You and preferences
+          Your Preferences
         </h2>
         <SettingsForm
           venues={venues.map((v) => ({ id: v.id, name: v.name }))}
