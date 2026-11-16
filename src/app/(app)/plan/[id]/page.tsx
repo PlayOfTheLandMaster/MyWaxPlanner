@@ -263,14 +263,20 @@ function RecommendationView({ r, catalogueSize, mode }: { r: Recommendation; cat
       )}
 
       {r.procedure.map((section) => (
-        <div key={section.title} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <h3 className="font-semibold">How to do it: {section.title.toLowerCase()}</h3>
-          <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm">
+        // Folded by default: the picks above are what a plan is read for; the steps come with "Use this plan".
+        <details key={section.title} className="rounded-xl border border-line bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+            How to do it: {section.title.toLowerCase()}
+            <span className="ml-auto pl-2 text-sm font-normal text-muted">
+              {section.steps.length} {section.steps.length === 1 ? "step" : "steps"}
+            </span>
+          </summary>
+          <ol className="flex list-decimal flex-col gap-2 px-4 pb-4 pl-9 text-sm">
             {section.steps.map((s, i) => (
               <li key={i}>{s.text}</li>
             ))}
           </ol>
-        </div>
+        </details>
       ))}
 
       {r.gaps.length > 0 && (

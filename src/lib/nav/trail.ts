@@ -14,10 +14,18 @@ const MAX = 30;
 
 export const pathOf = (url: string) => url.split(/[?#]/)[0] || "/";
 
-/** Pages whose only purpose is to fill in a form. */
+/**
+ * Pages "back" never returns to: forms (new, edit, add), and wax-along,
+ * which is a mode of its session page with its own Close.
+ */
 export function isFormPage(url: string): boolean {
-  return /\/(new|edit|add)$/.test(pathOf(url));
+  return /\/(new|edit|add|wax)$/.test(pathOf(url));
 }
+
+/** A session's own page, under either address. */
+const isSessionPage = (path: string) => /^\/(session|history)\/[0-9a-f-]{36}$/i.test(path);
+/** Plan step 2: a recommendation, used up once "Use this plan" saves it as a session. */
+const isPlanStep = (path: string) => /^\/plan\/[^/]+$/.test(path);
 
 /** The trail after arriving at url. */
 export function record(trail: readonly string[], url: string): string[] {
@@ -33,6 +41,9 @@ export function previous(trail: readonly string[], current: string): string | nu
   const at = trail.findIndex((u) => pathOf(u) === path);
   for (let i = (at >= 0 ? at : trail.length) - 1; i >= 0; i--) {
     const u = trail[i];
+    // From a session, skip the plan step it was saved from: going back there
+    // would offer to save the same plan again. The Session tab is the way back.
+    if (isSessionPage(path) && isPlanStep(pathOf(u))) continue;
     if (pathOf(u) !== path && !isFormPage(u)) return u;
   }
   return null;
@@ -46,12 +57,17 @@ export function backLabel(url: string): string {
   if (p.startsWith("/account")) return "Account";
   if (p.startsWith("/wax-box/skis/")) return "Ski";
   if (p.startsWith("/wax-box/skis")) return "Skis";
+  if (p.startsWith("/wax-box/tools")) return "Tools";
   if (/^\/wax-box\/[^/]+$/.test(p)) return "Wax";
   if (p.startsWith("/wax-box")) return "Wax box";
-  if (/^\/history\/[^/]+$/.test(p)) return "Session";
+  if (p === "/history/compare") return "Compare";
+  if (p === "/history/insights") return "Insights";
+  if (/^\/(history|session)\/[^/]+\/share$/.test(p)) return "Share";
+  if (/^\/(history|session)\/[^/]+$/.test(p)) return "Session";
   if (p.startsWith("/history")) return "History";
   if (/^\/plan\/[^/]+$/.test(p)) return "Plan";
-  if (p.startsWith("/plan")) return "Plan";
+  // The Session tab's start page lives at /plan.
+  if (p.startsWith("/plan")) return "Session";
   if (/^\/learn\/[^/]+$/.test(p)) return "Video";
   if (p.startsWith("/learn")) return "Learn";
   if (p.startsWith("/venues")) return "Venues";
