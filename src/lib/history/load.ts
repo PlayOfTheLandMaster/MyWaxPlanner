@@ -114,6 +114,8 @@ export type Session = {
   wax_steps_done: number[];
   /** When the skier finished waxing, if they have. */
   waxed_at: string | null;
+  /** When the skier marked the session Done (skied, not rated yet). */
+  done_at: string | null;
 };
 
 export type SessionPlan = {
@@ -135,7 +137,7 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
       `id, occurred_at, status, technique, mode, ski_id, venue_id, event_name, event_distance_km,
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
-       recommendation_id, wax_steps_done, waxed_at,
+       recommendation_id, wax_steps_done, waxed_at, done_at,
        ski:skis (name), skier:skiers (name), venue:venues (name),
        layers:wax_session_layers (id, zone, position, layer_role, product_id, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,

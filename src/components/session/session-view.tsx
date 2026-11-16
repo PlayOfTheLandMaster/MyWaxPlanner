@@ -22,7 +22,7 @@ import { RateForm } from "./rate-form";
 import { deleteSession, rateSession } from "@/app/(app)/history/actions";
 import { WaxChecklist } from "./wax-checklist";
 import { comparePlan, type LayerComparison } from "@/lib/history/plan-compare";
-import { changeLayer, finishWaxing, unfinishWaxing } from "@/app/(app)/session/actions";
+import { changeLayer, finishWaxing, markDone, unfinishWaxing, unmarkDone } from "@/app/(app)/session/actions";
 
 // One page for a waxing session, from plan to rating: Plan → Wax → Ski → Rate.
 // The Session tab opens it while a session is under way (/session/[id]) and
@@ -115,7 +115,9 @@ export async function SessionView({
               ? "Thanks — your ratings are saved."
               : saved === "waxed"
                 ? "Waxed and ready. After skiing, rate it here."
-                : "Session saved."}
+                : saved === "done"
+                  ? "Done. It waits under Unrated sessions on the Session tab until you rate it."
+                  : "Session saved."}
         </p>
       )}
 
@@ -200,6 +202,26 @@ export async function SessionView({
               ) : null}
             </div>
           </details>
+
+          {/* "Done": skied, rating later. Offered once the waxing is over. */}
+          {stage !== "wax" &&
+            (s.done_at ? (
+              <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
+                <span>
+                  Marked done <LocalTime iso={s.done_at} />. Rate it when you&apos;re ready.
+                </span>
+                <button type="submit" className="min-h-11 px-2 text-link underline">
+                  Undo
+                </button>
+              </form>
+            ) : (
+              <form action={markDone.bind(null, s.id)} className={card}>
+                <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
+                <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
+                  Done
+                </button>
+              </form>
+            ))}
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">

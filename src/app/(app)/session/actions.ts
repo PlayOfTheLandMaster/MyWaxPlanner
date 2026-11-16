@@ -40,6 +40,22 @@ export async function finishWaxing(sessionId: string) {
   redirect(`/session/${sessionId}?saved=waxed`);
 }
 
+/** "Done": skied, rating later. The session moves to Unrated sessions on the Session tab. */
+export async function markDone(sessionId: string) {
+  const supabase = await signedIn();
+  await supabase.from("wax_sessions").update({ done_at: new Date().toISOString() }).eq("id", sessionId);
+  revalidatePath("/plan");
+  redirect(`/session/${sessionId}?saved=done`);
+}
+
+/** Undoes "Done", for a tap made too early. */
+export async function unmarkDone(sessionId: string) {
+  const supabase = await signedIn();
+  await supabase.from("wax_sessions").update({ done_at: null }).eq("id", sessionId);
+  revalidatePath("/plan");
+  refresh();
+}
+
 /** Undoes "Done waxing", for a tap made too early. */
 export async function unfinishWaxing(sessionId: string) {
   const supabase = await signedIn();

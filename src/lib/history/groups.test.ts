@@ -20,3 +20,10 @@ test("today and later are current, soonest first; earlier days are unrated, late
   assert.deepEqual(current.map((r) => r.id), ["this-morning", "tomorrow"]);
   assert.deepEqual(unrated.map((r) => r.id), ["yesterday", "last-week"]);
 });
+
+test("a session marked Done is unrated even on its own day", () => {
+  const rows = [{ id: "done-today", occurred_at: "2026-11-16T17:00:00Z", done_at: "2026-11-16T20:00:00Z" }, { id: "today", occurred_at: "2026-11-16T18:00:00Z" }];
+  const { current, unrated } = splitByDay(rows, now, "Etc/GMT+7");
+  assert.deepEqual(current.map((r) => r.id), ["today"]);
+  assert.deepEqual(unrated.map((r) => r.id), ["done-today"]);
+});

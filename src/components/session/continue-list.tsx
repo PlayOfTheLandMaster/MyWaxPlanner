@@ -22,7 +22,7 @@ export async function ContinueList() {
   const who = await loadSkierContext();
   let q = supabase
     .from("wax_sessions")
-    .select("id, occurred_at, technique, event_name, waxed_at, venue:venues (name)")
+    .select("id, occurred_at, technique, event_name, waxed_at, done_at, venue:venues (name)")
     .eq("status", "planned");
   q = who.current ? q.eq("skier_id", who.current.id) : q.is("skier_id", null);
   const { data } = await q.order("occurred_at", { ascending: false }).limit(30);
@@ -32,6 +32,7 @@ export async function ContinueList() {
     technique: r.technique as "classic" | "skate",
     event_name: r.event_name as string | null,
     waxed_at: r.waxed_at as string | null,
+    done_at: r.done_at as string | null,
     venue_name: (r.venue as unknown as { name: string } | null)?.name ?? null,
   }));
   if (rows.length === 0) return null;
@@ -50,7 +51,7 @@ export async function ContinueList() {
   );
 }
 
-type Row = { id: string; occurred_at: string; technique: "classic" | "skate"; event_name: string | null; waxed_at: string | null; venue_name: string | null };
+type Row = { id: string; occurred_at: string; technique: "classic" | "skate"; event_name: string | null; waxed_at: string | null; done_at: string | null; venue_name: string | null };
 
 function Group({ id, title, note, rows, now }: { id: string; title: string; note: string; rows: Row[]; now: Date }) {
   return (
@@ -63,7 +64,7 @@ function Group({ id, title, note, rows, now }: { id: string; title: string; note
       </div>
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
-          const stage = stageOf({ status: "planned", occurred_at: r.occurred_at, waxed_at: r.waxed_at }, now);
+          const stage = stageOf({ status: "planned", occurred_at: r.occurred_at, waxed_at: r.waxed_at, done_at: r.done_at }, now);
           return (
             <li
               key={r.id}

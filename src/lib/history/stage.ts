@@ -7,10 +7,12 @@ export type Stage = "wax" | "ski" | "rate" | "done";
 export const SKI_HOURS = 3;
 
 export function stageOf(
-  s: { status: "planned" | "completed"; occurred_at: string; waxed_at?: string | null },
+  s: { status: "planned" | "completed"; occurred_at: string; waxed_at?: string | null; done_at?: string | null },
   now: Date,
 ): Stage {
   if (s.status === "completed") return "done";
+  // Marked "Done" (skied, not rated yet): rating is all that is left.
+  if (s.done_at) return "rate";
   const start = Date.parse(s.occurred_at);
   // Waxed already ("Done waxing"): next is skiing, even before the start time.
   if (Number.isNaN(start) || now.getTime() < start) return s.waxed_at ? "ski" : "wax";
