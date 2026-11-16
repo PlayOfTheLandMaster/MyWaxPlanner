@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { displayName } from "@/lib/profile/name";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -61,7 +62,8 @@ async function Account() {
         <ul className="my-3 flex flex-col divide-y divide-line">
           <li className="flex min-h-11 items-center justify-between gap-3">
             <span>
-              Me <span className="text-sm text-muted">· {[plural(pairs(null)), describeBody(me)].filter(Boolean).join(" · ")}</span>
+              {displayName(profile.data?.first_name as string | null, profile.data?.last_initial as string | null)}{" "}
+              <span className="text-sm text-muted">· {[plural(pairs(null)), describeBody(me)].filter(Boolean).join(" · ")}</span>
             </span>
             <Link href="/wax-box/skis?skier=me" className="text-sm text-link underline">
               Skis

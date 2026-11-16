@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { readBody, type Body } from "@/lib/skiers/body";
+import { displayName, readName } from "@/lib/profile/name";
 
 export type SkierFormState = { error?: string; added?: string };
 
@@ -15,10 +16,10 @@ async function signedIn() {
 }
 
 function read(form: FormData): ({ name: string; notes: string | null } & Body) | { error: string } {
-  const name = String(form.get("name") ?? "").trim().replace(/\s+/g, " ");
-  if (!name) return { error: "Give the skier a name." };
-  if (name.length > 60) return { error: "Keep the name under 60 characters." };
-  if (name.toLowerCase() === "me") return { error: "“Me” is you already; pick another name." };
+  // Saved as one name, "Anna S.", so every screen that names a skier shows the initial.
+  const parts = readName(form);
+  if ("error" in parts) return { error: parts.error.replace("your", "the skier's") };
+  const name = displayName(parts.first_name, parts.last_initial);
   const notes = String(form.get("notes") ?? "").trim().slice(0, 500) || null;
   const body = readBody(form);
   if ("error" in body) return body;
@@ -45,7 +46,7 @@ export async function updateSkier(id: string, _prev: SkierFormState, form: FormD
   redirect("/account");
 }
 
-/** Their skis and sessions stay, as yours ("Me"). */
+/** Their skis and sessions stay, as yours. */
 export async function deleteSkier(id: string) {
   const { supabase } = await signedIn();
   await supabase.from("skiers").delete().eq("id", id);
