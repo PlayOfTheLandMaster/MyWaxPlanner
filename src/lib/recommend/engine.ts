@@ -265,7 +265,11 @@ export function recommend(
       list
         .map((p) => scoreProduct(p, role, weights, req, history))
         .filter((x): x is Pick => x !== null)
-        .sort((a, b) => b.score - a.score || (a.product.price ?? 999) - (b.product.price ?? 999));
+        // Ties are broken by the wax's id: a fixed order that says nothing about
+        // brand or price. Price used to break ties, which put brands with no
+        // stored price (and prices from one shop, in one currency) last, and
+        // name order would always put the same brands first.
+        .sort((a, b) => b.score - a.score || (a.product.id < b.product.id ? -1 : a.product.id > b.product.id ? 1 : 0));
     const pick = rank(box)[0] ?? null;
     const ownedIds = new Set(box.map((b) => b.id));
     const market = rank(catalogue.filter((p) => !ownedIds.has(p.id)))

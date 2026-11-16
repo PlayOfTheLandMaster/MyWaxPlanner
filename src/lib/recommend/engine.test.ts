@@ -163,3 +163,23 @@ test("a kick plan suggests warmer and colder waxes to carry", () => {
   assert.equal(r.layers.find((l) => l.role === "kick")!.pick?.product.name, "Blue hardwax");
   assert.deepEqual(r.carry.map((c) => c.product.name), ["Violet hardwax", "Green hardwax"]);
 });
+
+test("price and brand never decide between equally good waxes", () => {
+  const shop = (name: string, brand: string, price: number | null, idSuffix: string) =>
+    wax(name, "hydrocarbon", -9, -3, {
+      id: `tie-${idSuffix}`,
+      brand: { name: brand, temperature_basis: "snow" },
+      price,
+      currency: price === null ? null : "USD",
+      user_product_id: null,
+      amount_left: null,
+    });
+  // Same ranges, so the same score. The cheap one and the A-brand one come
+  // last by id; they must not jump ahead for being cheap or early in the alphabet.
+  const pricey = shop("Pricey", "Zeta", 99, "a");
+  const unpriced = shop("No price", "Mid", null, "b");
+  const cheap = shop("Cheap", "Alpha", 5, "c");
+  const r = recommend(req({}), rules, [], [cheap, unpriced, pricey], [], allTools);
+  const temp = r.layers.find((l) => l.role === "temperature")!;
+  assert.deepEqual(temp.market.map((m) => m.product.name), ["Pricey", "No price", "Cheap"]);
+});
