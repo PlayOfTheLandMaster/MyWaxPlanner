@@ -269,5 +269,11 @@ reset role;
 select set_config('role', 'anon', true);
 select pg_temp.expect_error($$select 1 from public.products limit 1$$,
   'a signed-out visitor cannot read the catalogue');
+select pg_temp.expect_error($$select 1 from public.skiers limit 1$$,
+  'a signed-out visitor cannot read skiers');
+select pg_temp.expect_error($$select 1 from public.saved_filters limit 1$$,
+  'a signed-out visitor cannot read saved filters');
+select pg_temp.expect_error($$select 1 from public.wax_session_list limit 1$$,
+  'a signed-out visitor cannot read the history list');
 
 rollback;
