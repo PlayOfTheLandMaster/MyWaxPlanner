@@ -8,8 +8,7 @@ import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
-import { setCurrentSkier } from "@/lib/skiers/actions";
-import { ME } from "@/lib/skiers/load";
+import { SkierPicker } from "@/components/skier-picker";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -104,24 +103,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
           <h2 id="skier-h" className="mb-2 text-sm font-medium text-muted">
             Waxing for
           </h2>
-          {/* One tap picks the skier; Session, History and Skis all start with them. */}
-          <form action={setCurrentSkier} className="flex flex-wrap gap-2">
-            {[{ id: "me", name: ME }, ...who.skiers].map((k) => {
-              const on = who.key === k.id;
-              return (
-                <button
-                  key={k.id}
-                  type="submit"
-                  name="skier"
-                  value={k.id}
-                  aria-pressed={on}
-                  className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm ${on ? "border-accent bg-accent font-semibold text-on-accent" : "border-line bg-surface active:bg-tile"}`}
-                >
-                  {k.name}
-                </button>
-              );
-            })}
-          </form>
+          <SkierPicker skiers={who.skiers} current={who.key} />
         </section>
       )}
 

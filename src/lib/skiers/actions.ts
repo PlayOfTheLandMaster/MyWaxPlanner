@@ -17,4 +17,8 @@ export async function setCurrentSkier(form: FormData) {
     .update({ current_skier_id: UUID.test(value) ? value : null })
     .eq("id", data.user.id);
   revalidatePath("/", "layout");
+  // Picked from a screen's own banner: stay there (without a filter that
+  // would keep showing the previous skier). Only same-site paths.
+  const back = String(form.get("return") ?? "");
+  if (back.startsWith("/") && !back.startsWith("//")) redirect(back);
 }

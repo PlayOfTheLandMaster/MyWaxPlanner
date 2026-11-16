@@ -144,7 +144,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
 
   return (
     <div className="flex flex-col gap-4">
-      <SkierBanner everyone={skier === "all"} override={f.skier && f.skier !== "all" ? (f.skier === "me" ? "Me" : (skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? null) : null} />
+      <SkierBanner returnTo={`/history${toQuery(f, { skier: undefined })}`} everyone={skier === "all"} override={f.skier && f.skier !== "all" ? (f.skier === "me" ? "Me" : (skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? null) : null} />
       {(saved.data ?? []).length > 0 && (
         <nav aria-label="Saved filters" className="flex flex-wrap gap-2">
           {(saved.data ?? []).map((s) => {
