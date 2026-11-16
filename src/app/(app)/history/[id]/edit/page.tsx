@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
+import { formOwner, skisOf } from "@/lib/skis/owner";
 import { SessionForm, type SessionInitial } from "../../session-form";
 import { saveSession } from "../../actions";
 
@@ -34,8 +35,10 @@ async function Edit({
     Boolean,
   );
   const supabase = await createClient();
-  const [session, options] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase)]);
+  const [session, allOptions] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase)]);
   if (!session) notFound();
+  // Only the skis of the person this session is for.
+  const options = { ...allOptions, skis: skisOf(allOptions.skis, formOwner(allOptions.skis, session, null)) };
 
   const initial: SessionInitial = {
     ...session,
