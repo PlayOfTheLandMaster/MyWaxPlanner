@@ -8,6 +8,10 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Learn from history** (phase 3):
+
+- **Download as spreadsheet** on History (`/history/export`): the sessions the list shows, with the same filters and sort (`src/lib/history/query.ts` builds both), as a CSV file that opens in Numbers, Google Sheets or Excel. One row per session: date and time in your own time zone, skier, technique, skis, venue, event and result, snow and air temperature, snow type and humidity, the glide and grip waxes by layer, the ratings and the notes (`src/lib/history/csv.ts`, tested). Temperatures stay numbers so they sort and chart; text a spreadsheet would run as a formula is defused.
+
 **Session flow** — planning and logging are one session:
 
 - **The Session tab** starts with **Continue** (sessions under way, with what comes next), then **Plan a wax**, then **I already waxed** for a wax done without a plan. History is for looking back; "Log a session" is gone from History and Today.
