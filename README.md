@@ -8,6 +8,12 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Session flow** — planning and logging are one session:
+
+- **The Session tab** starts with **Continue** (sessions under way, with what comes next), then **Plan a wax**, then **I already waxed** for a wax done without a plan. History is for looking back; "Log a session" is gone from History and Today.
+- **Nothing is saved until "Use this plan".** Step 1's conditions travel to step 2 in the address (`src/lib/plan/draft.ts`, checked again on the way in), and "Use this plan" saves the conditions, the recommendation and the session together. Older plan links that point at saved conditions still work.
+- **One session page** (`/session/[id]`, the same page as `/history/[id]`): a Plan ✓ · Wax · Ski · Rate strip (`src/lib/history/stage.ts`), the plan with why each layer was picked, the steps as a tick-off checklist (ticks remembered on the device), and the **How did it go?** card built in — leading once the session is over, folded away before. A rated session shows how it went. `/history/[id]/rate` now forwards to the session page.
+
 **Build prompt 5** — the recommendation:
 
 - **Plan step 2** (`/plan/[conditions]`): pick a pair of skis (or technique and grip type), recreational or race, and a glide wax type, then **RECOMMEND**.

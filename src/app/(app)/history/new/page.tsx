@@ -7,7 +7,7 @@ import { SessionForm, type SessionInitial } from "../session-form";
 import { saveSession } from "../actions";
 import { SkierBanner } from "@/components/skier-banner";
 
-export const metadata: Metadata = { title: "Log a session · My Wax Planner" };
+export const metadata: Metadata = { title: "I already waxed · My Wax Planner" };
 
 export default function NewSessionPage({ searchParams }: PageProps<"/history/new">) {
   return (
@@ -74,7 +74,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
     <>
       <div>
         <BackLink fallback={source ? `/history/${source.id}` : "/history"}>{source ? "✕ Cancel" : undefined}</BackLink>
-        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Log a session"}</h1>
+        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "I already waxed"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>
       {!source && <SkierBanner />}

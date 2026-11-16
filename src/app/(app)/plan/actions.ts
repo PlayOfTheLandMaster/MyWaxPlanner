@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { HUMIDITY_BANDS, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { SKIES, TRACKS } from "@/lib/history/vocab";
+import { encodeDraft, type DraftConditions } from "@/lib/plan/draft";
 
 export type ConditionsFormState = { error?: string };
 
@@ -21,8 +22,10 @@ const oneOf = <T extends string>(list: readonly T[], v: FormDataEntryValue | nul
   typeof v === "string" && (list as readonly string[]).includes(v) ? (v as T) : null;
 
 /**
- * Save the conditions a plan is built on: the venue's forecast for the
- * session window, with whatever the skier corrected after looking at the snow.
+ * Step 1 of a plan: the venue's forecast for the session window, with
+ * whatever the skier corrected after looking at the snow. Nothing is saved
+ * yet: the conditions travel to step 2 in the address and are saved only
+ * when the skier taps "Use this plan", so trying plans leaves nothing behind.
  */
 export async function saveConditions(_prev: ConditionsFormState, form: FormData): Promise<ConditionsFormState> {
   const supabase = await createClient();
@@ -35,15 +38,13 @@ export async function saveConditions(_prev: ConditionsFormState, form: FormData)
     return { error: "The forecast could not be read. Reload the page and try again." };
   }
 
-  let row;
+  let row: DraftConditions;
   try {
     const snowTemp = num(form, "snow_temp_c", -40, 0);
     const estimate = num(form, "snow_temp_estimate", -40, 0);
     row = {
-      user_id: auth.user.id,
       venue_id: venueId,
       observed_at: startIso,
-      source: "forecast" as const,
       air_temp_c: num(form, "air_temp_c", -60, 40),
       air_temp_min_c: num(form, "air_temp_min_c", -60, 40),
       air_temp_max_c: num(form, "air_temp_max_c", -60, 40),
@@ -73,7 +74,5 @@ export async function saveConditions(_prev: ConditionsFormState, form: FormData)
     throw e;
   }
 
-  const { data, error } = await supabase.from("conditions").insert(row).select("id").single();
-  if (error) return { error: `Could not save the conditions: ${error.message}` };
-  redirect(`/plan/${data.id}`);
+  redirect(`/plan/draft?c=${encodeDraft(row)}`);
 }

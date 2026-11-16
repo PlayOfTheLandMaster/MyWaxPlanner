@@ -8,8 +8,9 @@ import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { ConditionsForm } from "./conditions-form";
 import { WhereWhenForm } from "./where-when-form";
+import { ContinueList } from "@/components/session/continue-list";
 
-export const metadata: Metadata = { title: "Plan · My Wax Planner" };
+export const metadata: Metadata = { title: "Session · My Wax Planner" };
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
@@ -18,6 +19,11 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      {/* The Session tab: sessions under way first, then a new plan, then a
+          way to log a wax done without one. */}
+      <Suspense fallback={null}>
+        <ContinueList />
+      </Suspense>
       <div>
         <h1 className="text-2xl font-bold">Plan a wax</h1>
         <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
@@ -28,6 +34,18 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Plan searchParams={searchParams} />
       </Suspense>
+      <Link
+        href="/history/new"
+        className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+      >
+        <span>
+          <span className="block font-semibold">I already waxed</span>
+          <span className="block text-sm text-muted">Log what went on the skis, without a plan</span>
+        </span>
+        <span aria-hidden className="text-muted">
+          →
+        </span>
+      </Link>
     </main>
   );
 }

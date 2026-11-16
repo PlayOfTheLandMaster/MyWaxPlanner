@@ -106,6 +106,15 @@ export type Session = {
   forecast: Conditions | null;
   layers: SessionLayer[];
   photos: { id: string; storage_path: string; caption: string | null }[];
+  /** What the app recommended, when the session came from a plan. */
+  plan: SessionPlan | null;
+};
+
+export type SessionPlan = {
+  /** The procedure, in order, grouped by section ("Glide", "Grip", "Finish"…). */
+  steps: { section: string; text: string }[];
+  /** Why each layer was picked, by zone and role. */
+  reasons: { zone: string; layer_role: string; reason: string | null; fit: string | null }[];
 };
 
 const CONDITION_COLUMNS = `air_temp_c, snow_temp_c, snow_temp_estimated, air_rh_pct, air_humidity_band,
@@ -118,6 +127,7 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
       `id, occurred_at, status, technique, mode, ski_id, venue_id, event_name, event_distance_km,
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
+       recommendation_id,
        ski:skis (name), skier:skiers (name), venue:venues (name),
        layers:wax_session_layers (id, zone, position, layer_role, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,
@@ -141,11 +151,40 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
     for (const r of rows ?? []) conds.set(r.id as string, r as unknown as Conditions);
   }
 
-  const session = data as unknown as Session & { actual_conditions_id: string | null; forecast_conditions_id: string | null };
+  let plan: SessionPlan | null = null;
+  if (data.recommendation_id) {
+    const { data: rec } = await supabase
+      .from("recommendations")
+      .select("procedure_steps, layers")
+      .eq("id", data.recommendation_id)
+      .maybeSingle();
+    if (rec) {
+      const steps = Array.isArray(rec.procedure_steps) ? rec.procedure_steps : [];
+      const layers = Array.isArray(rec.layers) ? rec.layers : [];
+      plan = {
+        steps: steps
+          .filter((x: { text?: unknown }) => typeof x?.text === "string")
+          .map((x: { section?: unknown; text: string }) => ({ section: typeof x.section === "string" ? x.section : "", text: x.text })),
+        reasons: layers.map((l: Record<string, unknown>) => ({
+          zone: String(l.zone ?? ""),
+          layer_role: String(l.layer_role ?? ""),
+          reason: typeof l.reason === "string" ? l.reason : null,
+          fit: typeof l.fit === "string" ? l.fit : null,
+        })),
+      };
+    }
+  }
+
+  const session = data as unknown as Session & {
+    actual_conditions_id: string | null;
+    forecast_conditions_id: string | null;
+    recommendation_id: string | null;
+  };
   session.layers.sort((a, b) => (a.zone === b.zone ? a.position - b.position : a.zone === "glide" ? -1 : 1));
   return {
     ...session,
     actual: session.actual_conditions_id ? (conds.get(session.actual_conditions_id) ?? null) : null,
     forecast: session.forecast_conditions_id ? (conds.get(session.forecast_conditions_id) ?? null) : null,
+    plan,
   };
 }

@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { SKI_CATEGORIES } from "@/lib/skis/input";
 import { MODES, MODE_LABELS } from "@/lib/history/vocab";
-import { buildRecommendation, loadConditions, loadDefaultMode, loadSkis, type PlanChoice } from "@/lib/recommend/load";
+import { buildRecommendation, draftConditions, loadConditions, loadDefaultMode, loadSkis, type PlanChoice } from "@/lib/recommend/load";
+import { decodeDraft } from "@/lib/plan/draft";
 import { CATEGORY_TEXT, ROLE_TEXT, type Pick, type Recommendation } from "@/lib/recommend/engine";
 import { LocalTime } from "@/components/local-time";
 import { savePlan } from "./actions";
@@ -53,8 +54,11 @@ async function Step({
   const { id } = await params;
   const p = await searchParams;
   const supabase = await createClient();
+  // "draft": conditions not saved yet, carried in the address (?c=) until
+  // "Use this plan". Any other id is a plan saved before drafts existed.
+  const draft = id === "draft" ? decodeDraft(one(p.c)) : null;
   const [c, skis, defaultMode, who] = await Promise.all([
-    loadConditions(supabase, id),
+    id === "draft" ? (draft ? draftConditions(supabase, draft) : Promise.resolve(null)) : loadConditions(supabase, id),
     loadSkis(supabase),
     loadDefaultMode(supabase),
     loadSkierContext(),
@@ -114,6 +118,7 @@ async function Step({
 
       <form method="get" className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4">
         <input type="hidden" name="go" value="1" />
+        {draft && <input type="hidden" name="c" value={one(p.c)} />}
         <SkiFields
           skis={skis}
           skiers={skiers.map((k) => ({ id: k.id, name: k.name }))}
@@ -150,7 +155,7 @@ async function Step({
         <>
           <RecommendationView r={built.result} catalogueSize={built.catalogueSize} mode={mode} />
           <SavePlanButton
-            save={savePlan.bind(null, c.id, {
+            save={savePlan.bind(null, draft ? { draft: one(p.c) ?? "" } : { id: c.id }, {
               technique: built.req.technique,
               gripType: built.req.gripType,
               mode,
@@ -176,17 +181,13 @@ function PickLine({ pick, owned }: { pick: Pick; owned: boolean }) {
         <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${pick.fit === "great" ? "bg-accent text-on-accent" : "bg-tile"}`}>{FIT_TEXT[pick.fit]}</span>
       </p>
       {pick.reasons.length > 0 && <p className="text-sm text-muted">{pick.reasons.join(" · ")}</p>}
-      {!owned && (
+      {/* No price for a wax not in the box: the catalogue's prices are from
+          one shop, in one currency (mostly US dollars), and would mislead. */}
+      {!owned && p.buy_url && (
         <p className="text-sm">
-          {p.price !== null ? `${p.price.toFixed(2)} ${p.currency ?? ""}` : null}
-          {p.buy_url && (
-            <>
-              {p.price !== null ? " · " : ""}
-              <a href={p.buy_url} target="_blank" rel="noopener noreferrer" className="text-link underline">
-                Where to buy
-              </a>
-            </>
-          )}
+          <a href={p.buy_url} target="_blank" rel="noopener noreferrer" className="text-link underline">
+            Where to buy
+          </a>
         </p>
       )}
     </div>

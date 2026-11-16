@@ -5,6 +5,7 @@ import { recommend, toolKey } from "./engine";
 import type { SkiCategory, Technique } from "@/lib/skis/input";
 import { loadSnowRanges } from "@/lib/wax-box/load";
 import { applySnowRanges } from "@/lib/wax-box/snow-range";
+import { airHumidityBand, type DraftConditions } from "@/lib/plan/draft";
 
 // Everything the engine needs, read as the signed-in skier (Row Level
 // Security limits it to their box, tools, skis and history plus the shared
@@ -49,6 +50,22 @@ export async function loadConditions(supabase: SupabaseClient, id: string): Prom
   if (!data) return null;
   const c = data as unknown as PlanConditions;
   return { ...c, snow_temp_c: c.snow_temp_c === null ? null : Number(c.snow_temp_c), air_temp_c: c.air_temp_c === null ? null : Number(c.air_temp_c) };
+}
+
+/**
+ * A plan's conditions that have not been saved yet (they travel in the
+ * address until "Use this plan"). The venue must be one the skier can see,
+ * which Row Level Security decides; otherwise there is nothing to plan for.
+ */
+export async function draftConditions(supabase: SupabaseClient, d: DraftConditions): Promise<PlanConditions | null> {
+  const { data: venue } = await supabase.from("venues").select("name").eq("id", d.venue_id).maybeSingle();
+  if (!venue) return null;
+  return {
+    ...d,
+    id: "draft",
+    venue: { name: venue.name as string },
+    air_humidity_band: airHumidityBand(d.air_rh_pct),
+  };
 }
 
 export async function loadSkis(supabase: SupabaseClient): Promise<PlanSki[]> {

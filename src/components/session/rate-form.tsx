@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState } from "react";
-import type { SessionFormState } from "../../actions";
+import type { SessionFormState } from "@/app/(app)/history/actions";
 import { KICK_FEELS, KICK_FEEL_LABELS, RATING_WORDS } from "@/lib/history/vocab";
 
 const choice =
