@@ -145,11 +145,28 @@ details[open] > summary::before,
   }
 }
 
-/* iPad and iPhone browsers (WebKit) ignore min-height on a <select>, so a
-   pull-down drew shorter than the text box beside it (Birth year and Month
-   next to Weight on Account). A fixed height is honoured; it matches min-h-11. */
-@layer base {
-  select.min-h-11 {
-    height: 2.75rem;
+/* iPad and iPhone browsers (WebKit) draw a <select> at their own native
+   height and ignore both min-height and height, so a pull-down sat shorter
+   than the text box beside it (Birth year and Month next to Weight on
+   Account). Turning the native look off is the only way to size it; the
+   arrow is then drawn here, in the muted ink of each theme. */
+:root {
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%235a6675' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6l3-3 3 3M5 10l3 3 3-3'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%239aa7b6' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6l3-3 3 3M5 10l3 3 3-3'/%3E%3C/svg%3E");
   }
+}
+/* Outside any layer on purpose: the field classes' px-3 would otherwise
+   win over padding-right and the text would run under the arrow. */
+select.min-h-11 {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2.75rem;
+  padding-right: 2.25rem;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
