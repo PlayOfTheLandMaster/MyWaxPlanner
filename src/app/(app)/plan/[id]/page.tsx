@@ -71,10 +71,10 @@ async function Step({
   const ownerParam = one(p.owner);
   const owner = ski
     ? (ski.skier_id ?? "me")
-    : ownerParam === "" || ownerParam === "me" || skiers.some((k) => k.id === ownerParam)
+    : ownerParam === "other" || ownerParam === "me" || skiers.some((k) => k.id === ownerParam)
       ? (ownerParam as string)
       : who.key;
-  const ownerName = owner === "me" ? "Me" : (skiers.find((k) => k.id === owner)?.name ?? null);
+  const ownerName = owner === "me" ? "Me" : owner === "other" ? "another skier" : (skiers.find((k) => k.id === owner)?.name ?? null);
   const technique = ski?.technique ?? (one(p.technique) === "classic" ? "classic" : one(p.technique) === "skate" ? "skate" : null);
   const gripParam = one(p.grip);
   const gripType = ski ? ski.category : (SKI_CATEGORIES as readonly string[]).includes(gripParam ?? "") ? (gripParam as PlanChoice["gripType"]) : null;
@@ -95,7 +95,7 @@ async function Step({
         <h1 className="text-2xl font-bold">Plan a wax</h1>
         <p className="text-sm text-muted">Step 2 of 2: your skis, then RECOMMEND.</p>
       </div>
-      <SkierBanner everyone={owner === ""} override={ownerName} />
+      <SkierBanner override={ownerName} />
 
       <section className="rounded-xl border border-line bg-surface p-4 text-sm" aria-label="Conditions">
         <p className="font-semibold">
