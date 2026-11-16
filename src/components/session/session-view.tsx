@@ -177,6 +177,23 @@ export async function SessionView({
               {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
             </Link>
           )}
+          {/* Outside the fold: it is what moves the session on to Ski (and offers Done). */}
+          {s.waxed_at ? (
+            <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
+              <span>
+                Waxed <LocalTime iso={s.waxed_at} />
+              </span>
+              <button type="submit" className="min-h-11 px-2 text-link underline">
+                Undo
+              </button>
+            </form>
+          ) : waxing ? (
+            <form action={finishWaxing.bind(null, s.id)}>
+              <button type="submit" className="min-h-11 w-full rounded-lg border border-line bg-surface px-4 font-semibold active:bg-tile">
+                Done waxing
+              </button>
+            </form>
+          ) : null}
           {/* Folded by default: Start wax-along, above, is the way in; the full list is here when wanted. */}
           <details className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
@@ -184,22 +201,6 @@ export async function SessionView({
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
               {steps.length > 0 && <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />}
-              {s.waxed_at ? (
-                <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
-                  <span>
-                    Waxed <LocalTime iso={s.waxed_at} />
-                  </span>
-                  <button type="submit" className="min-h-11 px-2 text-link underline">
-                    Undo
-                  </button>
-                </form>
-              ) : waxing ? (
-                <form action={finishWaxing.bind(null, s.id)}>
-                  <button type="submit" className="min-h-11 w-full rounded-lg border border-line px-4 font-semibold active:bg-tile">
-                    Done waxing
-                  </button>
-                </form>
-              ) : null}
             </div>
           </details>
 
