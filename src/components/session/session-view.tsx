@@ -284,7 +284,7 @@ export async function SessionView({
         <section className="grid gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-2">
           {s.forecast && (
             <div>
-              <h2 className="font-semibold">Forecast</h2>
+              <h2 className="font-semibold">Forecast at time of session</h2>
               <ul className="text-sm">
                 {conditionsLines(s.forecast).map((x) => (
                   <li key={x}>{x}</li>
