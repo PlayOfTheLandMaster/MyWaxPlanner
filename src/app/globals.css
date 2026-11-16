@@ -144,3 +144,12 @@ details[open] > summary::before,
     animation: none;
   }
 }
+
+/* iPad and iPhone browsers (WebKit) ignore min-height on a <select>, so a
+   pull-down drew shorter than the text box beside it (Birth year and Month
+   next to Weight on Account). A fixed height is honoured; it matches min-h-11. */
+@layer base {
+  select.min-h-11 {
+    height: 2.75rem;
+  }
+}
