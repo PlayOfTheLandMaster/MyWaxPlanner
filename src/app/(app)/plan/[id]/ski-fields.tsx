@@ -64,7 +64,7 @@ export function SkiFields({
       <label className={label}>
         Skis
         <select name="ski" value={skiId} onChange={(e) => setSkiId(e.target.value)} className={field}>
-          <option value="">Not one of {owner === "" || owner === "me" ? "my" : "their"} pairs</option>
+          <option value="">Select ski</option>
           {pairs.map((k) => (
             <option key={k.id} value={k.id}>
               {owner === "" && k.skier_id ? `${skiers.find((x) => x.id === k.skier_id)?.name ?? ""}: ` : ""}
