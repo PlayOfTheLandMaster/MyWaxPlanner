@@ -52,3 +52,26 @@ test("form pages and labels", () => {
   assert.equal(backLabel("/wax-box/skis?skier=me"), "Skis");
   assert.equal(backLabel("/wax-box/1"), "Wax");
 });
+
+test("labels for the newer pages", () => {
+  assert.equal(backLabel("/history/compare?ids=1"), "Compare");
+  assert.equal(backLabel("/history/insights"), "Insights");
+  assert.equal(backLabel("/session/1/share"), "Share");
+  assert.equal(backLabel("/session/1"), "Session");
+  assert.equal(backLabel("/wax-box/tools"), "Tools");
+  assert.equal(backLabel("/plan"), "Session");
+  assert.equal(backLabel("/plan/draft?c=x"), "Plan");
+});
+
+test("wax-along is never a place to go back to", () => {
+  const s = "/session/00000000-0000-0000-0000-000000000001";
+  assert.ok(isFormPage(`${s}/wax`));
+  assert.equal(previous(["/plan", s, `${s}/wax`, `${s}/share`], `${s}/share`), s);
+});
+
+test("after Use this plan, back from the session skips the plan step", () => {
+  const s = "/session/00000000-0000-0000-0000-000000000001?saved=plan";
+  assert.equal(previous(["/", "/plan", "/plan/draft?c=x&go=1", s], s), "/plan");
+  // Anywhere else, the plan step is a normal place to go back to.
+  assert.equal(previous(["/plan/draft?c=x&go=1", "/wax-box/1"], "/wax-box/1"), "/plan/draft?c=x&go=1");
+});

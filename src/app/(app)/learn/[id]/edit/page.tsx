@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { BackLink } from "@/components/nav-trail";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: "Edit video · My Wax Planner" };
 export default function EditVideoPage({ params }: PageProps<"/learn/[id]/edit">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      <BackLink fallback="/learn" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Edit video</h1>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Form params={params} />

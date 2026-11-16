@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { BackLink } from "@/components/nav-trail";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +24,7 @@ type Ski = {
 export default function SkisPage({ searchParams }: PageProps<"/wax-box/skis">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      <BackLink fallback="/wax-box" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Wax box</h1>
       <WaxBoxNav current="skis" />
       <Link
