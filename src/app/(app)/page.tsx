@@ -104,7 +104,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
           <h2 id="skier-h" className="mb-2 text-sm font-medium text-muted">
             Waxing for
           </h2>
-          {/* One tap picks the skier; Plan, History, Log a session and Skis all start with them. */}
+          {/* One tap picks the skier; Session, History and Skis all start with them. */}
           <form action={setCurrentSkier} className="flex flex-wrap gap-2">
             {[{ id: "me", name: ME }, ...who.skiers].map((k) => {
               const on = who.key === k.id;
@@ -157,7 +157,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       </Link>
 
       {waiting && (
-        <Link href={`/history/${waiting.id}/rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
+        <Link href={`/session/${waiting.id}#rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
           <span className="min-w-0">
             <span className="block font-semibold">How did it go?</span>
             <span className="block truncate text-sm text-muted">
@@ -168,7 +168,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
         </Link>
       )}
       {upcoming && (
-        <Link href={`/history/${upcoming.id}`} className={`${card} flex items-center justify-between gap-3 active:bg-tile`}>
+        <Link href={`/session/${upcoming.id}`} className={`${card} flex items-center justify-between gap-3 active:bg-tile`}>
           <span className="min-w-0">
             <span className="block text-xs font-semibold uppercase tracking-wide text-muted">Up next</span>
             <span className="block truncate font-medium">
@@ -212,7 +212,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       )}
 
       <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
-        <Shortcut href="/history/new" title="Log a session" />
+        <Shortcut href="/history" title="History" detail="look back" />
         <Shortcut href="/wax-box" title="Wax box" detail={waxes.length ? `${waxes.length} waxes${low ? ` · ${low} low` : ""}` : "Empty"} warn={low > 0} />
         {venue ? (
           <Suspense fallback={<Shortcut href="/history" title="Similar to today" detail="from your history" />}>

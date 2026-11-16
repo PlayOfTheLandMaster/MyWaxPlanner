@@ -34,7 +34,7 @@ const TABS: Tab[] = [
     // "Session": planning a wax and, after skiing, rating it are one session.
     // Not "Wax", which would sit beside "Wax box" and invite mix-ups.
     label: "Session",
-    match: (p) => p.startsWith("/plan"),
+    match: (p) => p.startsWith("/plan") || p.startsWith("/session"),
     icon: (
       <svg viewBox="0 0 24 24" className="size-6" {...stroke}>
         <rect x="5" y="4" width="14" height="17" rx="2" />

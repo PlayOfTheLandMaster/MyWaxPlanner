@@ -59,12 +59,7 @@ export default function HistoryPage({ searchParams }: PageProps<"/history">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <h1 className="text-2xl font-bold">History</h1>
-      <Link
-        href="/history/new"
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
-      >
-        Log a session
-      </Link>
+      {/* Looking back only: a new session starts on the Session tab (plan, or "I already waxed"). */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <History searchParams={searchParams} />
       </Suspense>

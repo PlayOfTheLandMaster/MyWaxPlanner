@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { buildRecommendation, loadConditions, loadSkis, type PlanChoice } from "@/lib/recommend/load";
+import { decodeDraft } from "@/lib/plan/draft";
 import { CATEGORY_TEXT, ROLE_TEXT } from "@/lib/recommend/engine";
 
 export type SavePlanState = { error?: string };
@@ -15,7 +16,8 @@ export type SavePlanState = { error?: string };
  * from the page, so what is saved is exactly what the engine says.
  */
 export async function savePlan(
-  conditionsId: string,
+  /** Unsaved conditions from the address, or (for older plans) saved ones. */
+  from: { draft: string } | { id: string },
   choice: { technique: string; gripType: string | null; mode: string; family: string; skiId: string | null; owner: string },
   prev: SavePlanState,
 ): Promise<SavePlanState> {
@@ -24,6 +26,22 @@ export async function savePlan(
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
 
+  // "Use this plan" is the moment anything is saved: the conditions first,
+  // then the recommendation and the session that point at them.
+  let conditionsId: string;
+  if ("draft" in from) {
+    const d = decodeDraft(from.draft);
+    if (!d) return { error: "The plan's conditions could not be read. Start the plan again." };
+    const { data: row, error: condError } = await supabase
+      .from("conditions")
+      .insert({ ...d, user_id: auth.user.id, source: "forecast" })
+      .select("id")
+      .single();
+    if (condError) return { error: `Could not save the conditions: ${condError.message}` };
+    conditionsId = row.id as string;
+  } else {
+    conditionsId = from.id;
+  }
   const conditions = await loadConditions(supabase, conditionsId);
   if (!conditions) return { error: "Those conditions are no longer saved. Start the plan again." };
   const skis = await loadSkis(supabase);
@@ -99,5 +117,5 @@ export async function savePlan(
     await supabase.from("wax_sessions").update({ skier_id: choice.owner }).eq("id", sessionId as string);
   }
   revalidatePath("/history");
-  redirect(`/history/${sessionId as string}?saved=plan`);
+  redirect(`/session/${sessionId as string}?saved=plan`);
 }

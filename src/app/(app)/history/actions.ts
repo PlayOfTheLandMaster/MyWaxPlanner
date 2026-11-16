@@ -39,7 +39,9 @@ export async function saveSession(
   // A new session with no skis is for the skier picked on Today.
   if (!id) await claimForCurrentSkier(supabase, data as string);
   revalidatePath("/history");
-  redirect(`/history/${data as string}${id ? "" : "?saved=1"}`);
+  // A session still to be rated belongs to the Session tab; a finished one to History.
+  const where = payload.session.status === "planned" ? "session" : "history";
+  redirect(`/${where}/${data as string}${id ? "" : "?saved=1"}`);
 }
 
 /**

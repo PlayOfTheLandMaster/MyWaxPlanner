@@ -55,5 +55,5 @@ export function readRating(form: FormData, classic: boolean): RatingResult {
 /** Where to go after saving: the full form if something needs correcting, else the session. */
 export function afterRating(id: string, r: Pick<RatingInput, "snow" | "waxed">): string {
   const fix = [r.waxed === "changed" ? "layers" : null, r.snow === "different" ? "conditions" : null].filter(Boolean);
-  return fix.length ? `/history/${id}/edit?then=${fix.join(",")}` : `/history/${id}?saved=rated`;
+  return fix.length ? `/history/${id}/edit?then=${fix.join(",")}` : `/session/${id}?saved=rated`;
 }
