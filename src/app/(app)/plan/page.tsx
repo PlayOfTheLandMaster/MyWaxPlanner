@@ -22,22 +22,25 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       {/* The Session tab: its own title, then sessions already planned, a way
           to log a wax done without a plan, and a new plan. */}
       <h1 className="text-2xl font-bold">Session</h1>
-      <Suspense fallback={null}>
+      {/* The list and the card share one boundary: the planned-sessions list
+          used to arrive a moment after the card and push it down the page.
+          The plan below waits on the forecast, so it keeps its own. */}
+      <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <ContinueList />
+        {/* Near the top, beside the plan: the full form for a wax done without one. */}
+        <Link
+          href="/history/new"
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+        >
+          <span>
+            <span className="block font-semibold">I already waxed</span>
+            <span className="block text-sm text-muted">Log what went on the skis, without a plan</span>
+          </span>
+          <span aria-hidden className="text-muted">
+            →
+          </span>
+        </Link>
       </Suspense>
-      {/* Near the top, beside the plan: the full form for a wax done without one. */}
-      <Link
-        href="/history/new"
-        className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
-      >
-        <span>
-          <span className="block font-semibold">I already waxed</span>
-          <span className="block text-sm text-muted">Log what went on the skis, without a plan</span>
-        </span>
-        <span aria-hidden className="text-muted">
-          →
-        </span>
-      </Link>
       <div>
         <h2 className="text-lg font-semibold">Plan a wax</h2>
         <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
