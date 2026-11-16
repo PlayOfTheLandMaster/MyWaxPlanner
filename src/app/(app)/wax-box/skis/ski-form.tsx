@@ -21,6 +21,7 @@ export function SkiForm({
   initial,
   submitLabel,
   skiers,
+  me,
   defaultSkier,
 }: {
   save: (prev: SkiFormState, data: FormData) => Promise<SkiFormState>;
@@ -28,6 +29,8 @@ export function SkiForm({
   submitLabel: string;
   /** The account's skiers; the owner pull-down only shows when there are any. */
   skiers: { id: string; name: string }[];
+  /** The account holder's name ("Finn P."), for their own choice. */
+  me: string;
   defaultSkier?: string;
 }) {
   const [state, action, pending] = useActionState<SkiFormState, FormData>(save, {});
@@ -55,7 +58,7 @@ export function SkiForm({
         <label className={label}>
           Owner
           <select name="skier_id" defaultValue={initial ? (initial.skier_id ?? "") : (defaultSkier ?? "")} className={field}>
-            <option value="">Me</option>
+            <option value="">{me}</option>
             {skiers.map((k) => (
               <option key={k.id} value={k.id}>
                 {k.name}

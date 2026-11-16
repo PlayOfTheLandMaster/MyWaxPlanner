@@ -74,7 +74,7 @@ async function Step({
     : ownerParam === "other" || ownerParam === "me" || skiers.some((k) => k.id === ownerParam)
       ? (ownerParam as string)
       : who.key;
-  const ownerName = owner === "me" ? "Me" : owner === "other" ? "another skier" : (skiers.find((k) => k.id === owner)?.name ?? null);
+  const ownerName = owner === "me" ? who.me : owner === "other" ? "another skier" : (skiers.find((k) => k.id === owner)?.name ?? null);
   const technique = ski?.technique ?? (one(p.technique) === "classic" ? "classic" : one(p.technique) === "skate" ? "skate" : null);
   const gripParam = one(p.grip);
   const gripType = ski ? ski.category : (SKI_CATEGORIES as readonly string[]).includes(gripParam ?? "") ? (gripParam as PlanChoice["gripType"]) : null;
@@ -122,6 +122,7 @@ async function Step({
         <SkiFields
           skis={skis}
           skiers={skiers.map((k) => ({ id: k.id, name: k.name }))}
+          me={who.me}
           initialSki={ski?.id ?? ""}
           initialOwner={owner}
           initialTechnique={technique}

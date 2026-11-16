@@ -15,6 +15,34 @@ export function LoginForm() {
 
   return (
     <form action={mode === "sign-in" ? signInAction : signUpAction} className="flex flex-col gap-4">
+      {mode === "sign-up" && (
+        // The initial tells two people with the same first name apart; it is
+        // shown as "Anna S." wherever the app names you.
+        <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+            First name
+            <input
+              name="first_name"
+              defaultValue={signUpState.first_name}
+              autoComplete="given-name"
+              maxLength={40}
+              required
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
+            />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+            Last initial
+            <input
+              name="last_initial"
+              defaultValue={signUpState.last_initial}
+              autoComplete="family-name"
+              maxLength={1}
+              required
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base uppercase"
+            />
+          </label>
+        </div>
+      )}
       <label className="flex flex-col gap-1 text-sm font-medium">
         Email
         <input

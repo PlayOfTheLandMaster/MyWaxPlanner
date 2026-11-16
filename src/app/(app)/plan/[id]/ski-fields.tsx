@@ -24,6 +24,7 @@ const choice =
 export function SkiFields({
   skis,
   skiers,
+  me,
   initialSki,
   initialOwner,
   initialTechnique,
@@ -31,6 +32,8 @@ export function SkiFields({
 }: {
   skis: PlanSki[];
   skiers: { id: string; name: string }[];
+  /** The account holder's name ("Finn P."). */
+  me: string;
   initialSki: string;
   /** "me", a skier id, or "other" (someone with no saved skis). */
   initialOwner: string;
@@ -68,7 +71,7 @@ export function SkiFields({
             }}
             className={field}
           >
-            <option value="me">Me</option>
+            <option value="me">{me}</option>
             {skiers.map((k) => (
               <option key={k.id} value={k.id}>
                 {k.name}

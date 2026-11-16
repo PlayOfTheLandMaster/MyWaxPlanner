@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     for (const row of (data ?? []) as unknown as (ExportDetails & { id: string })[]) details.set(row.id, row);
   }
 
-  return new NextResponse(historyCsv(sessions, details, timeZone), {
+  return new NextResponse(historyCsv(sessions, details, timeZone, who.me), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${csvFilename(now, timeZone)}"`,

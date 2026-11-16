@@ -1,5 +1,4 @@
 import { setCurrentSkier } from "@/lib/skiers/actions";
-import { ME } from "@/lib/skiers/load";
 
 /**
  * One tap picks who is being waxed for; Session, History and Skis all follow.
@@ -10,16 +9,19 @@ import { ME } from "@/lib/skiers/load";
 export function SkierPicker({
   skiers,
   current,
+  me,
   returnTo,
 }: {
   skiers: { id: string; name: string }[];
   current: string;
+  /** The account holder's name, for their own button. */
+  me: string;
   returnTo?: string;
 }) {
   return (
     <form action={setCurrentSkier} className="flex flex-wrap gap-2">
       {returnTo && <input type="hidden" name="return" value={returnTo} />}
-      {[{ id: "me", name: ME }, ...skiers].map((k) => {
+      {[{ id: "me", name: me }, ...skiers].map((k) => {
         const on = current === k.id;
         return (
           <button

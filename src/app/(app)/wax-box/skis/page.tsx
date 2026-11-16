@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { WaxBoxNav } from "@/components/wax-box-nav";
-import { ME } from "@/lib/skiers/load";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierBanner } from "@/components/skier-banner";
 import { SKI_CATEGORY_LABELS, TECHNIQUE_LABELS, type SkiCategory, type Technique } from "@/lib/skis/input";
@@ -69,7 +68,7 @@ async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/ski
 
   // Grouped by owner: me first, then each skier A–Z. A chip shows one owner.
   // Everyone who has skis, plus the picked skier even before their first pair.
-  const owners = [{ id: "me", name: ME }, ...skiers].filter(
+  const owners = [{ id: "me", name: who.me }, ...skiers].filter(
     (o) => o.id === who.key || all.some((k) => (o.id === "me" ? k.skier_id === null : k.skier_id === o.id)),
   );
   // No choice in the address: the skier picked on Today ("all" shows everyone).

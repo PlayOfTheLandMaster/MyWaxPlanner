@@ -14,14 +14,16 @@ export function SettingsForm({
   venues,
   home,
   mode,
-  displayName,
+  firstName,
+  lastInitial,
   me,
   years,
 }: {
   venues: { id: string; name: string }[];
   home: string | null;
   mode: string;
-  displayName: string | null;
+  firstName: string | null;
+  lastInitial: string | null;
   me: Body;
   years: number[];
 }) {
@@ -35,10 +37,24 @@ export function SettingsForm({
       }}
       className="flex flex-col gap-4"
     >
-      <label className={label}>
-        Your name (optional)
-        <input name="display_name" defaultValue={displayName ?? ""} maxLength={60} className={field} />
-      </label>
+      {/* Shown as "Finn P." wherever the app names you; the initial tells two people with one first name apart. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+        <label className={label}>
+          First name
+          <input name="first_name" defaultValue={firstName ?? ""} autoComplete="given-name" maxLength={40} required className={field} />
+        </label>
+        <label className={label}>
+          Last initial
+          <input
+            name="last_initial"
+            defaultValue={lastInitial ?? ""}
+            autoComplete="family-name"
+            maxLength={1}
+            required
+            className={`${field} uppercase`}
+          />
+        </label>
+      </div>
       <BodyFields initial={me} years={years} />
       <label className={label}>
         Home venue — its forecast is on Today
