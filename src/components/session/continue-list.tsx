@@ -33,9 +33,12 @@ export async function ContinueList() {
   const now = new Date();
   return (
     <section aria-labelledby="continue-h" className="flex flex-col gap-2">
-      <h2 id="continue-h" className="font-semibold">
-        Continue
-      </h2>
+      <div>
+        <h2 id="continue-h" className="text-lg font-semibold">
+          Planned sessions
+        </h2>
+        <p className="text-sm text-muted">Planned and not yet rated. Tap one to wax, ski or rate it.</p>
+      </div>
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
           const stage = stageOf({ status: "planned", occurred_at: r.occurred_at, waxed_at: r.waxed_at }, now);
