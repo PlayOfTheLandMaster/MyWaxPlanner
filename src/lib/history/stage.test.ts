@@ -38,3 +38,8 @@ test("once waxed, the next step is skiing, even before the start", () => {
     "rate",
   );
 });
+
+test("marked Done, the next step is rating, whatever the clock says", () => {
+  assert.equal(stageOf({ status: "planned", occurred_at: at, done_at: "2026-11-21T08:00:00Z" }, now("2026-11-21T08:00:00Z")), "rate");
+  assert.equal(stageOf({ status: "completed", occurred_at: at, done_at: "2026-11-21T08:00:00Z" }, now("2026-11-21T08:00:00Z")), "done");
+});
