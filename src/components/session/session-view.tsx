@@ -305,7 +305,7 @@ export async function SessionView({
 
       <details className="rounded-lg border border-line">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">Delete this session</summary>
-        <form action={deleteSession.bind(null, id)} className="flex flex-col gap-2 p-3 pt-0">
+        <form action={deleteSession.bind(null, id, "/history")} className="flex flex-col gap-2 p-3 pt-0">
           <p className="text-sm text-muted">Its layers, conditions and photos are deleted too. This can&apos;t be undone.</p>
           <button type="submit" className="min-h-11 rounded-lg bg-danger px-4 font-semibold text-on-accent active:opacity-70">
             Yes, delete it
