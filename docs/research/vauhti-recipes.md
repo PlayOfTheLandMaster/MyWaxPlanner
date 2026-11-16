@@ -8,7 +8,8 @@ October 2025, 25 slides). The waxes themselves are in the shared catalogue
 to the PDF.
 
 Temperatures are as printed. The PDF does not say whether they are air or snow
-temperatures; the catalogue treats them as snow temperatures.
+temperatures; the catalogue treats them as air temperatures (since
+`20261128000000`; they were snow temperatures before).
 
 ## Glide: base → middle → top, paraffin and powder (pp. 15–16)
 
