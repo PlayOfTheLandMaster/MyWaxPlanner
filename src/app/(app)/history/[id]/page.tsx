@@ -58,7 +58,7 @@ async function Detail({
   searchParams: PageProps<"/history/[id]">["searchParams"];
 }) {
   const { id } = await params;
-  const saved = (await searchParams).saved === "1";
+  const saved = (await searchParams).saved;
   const supabase = await createClient();
   const [s, user] = await Promise.all([loadSession(supabase, id), currentUser()]);
   if (!s || !user) notFound();
@@ -78,7 +78,11 @@ async function Detail({
     <>
       {saved && (
         <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
-          Session saved.
+          {saved === "plan"
+            ? "Plan saved. After skiing, tap How did it go? to rate it."
+            : saved === "rated"
+              ? "Thanks — your ratings are saved."
+              : "Session saved."}
         </p>
       )}
       <div>
@@ -97,9 +101,26 @@ async function Detail({
         )}
       </div>
 
+      {/* A planned session's next step is the short rating card, not the full form. */}
+      {s.status === "planned" && (
+        <Link
+          href={`/history/${id}/rate`}
+          className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+        >
+          How did it go?
+        </Link>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
-        <Link href={`/history/${id}/edit`} className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
-          Edit
+        <Link
+          href={`/history/${id}/edit`}
+          className={
+            s.status === "planned"
+              ? "flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+              : "flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+          }
+        >
+          {s.status === "planned" ? "Edit everything" : "Edit"}
         </Link>
         <Link
           href={`/history/new?from=${id}`}

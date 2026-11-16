@@ -183,14 +183,10 @@ export function SessionForm({
       <input type="hidden" name="tz_offset" value={tz} />
 
       <section className={section} aria-label="When and where">
-        <div className="grid grid-cols-2 gap-2">
-          {(["completed", "planned"] as const).map((st) => (
-            <label key={st} className={choice}>
-              <input type="radio" name="status" value={st} defaultChecked={(initial?.status ?? "completed") === st} className="sr-only" />
-              {st === "completed" ? "Skied" : "Planned"}
-            </label>
-          ))}
-        </div>
+        {/* No Skied / Planned switch: a session counts as done once it is rated
+            (statusFor). The previous status rides along so an older, unrated
+            session that was already done stays done. */}
+        {initial?.status && <input type="hidden" name="status" value={initial.status} />}
         <label className={label}>
           Date and time
           <input
@@ -420,6 +416,7 @@ export function SessionForm({
 
       <section className={section} aria-label="How it went">
         <h2 className="font-semibold">How it went</h2>
+        <p className="-mt-2 text-sm text-muted">Any rating marks the session as done.</p>
         <Rating name="glide_rating" legend="Glide" initial={initial?.glide_rating} />
         {classic && <Rating name="grip_rating" legend="Grip" initial={initial?.grip_rating} />}
         {classic && (
