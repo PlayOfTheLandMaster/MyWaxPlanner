@@ -6,7 +6,7 @@ import type { PlannedLayer } from "./plan-compare";
 // The history's reads. All run as the signed-in user, so Row Level Security
 // limits them to that skier's own sessions, skis, venues and wax box.
 
-export type SkiOption = { id: string; name: string; technique: Technique; category: SkiCategory | null };
+export type SkiOption = { id: string; name: string; technique: Technique; category: SkiCategory | null; skier_id: string | null };
 export type VenueOption = { id: string; name: string };
 export type WaxOption = {
   id: string; // user_products.id
@@ -20,7 +20,7 @@ export type FormOptions = { skis: SkiOption[]; venues: VenueOption[]; waxes: Wax
 
 export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOptions> {
   const [skis, venues, box] = await Promise.all([
-    supabase.from("skis").select("id, name, technique, category, skier:skiers (name)").order("name"),
+    supabase.from("skis").select("id, name, technique, category, skier_id, skier:skiers (name)").order("name"),
     supabase.from("venues").select("id, name").order("name"),
     supabase
       .from("user_products")
@@ -46,7 +46,7 @@ export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOpt
   // A pair that belongs to one of the account's skiers is labelled with their name.
   const skiOptions = (skis.data ?? []).map((k) => {
     const owner = (k.skier as unknown as { name: string } | null)?.name;
-    return { id: k.id, technique: k.technique, category: k.category, name: owner ? `${owner}: ${k.name}` : k.name } as SkiOption;
+    return { id: k.id, technique: k.technique, category: k.category, skier_id: (k.skier_id as string | null) ?? null, name: owner ? `${owner}: ${k.name}` : k.name } as SkiOption;
   });
   return { skis: skiOptions, venues: (venues.data ?? []) as VenueOption[], waxes };
 }
@@ -103,6 +103,8 @@ export type Session = {
   notes: string | null;
   ski: { name: string } | null;
   skier: { name: string } | null;
+  /** The skier the session is for; null is the account holder. */
+  skier_id: string | null;
   venue: { name: string } | null;
   actual: Conditions | null;
   forecast: Conditions | null;
@@ -137,7 +139,7 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
       `id, occurred_at, status, technique, mode, ski_id, venue_id, event_name, event_distance_km,
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
-       recommendation_id, wax_steps_done, waxed_at, done_at,
+       recommendation_id, wax_steps_done, waxed_at, done_at, skier_id,
        ski:skis (name), skier:skiers (name), venue:venues (name),
        layers:wax_session_layers (id, zone, position, layer_role, product_id, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,

@@ -6,6 +6,8 @@ import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { SessionForm, type SessionInitial } from "../session-form";
 import { saveSession } from "../actions";
 import { SkierBanner } from "@/components/skier-banner";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { formOwner, skisOf } from "@/lib/skis/owner";
 
 export const metadata: Metadata = { title: "I already waxed · My Wax Planner" };
 
@@ -22,10 +24,15 @@ export default function NewSessionPage({ searchParams }: PageProps<"/history/new
 async function Form({ searchParams }: { searchParams: PageProps<"/history/new">["searchParams"] }) {
   const from = (await searchParams).from;
   const supabase = await createClient();
-  const [options, source] = await Promise.all([
+  const [allOptions, source, who] = await Promise.all([
     loadFormOptions(supabase),
     typeof from === "string" ? loadSession(supabase, from) : Promise.resolve(null),
+    loadSkierContext(),
   ]);
+  // Only the skis of the person this session is for: the skier picked on
+  // Today, or for "Repeat this prep" whoever the copied session was for.
+  const owner = formOwner(allOptions.skis, source, who.current?.id ?? null);
+  const options = { ...allOptions, skis: skisOf(allOptions.skis, owner) };
 
   // "Repeat this prep": the same skis, layers and finish as a past session,
   // planned for now. Ratings, conditions and race details start empty.
