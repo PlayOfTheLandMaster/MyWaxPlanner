@@ -12,7 +12,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 - **Plan step 2** (`/plan/[conditions]`): pick a pair of skis (or technique and grip type), recreational or race, and a glide wax type, then **RECOMMEND**.
 - **The engine** (`src/lib/recommend/engine.ts`, pure and tested) reads the `rules` table to decide the layers and wax categories, scores every wax on snow temperature, snow type, humidity, category weight and your own past ratings in similar snow (brand never counts), picks the best from your box, offers up to three better ones from the shared catalogue, and writes the procedure using only tools you own. Race plans only use fluoro-free waxes. Classic waxable plans suggest a warmer and a colder kick wax to carry.
-- **Save as a planned session** stores the recommendation and a planned session in History, linked to the forecast conditions.
+- **Use this plan** stores the recommendation and a planned session in History, linked to the forecast conditions. After skiing, **How did it go?** (from Today or the session) rates it in a few taps and marks it done; a session counts as done once it has any rating.
 - Default rules are seeded by `20261119000000_default_rules.sql`; tune them by editing rows.
 - *Add a wax* starts with Glide · Grip · Cleaners · Consumables, so the type list is short.
 

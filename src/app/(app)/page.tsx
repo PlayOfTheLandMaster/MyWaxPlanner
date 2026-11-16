@@ -157,11 +157,11 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       </Link>
 
       {waiting && (
-        <Link href={`/history/${waiting.id}/edit`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
+        <Link href={`/history/${waiting.id}/rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
           <span className="min-w-0">
             <span className="block font-semibold">How did it go?</span>
             <span className="block truncate text-sm text-muted">
-              <LocalTime iso={waiting.occurred_at} format="date" /> · {waiting.event_name ?? waiting.venue_name ?? TECHNIQUE_LABELS[waiting.technique]} — add your ratings
+              <LocalTime iso={waiting.occurred_at} format="date" /> · {waiting.event_name ?? waiting.venue_name ?? TECHNIQUE_LABELS[waiting.technique]} — rate it in a few taps
             </span>
           </span>
           <span aria-hidden className="text-muted">→</span>

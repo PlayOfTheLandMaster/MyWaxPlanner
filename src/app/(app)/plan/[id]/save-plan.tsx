@@ -13,9 +13,9 @@ export function SavePlanButton({ save }: { save: (prev: SavePlanState) => Promis
         onClick={() => startTransition(() => action())}
         className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Save as a planned session"}
+        {pending ? "Saving…" : "Use this plan"}
       </button>
-      <p className="text-xs text-muted">It goes in your History. After skiing, open it and add how the skis ran.</p>
+      <p className="text-xs text-muted">Saves it as today&apos;s session. After skiing, Today asks how it went.</p>
       {state.error && (
         <p role="alert" className="text-sm text-danger">
           {state.error}

@@ -99,5 +99,5 @@ export async function savePlan(
     await supabase.from("wax_sessions").update({ skier_id: choice.owner }).eq("id", sessionId as string);
   }
   revalidatePath("/history");
-  redirect(`/history/${sessionId as string}?saved=1`);
+  redirect(`/history/${sessionId as string}?saved=plan`);
 }

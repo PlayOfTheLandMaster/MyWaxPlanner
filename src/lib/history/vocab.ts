@@ -19,7 +19,7 @@ export type Sky = (typeof SKIES)[number];
 export type Track = (typeof TRACKS)[number];
 
 export const MODE_LABELS: Record<Mode, string> = { recreational: "Recreational", race: "Race day" };
-export const STATUS_LABELS: Record<Status, string> = { planned: "Planned", completed: "Skied" };
+export const STATUS_LABELS: Record<Status, string> = { planned: "Planned", completed: "Done" };
 export const ZONE_LABELS: Record<Zone, string> = { glide: "Glide", grip: "Grip" };
 export const KICK_FEEL_LABELS: Record<KickFeel, string> = {
   slipping: "Slipping",

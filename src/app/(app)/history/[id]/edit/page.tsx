@@ -9,18 +9,30 @@ import { saveSession } from "../../actions";
 
 export const metadata: Metadata = { title: "Edit session · My Wax Planner" };
 
-export default function EditSessionPage({ params }: PageProps<"/history/[id]/edit">) {
+export default function EditSessionPage({ params, searchParams }: PageProps<"/history/[id]/edit">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-6">
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Edit params={params} />
+        <Edit params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function Edit({ params }: { params: PageProps<"/history/[id]/edit">["params"] }) {
+async function Edit({
+  params,
+  searchParams,
+}: {
+  params: PageProps<"/history/[id]/edit">["params"];
+  searchParams: PageProps<"/history/[id]/edit">["searchParams"];
+}) {
   const { id } = await params;
+  // Arriving from "How did it go?" with something to correct.
+  const thenRaw = (await searchParams).then;
+  const then = (Array.isArray(thenRaw) ? thenRaw[0] : (thenRaw ?? "")).split(",");
+  const fix = [then.includes("layers") ? "what went on the skis" : null, then.includes("conditions") ? "the actual conditions" : null].filter(
+    Boolean,
+  );
   const supabase = await createClient();
   const [session, options] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase)]);
   if (!session) notFound();
@@ -48,6 +60,11 @@ async function Edit({ params }: { params: PageProps<"/history/[id]/edit">["param
         <BackLink fallback={`/history/${id}`} />
         <h1 className="text-2xl font-bold">Edit session</h1>
       </div>
+      {fix.length > 0 && (
+        <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
+          Ratings saved. Now correct {fix.join(" and ")} below, then Save changes.
+        </p>
+      )}
       <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} />
     </>
   );

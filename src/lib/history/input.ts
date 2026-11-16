@@ -4,7 +4,7 @@
 
 import { HUMIDITY_BANDS, LAYER_ROLES, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { TECHNIQUES } from "@/lib/skis/input";
-import { KICK_FEELS, METHODS, MODES, SKIES, STATUSES, TRACKS, ZONES, type Zone } from "./vocab";
+import { KICK_FEELS, METHODS, MODES, SKIES, STATUSES, TRACKS, ZONES, type Status, type Zone } from "./vocab";
 
 export type LayerInput = {
   zone: Zone;
@@ -67,6 +67,23 @@ function id(v: unknown): string | null {
  * datetime-local field) as an exact moment. tz_offset is the browser's
  * Date.getTimezoneOffset(), in minutes: 420 in Calgary in winter.
  */
+/**
+ * A session is done once it has been rated: any of glide, grip, durability or
+ * kick feel. Until then it stays as it was, and a new one starts as planned,
+ * so Today can ask how it went. Nobody sets the status by hand any more; the
+ * form carries the previous status in a hidden field only so that editing an
+ * older, unrated session that was already done does not undo it.
+ */
+export function statusFor(
+  r: { glide_rating: number | null; grip_rating: number | null; durability_rating: number | null; kick_feel: string | null },
+  previous: Status | null,
+): Status {
+  if (r.glide_rating !== null || r.grip_rating !== null || r.durability_rating !== null || r.kick_feel !== null) {
+    return "completed";
+  }
+  return previous ?? "planned";
+}
+
 export function localToIso(local: string | null, tzOffset: string | null): string | null {
   if (!local) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
@@ -104,7 +121,8 @@ function read(form: FormData): SessionPayload {
 
   const session = {
     occurred_at: occurredAt,
-    status: oneOf(STATUSES, form.get("status")) ?? "completed",
+    // Set from the ratings below (statusFor).
+    status: "planned" as Status,
     technique,
     ski_id: id(form.get("ski_id")),
     mode,
@@ -127,6 +145,7 @@ function read(form: FormData): SessionPayload {
     kick_feel: classic ? oneOf(KICK_FEELS, form.get("kick_feel")) : null,
     notes: longText(form.get("notes")),
   };
+  session.status = statusFor(session, oneOf(STATUSES, form.get("status")));
 
   const snowTemp = num(form.get("snow_temp_c"), "Snow temperature", -40, 0);
   const actualFields = {

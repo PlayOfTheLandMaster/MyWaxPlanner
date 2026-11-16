@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { localToIso, readSession } from "./input";
+import { localToIso, readSession, statusFor } from "./input";
 import { parseFilters, periodRange, seasonOf, seasonRange, toQuery } from "./filters";
 import { KICK_FEELS, METHODS, SKIES, TRACKS } from "./vocab";
 
@@ -122,4 +122,21 @@ test("whose skis: me, everyone, a skier, or unset (the skier picked on Today)", 
   assert.equal(parseFilters({ skier: "0b7c2c1e-1111-4222-8333-944455556666" }).skier, "0b7c2c1e-1111-4222-8333-944455556666");
   assert.equal(parseFilters({ skier: "nobody" }).skier, undefined);
   assert.equal(parseFilters({}).skier, undefined);
+});
+
+test("a session is done once it has any rating, and planned until then", () => {
+  const none = { glide_rating: null, grip_rating: null, durability_rating: null, kick_feel: null };
+  assert.equal(statusFor(none, null), "planned");
+  assert.equal(statusFor({ ...none, glide_rating: 4 }, null), "completed");
+  assert.equal(statusFor({ ...none, kick_feel: "good" }, "planned"), "completed");
+  // Editing an older session that was already done, with no ratings, keeps it done.
+  assert.equal(statusFor(none, "completed"), "completed");
+  assert.equal(statusFor(none, "planned"), "planned");
+});
+
+test("the form's status no longer decides: ratings do", () => {
+  const rated = readSession(form({ ...base, status: "planned", glide_rating: "5" }));
+  assert.equal(rated.payload?.session.status, "completed");
+  const unrated = readSession(form({ ...base }));
+  assert.equal(unrated.payload?.session.status, "planned");
 });
