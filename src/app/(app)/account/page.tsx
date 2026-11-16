@@ -65,9 +65,14 @@ async function Account() {
               {displayName(profile.data?.first_name as string | null, profile.data?.last_initial as string | null)}{" "}
               <span className="text-sm text-muted">· {[plural(pairs(null)), describeBody(me)].filter(Boolean).join(" · ")}</span>
             </span>
-            <Link href="/wax-box/skis?skier=me" className="text-sm text-link underline">
-              Skis
-            </Link>
+            <span className="flex shrink-0 gap-4 text-sm">
+              <a href="#prefs" className="inline-flex min-h-11 items-center text-link underline">
+                Edit
+              </a>
+              <Link href="/wax-box/skis?skier=me" className="inline-flex min-h-11 items-center text-link underline">
+                Skis
+              </Link>
+            </span>
           </li>
           {skiers.map((k) => (
             <li key={k.id} className="flex min-h-11 items-center justify-between gap-3">
@@ -75,9 +80,15 @@ async function Account() {
                 <span className="block truncate font-medium">{k.name}</span>
                 <span className="block truncate text-sm text-muted">{[plural(pairs(k.id)), describeBody(k), k.notes].filter(Boolean).join(" · ")}</span>
               </Link>
-              <Link href={`/wax-box/skis?skier=${k.id}`} className="shrink-0 text-sm text-link underline">
-                Skis
-              </Link>
+              {/* The name opens the editor too; "Edit" says so out loud. */}
+              <span className="flex shrink-0 gap-4 text-sm">
+                <Link href={`/account/skiers/${k.id}`} className="inline-flex min-h-11 items-center text-link underline" aria-label={`Edit ${k.name}`}>
+                  Edit
+                </Link>
+                <Link href={`/wax-box/skis?skier=${k.id}`} className="inline-flex min-h-11 items-center text-link underline">
+                  Skis
+                </Link>
+              </span>
             </li>
           ))}
         </ul>
@@ -90,7 +101,7 @@ async function Account() {
       </section>
 
       <section className={card} aria-labelledby="prefs">
-        <h2 id="prefs" className="mb-3 font-semibold">
+        <h2 id="prefs" className="mb-3 scroll-mt-4 font-semibold">
           You and preferences
         </h2>
         <SettingsForm
