@@ -181,17 +181,13 @@ function PickLine({ pick, owned }: { pick: Pick; owned: boolean }) {
         <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${pick.fit === "great" ? "bg-accent text-on-accent" : "bg-tile"}`}>{FIT_TEXT[pick.fit]}</span>
       </p>
       {pick.reasons.length > 0 && <p className="text-sm text-muted">{pick.reasons.join(" · ")}</p>}
-      {!owned && (
+      {/* No price for a wax not in the box: the catalogue's prices are from
+          one shop, in one currency (mostly US dollars), and would mislead. */}
+      {!owned && p.buy_url && (
         <p className="text-sm">
-          {p.price !== null ? `${p.price.toFixed(2)} ${p.currency ?? ""}` : null}
-          {p.buy_url && (
-            <>
-              {p.price !== null ? " · " : ""}
-              <a href={p.buy_url} target="_blank" rel="noopener noreferrer" className="text-link underline">
-                Where to buy
-              </a>
-            </>
-          )}
+          <a href={p.buy_url} target="_blank" rel="noopener noreferrer" className="text-link underline">
+            Where to buy
+          </a>
         </p>
       )}
     </div>
