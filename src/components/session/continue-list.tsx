@@ -6,12 +6,16 @@ import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { stageOf } from "@/lib/history/stage";
 import { deleteSession } from "@/app/(app)/history/actions";
 import { DeletePlanned } from "./delete-planned";
+import { splitByDay } from "@/lib/history/groups";
+import { readerTimeZone } from "@/lib/reader-zone";
 
 const NEXT: Record<string, string> = { wax: "Wax it", ski: "Ready to ski", rate: "Rate it" };
 
 /**
- * Sessions under way for the skier picked on Today: planned and not yet
- * rated, with what comes next. Shown at the top of the Session tab.
+ * Planned sessions for the skier picked on Today, at the top of the Session
+ * tab: "Current sessions" are today's and later ones; "Unrated sessions" are
+ * from an earlier day, skied and never rated. "Today" is the reader's own
+ * (lib/reader-zone), not the server's UTC.
  */
 export async function ContinueList() {
   const supabase = await createClient();
@@ -21,7 +25,7 @@ export async function ContinueList() {
     .select("id, occurred_at, technique, event_name, waxed_at, venue:venues (name)")
     .eq("status", "planned");
   q = who.current ? q.eq("skier_id", who.current.id) : q.is("skier_id", null);
-  const { data } = await q.order("occurred_at", { ascending: false }).limit(5);
+  const { data } = await q.order("occurred_at", { ascending: false }).limit(30);
   const rows = (data ?? []).map((r) => ({
     id: r.id as string,
     occurred_at: r.occurred_at as string,
@@ -33,13 +37,29 @@ export async function ContinueList() {
   if (rows.length === 0) return null;
 
   const now = new Date();
+  const { current, unrated } = splitByDay(rows, now, await readerTimeZone());
   return (
-    <section aria-labelledby="continue-h" className="flex flex-col gap-2">
+    <>
+      {current.length > 0 && (
+        <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to wax, ski or rate it." rows={current} now={now} />
+      )}
+      {unrated.length > 0 && (
+        <Group id="unrated-h" title="Unrated sessions" note="From an earlier day and not rated yet. Rate them, or delete the ones that never happened." rows={unrated} now={now} />
+      )}
+    </>
+  );
+}
+
+type Row = { id: string; occurred_at: string; technique: "classic" | "skate"; event_name: string | null; waxed_at: string | null; venue_name: string | null };
+
+function Group({ id, title, note, rows, now }: { id: string; title: string; note: string; rows: Row[]; now: Date }) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-2">
       <div>
-        <h2 id="continue-h" className="text-lg font-semibold">
-          Planned sessions
+        <h2 id={id} className="text-lg font-semibold">
+          {title}
         </h2>
-        <p className="text-sm text-muted">Planned and not yet rated. Tap one to wax, ski or rate it.</p>
+        <p className="text-sm text-muted">{note}</p>
       </div>
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
