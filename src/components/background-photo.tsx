@@ -29,7 +29,7 @@ export function BackgroundPhoto() {
   const next = `/backgrounds/${PHOTOS[(shown.index + 1) % PHOTOS.length]}.webp`;
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden print:hidden">
       {/* key: a new element per photo, so the fade-in runs each time. */}
       {/* eslint-disable-next-line @next/next/no-img-element -- a decorative, pre-sized background */}
       <img key={src} src={src} alt="" className="background-photo size-full object-cover" />

@@ -33,6 +33,22 @@
   }
 }
 
+/* Paper is white whatever the screen's theme: a PDF saved from a dark iPad
+   should not come out as white text on near-black. */
+@media print {
+  :root {
+    --page: #ffffff;
+    --surface: #ffffff;
+    --tile: #eef3fa;
+    --ink: #14202e;
+    --muted: #5a6675;
+    --line: #d3dae3;
+    --accent: #1d4f91;
+    --on-accent: #ffffff;
+    --link: #1d4f91;
+  }
+}
+
 @theme inline {
   --color-page: var(--page);
   --color-surface: var(--surface);

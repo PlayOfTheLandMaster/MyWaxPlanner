@@ -134,6 +134,15 @@ export async function SessionView({
 
       {planned && <StageStrip stage={stage} />}
 
+      {stage === "done" && (
+        <Link
+          href={`/session/${s.id}/share`}
+          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+        >
+          <span aria-hidden>↗</span> Share a summary
+        </Link>
+      )}
+
       {/* After skiing, rating is the one thing left to do, so it leads. */}
       {stage === "rate" && (
         <section id="rate" aria-labelledby="rate-h" className="flex scroll-mt-4 flex-col gap-3">
