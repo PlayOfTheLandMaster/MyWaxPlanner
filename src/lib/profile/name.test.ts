@@ -23,3 +23,11 @@ test("read: both are required", () => {
   assert.deepEqual(readName(form("Anna", "1")), { error: "Enter the first letter of your last name." });
   assert.ok("error" in readName(form("x".repeat(41), "S")));
 });
+
+test("split: a stored name back into its two fields", async () => {
+  const { splitName } = await import("./name");
+  assert.deepEqual(splitName("Anna S."), { first_name: "Anna", last_initial: "S" });
+  assert.deepEqual(splitName("Anna Maria K."), { first_name: "Anna Maria", last_initial: "K" });
+  assert.deepEqual(splitName("Anna"), { first_name: "Anna", last_initial: "" });
+  assert.deepEqual(splitName(null), { first_name: "", last_initial: "" });
+});

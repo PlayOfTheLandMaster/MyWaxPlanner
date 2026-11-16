@@ -28,3 +28,9 @@ export function readName(form: { get(name: string): unknown }): NameInput | { er
   if (!initial) return { error: "Enter the first letter of your last name." };
   return { first_name: first, last_initial: initial };
 }
+
+/** The reverse of displayName, for filling a form: "Anna S." → Anna and S; "Anna" → Anna and nothing. */
+export function splitName(name: string | null | undefined): NameInput {
+  const m = /^(.*\S)\s+(\p{L})\.?$/u.exec(name?.trim() ?? "");
+  return m ? { first_name: m[1], last_initial: m[2].toUpperCase() } : { first_name: name?.trim() ?? "", last_initial: "" };
+}

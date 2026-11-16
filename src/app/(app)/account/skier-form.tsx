@@ -4,6 +4,7 @@ import { startTransition, useActionState, useRef } from "react";
 import type { SkierFormState } from "./skier-actions";
 import { BodyFields } from "@/components/body-fields";
 import type { Body } from "@/lib/skiers/body";
+import { splitName } from "@/lib/profile/name";
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 
@@ -20,11 +21,13 @@ export function SkierForm({
   years: number[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  // Stored as "Anna S."; edited as its two parts.
+  const parts = splitName(initial?.name);
   const [state, action, pending] = useActionState<SkierFormState, FormData>(async (prev, data) => {
     const result = await save(prev, data);
     if (result.added && formRef.current) {
       formRef.current.reset();
-      formRef.current.querySelector<HTMLInputElement>("input[name=name]")?.focus();
+      formRef.current.querySelector<HTMLInputElement>("input[name=first_name]")?.focus();
     }
     return result;
   }, {});
@@ -39,7 +42,27 @@ export function SkierForm({
       }}
       className="flex flex-col gap-2"
     >
-      <input name="name" required maxLength={60} defaultValue={initial?.name} placeholder="Name, e.g. Emma" aria-label="Skier's name" className={field} />
+      {/* The initial tells two skiers with one first name apart: Anna S. and Anna K. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
+        <input
+          name="first_name"
+          required
+          maxLength={40}
+          defaultValue={parts.first_name}
+          placeholder="First name, e.g. Emma"
+          aria-label="Skier's first name"
+          className={field}
+        />
+        <input
+          name="last_initial"
+          required
+          maxLength={1}
+          defaultValue={parts.last_initial}
+          placeholder="Initial"
+          aria-label="Skier's last initial"
+          className={`${field} uppercase`}
+        />
+      </div>
       <input
         name="notes"
         maxLength={500}
