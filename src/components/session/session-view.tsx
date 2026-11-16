@@ -70,6 +70,9 @@ export async function SessionView({
   const planned = stage !== "done";
   const classic = s.technique === "classic";
   const steps = s.plan?.steps ?? [];
+  // Once skiing has started (or it is time to rate), the waxing is over: the
+  // steps stay as a record, but nothing invites waxing again.
+  const waxing = stage === "wax";
   const compare = comparePlan(s.plan?.picks ?? [], s.layers);
 
   // The waxes in the box, for swapping a layer while the session is under way.
@@ -166,10 +169,10 @@ export async function SessionView({
 
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-              Wax{s.waxed_at ? " ✓" : steps.length > 0 ? " · step by step" : ""}
+              Wax{s.waxed_at || !waxing ? " ✓" : steps.length > 0 ? " · step by step" : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              {steps.length > 0 && !s.waxed_at && (
+              {steps.length > 0 && waxing && !s.waxed_at && (
                 <Link
                   href={`/session/${s.id}/wax`}
                   className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
@@ -187,13 +190,13 @@ export async function SessionView({
                     Undo
                   </button>
                 </form>
-              ) : (
+              ) : waxing ? (
                 <form action={finishWaxing.bind(null, s.id)}>
                   <button type="submit" className="min-h-11 w-full rounded-lg border border-line px-4 font-semibold active:bg-tile">
                     Done waxing
                   </button>
                 </form>
-              )}
+              ) : null}
             </div>
           </details>
 

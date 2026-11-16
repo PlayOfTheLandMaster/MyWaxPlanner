@@ -79,7 +79,7 @@ async function SkiList({ searchParams }: { searchParams: PageProps<"/wax-box/ski
 
   return (
     <div className="flex flex-col gap-5">
-      <SkierBanner everyone={!pick} override={asked ? owners.find((o) => o.id === asked)?.name : null} />
+      <SkierBanner returnTo={wanted ? "/wax-box/skis" : undefined} everyone={!pick} override={asked ? owners.find((o) => o.id === asked)?.name : null} />
       {owners.length > 1 && (
         <nav aria-label="Owner" className="flex flex-wrap gap-2">
           {[{ id: undefined as string | undefined, name: "Everyone" }, ...owners].map((o) => (
