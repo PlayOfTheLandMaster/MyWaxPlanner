@@ -177,3 +177,15 @@ input.min-h-11:not([type="checkbox"]):not([type="radio"]) {
   min-height: 2.5rem;
   height: 2.5rem;
 }
+
+/* A <summary> styled as a plain row (list-none) shows no disclosure triangle.
+   Chrome on iPad still drew one from the class alone, beside the skier banner. */
+summary.list-none {
+  list-style: none;
+}
+summary.list-none::-webkit-details-marker {
+  display: none;
+}
+summary.list-none::marker {
+  content: "";
+}

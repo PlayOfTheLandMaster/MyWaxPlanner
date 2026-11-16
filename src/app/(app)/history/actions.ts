@@ -101,7 +101,8 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */
-export async function deleteSession(id: string) {
+/** Deletes a session; `back` is where to land (History by default, or the Session tab's list). */
+export async function deleteSession(id: string, back: "/history" | "/plan" = "/history") {
   const { supabase } = await signedIn();
   const { data: photos } = await supabase.from("wax_session_photos").select("storage_path").eq("session_id", id);
   const { data: session } = await supabase
@@ -114,7 +115,8 @@ export async function deleteSession(id: string) {
   if (session?.actual_conditions_id) await supabase.from("conditions").delete().eq("id", session.actual_conditions_id);
   if (photos?.length) await supabase.storage.from("session-photos").remove(photos.map((p) => p.storage_path));
   revalidatePath("/history");
-  redirect("/history");
+  revalidatePath("/plan");
+  redirect(back === "/plan" ? "/plan" : "/history");
 }
 
 export async function deletePhoto(sessionId: string, photoId: string) {

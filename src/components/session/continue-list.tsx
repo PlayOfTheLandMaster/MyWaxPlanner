@@ -4,6 +4,8 @@ import { loadSkierContext } from "@/lib/skiers/current";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { stageOf } from "@/lib/history/stage";
+import { deleteSession } from "@/app/(app)/history/actions";
+import { DeletePlanned } from "./delete-planned";
 
 const NEXT: Record<string, string> = { wax: "Wax it", ski: "Ready to ski", rate: "Rate it" };
 
@@ -33,17 +35,23 @@ export async function ContinueList() {
   const now = new Date();
   return (
     <section aria-labelledby="continue-h" className="flex flex-col gap-2">
-      <h2 id="continue-h" className="font-semibold">
-        Continue
-      </h2>
+      <div>
+        <h2 id="continue-h" className="text-lg font-semibold">
+          Planned sessions
+        </h2>
+        <p className="text-sm text-muted">Planned and not yet rated. Tap one to wax, ski or rate it.</p>
+      </div>
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
           const stage = stageOf({ status: "planned", occurred_at: r.occurred_at, waxed_at: r.waxed_at }, now);
           return (
-            <li key={r.id}>
+            <li
+              key={r.id}
+              className={`flex items-center gap-1 rounded-xl border bg-surface pr-2 ${stage === "rate" ? "border-accent" : "border-line"}`}
+            >
               <Link
                 href={`/session/${r.id}${stage === "rate" ? "#rate" : ""}`}
-                className={`flex items-center justify-between gap-3 rounded-xl border bg-surface p-3 active:bg-tile ${stage === "rate" ? "border-accent" : "border-line"}`}
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-l-xl p-3 active:bg-tile"
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{r.event_name ?? r.venue_name ?? `${TECHNIQUE_LABELS[r.technique]} session`}</span>
@@ -53,6 +61,10 @@ export async function ContinueList() {
                 </span>
                 <span className={`shrink-0 text-sm ${stage === "rate" ? "font-semibold text-link" : "text-muted"}`}>{NEXT[stage]} →</span>
               </Link>
+              <DeletePlanned
+                action={deleteSession.bind(null, r.id, "/plan")}
+                label={r.event_name ?? r.venue_name ?? "this planned session"}
+              />
             </li>
           );
         })}

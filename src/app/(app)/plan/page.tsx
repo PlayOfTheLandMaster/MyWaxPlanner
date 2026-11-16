@@ -19,21 +19,13 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
-      {/* The Session tab: sessions under way first, then a new plan, then a
-          way to log a wax done without one. */}
+      {/* The Session tab: its own title, then sessions already planned, a way
+          to log a wax done without a plan, and a new plan. */}
+      <h1 className="text-2xl font-bold">Session</h1>
       <Suspense fallback={null}>
         <ContinueList />
       </Suspense>
-      <div>
-        <h1 className="text-2xl font-bold">Plan a wax</h1>
-        <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
-      </div>
-      <Suspense fallback={null}>
-        <SkierBanner />
-      </Suspense>
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Plan searchParams={searchParams} />
-      </Suspense>
+      {/* Near the top, beside the plan: the full form for a wax done without one. */}
       <Link
         href="/history/new"
         className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
@@ -46,6 +38,16 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
           →
         </span>
       </Link>
+      <div>
+        <h2 className="text-lg font-semibold">Plan a wax</h2>
+        <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
+      </div>
+      <Suspense fallback={null}>
+        <SkierBanner />
+      </Suspense>
+      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <Plan searchParams={searchParams} />
+      </Suspense>
     </main>
   );
 }

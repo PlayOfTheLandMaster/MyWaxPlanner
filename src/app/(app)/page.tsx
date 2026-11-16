@@ -142,6 +142,9 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       >
         {who.current ? `Plan ${who.current.name}'s wax` : "Plan today\u2019s wax"}
       </Link>
+      <Link href="/history/new" className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline">
+        Already waxed? Log it in full
+      </Link>
 
       {waiting && (
         <Link href={`/session/${waiting.id}#rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
