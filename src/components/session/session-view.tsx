@@ -167,19 +167,20 @@ export async function SessionView({
             </div>
           </details>
 
-          <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
+          {steps.length > 0 && waxing && !s.waxed_at && (
+            <Link
+              href={`/session/${s.id}/wax`}
+              className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+            >
+              {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
+            </Link>
+          )}
+          {/* Folded by default: Start wax-along, above, is the way in; the full list is here when wanted. */}
+          <details className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
               Wax{s.waxed_at || !waxing ? " ✓" : steps.length > 0 ? " · step by step" : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              {steps.length > 0 && waxing && !s.waxed_at && (
-                <Link
-                  href={`/session/${s.id}/wax`}
-                  className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-                >
-                  {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
-                </Link>
-              )}
               {steps.length > 0 && <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />}
               {s.waxed_at ? (
                 <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
