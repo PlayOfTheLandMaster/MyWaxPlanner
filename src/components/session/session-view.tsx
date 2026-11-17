@@ -143,6 +143,16 @@ export async function SessionView({
 
       {planned && <StageStrip stage={stage} />}
 
+      {/* A coach waxing a squad the same way: one session, copied to each pair. */}
+      {s.layers.length > 0 && (
+        <Link
+          href={`/session/${s.id}/copy`}
+          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+        >
+          <span aria-hidden>⧉</span> Copy to other skis
+        </Link>
+      )}
+
       {stage === "done" && (
         <Link
           href={`/session/${s.id}/share`}
