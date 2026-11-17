@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { addVenue, type VenueFormState } from "./actions";
 
@@ -93,9 +94,19 @@ export function VenueForm({ prefill, back }: { prefill: VenuePrefill; back: stri
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50">
-        {pending ? "Saving…" : "Save venue"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={pending}
+          className="min-h-11 flex-1 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : "Save venue"}
+        </button>
+        {/* Back to where Add a venue was opened from: Today, Plan a wax or Venues. Nothing is saved. */}
+        <Link href={back} className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
+          Cancel
+        </Link>
+      </div>
     </form>
   );
 }
