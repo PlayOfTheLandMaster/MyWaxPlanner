@@ -34,7 +34,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         <Copied searchParams={searchParams} />
       </Suspense>
       <div>
-        <h2 className="text-lg font-semibold">Plan a wax</h2>
+        <h2 className="text-lg font-semibold">Plan a wax session</h2>
         <p className="text-sm text-muted">
           The app suggests waxes from your box. Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.
         </p>
