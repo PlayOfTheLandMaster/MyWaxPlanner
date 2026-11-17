@@ -32,12 +32,12 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         <ContinueList />
         {/* Near the top, beside the plan: the full form for a wax done without one. */}
         <Link
-          href="/history/new"
+          href="/history/new?record=1"
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
         >
           <span>
-            <span className="block font-semibold">I already waxed</span>
-            <span className="block text-sm text-muted">Log what went on the skis, without a plan</span>
+            <span className="block font-semibold">Record a wax</span>
+            <span className="block text-sm text-muted">Already waxed, or picking your own waxes: enter what goes on the skis</span>
           </span>
           <span aria-hidden className="text-muted">
             →
@@ -46,7 +46,9 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       </Suspense>
       <div>
         <h2 className="text-lg font-semibold">Plan a wax</h2>
-        <p className="text-sm text-muted">Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.</p>
+        <p className="text-sm text-muted">
+          The app suggests waxes from your box. Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.
+        </p>
       </div>
       <Suspense fallback={null}>
         <SkierBanner />

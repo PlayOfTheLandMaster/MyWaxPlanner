@@ -145,7 +145,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
             href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            {who.current ? `Record ${who.current.name}'s wax` : "Record today\u2019s wax"}
+            {who.current ? `Record a wax for ${who.current.name}` : "Record a wax"}
           </Link>
           <Link
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
@@ -160,10 +160,13 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            {who.current ? `Plan ${who.current.name}'s wax` : "Plan today\u2019s wax"}
+            {who.current ? `Plan a wax for ${who.current.name}` : "Plan a wax"}
           </Link>
-          <Link href="/history/new" className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline">
-            Already waxed? Log it in full
+          <Link
+            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
+          >
+            Already waxed? Record a wax
           </Link>
         </>
       )}
