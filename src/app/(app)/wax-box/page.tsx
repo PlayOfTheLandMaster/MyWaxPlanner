@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { AMOUNT_LABELS, CATEGORY_GROUPS, CATEGORY_LABELS, FLUORO_LABELS } from "@/lib/catalogue/labels";
 import { loadBox, type BoxRow } from "@/lib/wax-box/load";
@@ -14,6 +15,7 @@ export default function WaxBoxPage({ searchParams }: PageProps<"/wax-box">) {
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <h1 className="text-2xl font-bold">Wax box</h1>
       <WaxBoxNav current="waxes" />
+      <SetupNext step="waxes" searchParams={searchParams} />
       <Link
         href="/wax-box/add"
         className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"

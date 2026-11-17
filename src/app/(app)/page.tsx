@@ -10,6 +10,7 @@ import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
+import { setupSteps } from "@/lib/setup/steps";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -74,12 +75,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
 
   const waxes = box.data ?? [];
   const low = waxes.filter((w) => w.amount_left === "low" || w.amount_left === "empty").length;
-  const steps = [
-    { done: home !== null, label: "Pick a home venue", href: "/venues" },
-    { done: (skiCount.count ?? 0) > 0, label: "Add your skis", href: "/wax-box/skis/new" },
-    { done: waxes.length > 0, label: "Add your waxes", href: "/wax-box/add" },
-    { done: (toolCount.count ?? 0) > 0, label: "Tick the tools you own", href: "/wax-box/tools" },
-  ];
+  const steps = setupSteps({ home: home !== null, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
   const todo = steps.filter((s) => !s.done).length;
 
   // Venues for the chips: home first, then the ones you've skied most recently.

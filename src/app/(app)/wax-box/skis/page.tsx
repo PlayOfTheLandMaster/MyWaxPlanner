@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { BackLink } from "@/components/nav-trail";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { WaxBoxNav } from "@/components/wax-box-nav";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -27,6 +28,7 @@ export default function SkisPage({ searchParams }: PageProps<"/wax-box/skis">) {
       <BackLink fallback="/wax-box" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Wax box</h1>
       <WaxBoxNav current="skis" />
+      <SetupNext step="skis" searchParams={searchParams} />
       <Link
         href="/wax-box/skis/new"
         className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
