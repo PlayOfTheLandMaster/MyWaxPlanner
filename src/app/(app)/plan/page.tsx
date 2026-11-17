@@ -21,7 +21,7 @@ const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 tex
 const label = "flex flex-col gap-1 text-sm font-medium";
 // A hairline between the page's three groups (plan, record, the lists): a
 // quiet break, in the card borders' grey, with a little room either side.
-const divider = <hr className="my-1 border-line" />;
+const divider = <hr className="my-1 border-t-2 border-muted/35" />;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? undefined;
 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
