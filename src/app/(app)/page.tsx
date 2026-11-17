@@ -36,7 +36,7 @@ const card = "rounded-xl border border-line bg-surface p-4";
 // stylesheet's order, not the class list's, and bg-surface comes later.
 const tinted = "rounded-xl border border-line p-4";
 
-export default function TodayPage() {
+export default function TodayPage({ searchParams }: PageProps<"/">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       {/* Coming back to Today, every card starts folded. */}
@@ -61,6 +61,9 @@ export default function TodayPage() {
           </svg>
         </Link>
       </header>
+      <Suspense fallback={null}>
+        <Saved searchParams={searchParams} />
+      </Suspense>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Today />
       </Suspense>
@@ -347,6 +350,16 @@ async function Conditions({ venue }: { venue: VenueRow }) {
         </div>
       </details>
     </>
+  );
+}
+
+/** After Record a wax job's Save: where the new session is, and what comes next. */
+async function Saved({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
+  if ((await searchParams).saved !== "recorded") return null;
+  return (
+    <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
+      <strong>Wax job saved.</strong> It&apos;s under Active sessions; mark it Done Skiing after skiing, then rate it.
+    </p>
   );
 }
 

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { SessionForm, type SessionInitial } from "../session-form";
 import { saveSession } from "../actions";
+import { RecordForm } from "../record-form";
 import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { isExpert } from "@/lib/profile/style";
@@ -13,12 +14,6 @@ import { formOwner, skisOf } from "@/lib/skis/owner";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { forecastFor } from "@/lib/weather/window";
-import { encodeDraft } from "@/lib/plan/draft";
-import { draftFromWindow } from "@/lib/history/record";
-import { ForecastCard } from "@/components/forecast-card";
-import { fold, foldHead } from "@/components/fold";
-import { SKY_ICONS, SKY_LABELS } from "@/lib/history/vocab";
-import { loadSnowCheck } from "@/lib/snow/load";
 import type { FormOptions } from "@/lib/history/load";
 
 export const metadata: Metadata = { title: "Record a wax job · My Wax Planner" };
@@ -150,12 +145,8 @@ async function Record({
   skierName: string | null;
   expert: boolean;
 }) {
-  const supabase = await createClient();
-  const [forecast, snowCheck] = await Promise.all([
-    venue ? forecastFor(venue, { hours: 2 }) : Promise.resolve(null),
-    loadSnowCheck(supabase),
-  ]);
-  const w = forecast?.window ?? null;
+  // For the moment the form opens on, as the forecast saved with it will be.
+  const forecast = venue ? await forecastFor(venue, { at: new Date().toISOString(), hours: 2 }) : null;
 
   // A copy keeps its skis, layers and finish, but is for now and here.
   const start: SessionInitial | undefined = initial
@@ -199,35 +190,12 @@ async function Record({
         )}
       </p>
 
-
-      {w ? (
-        // Folded to one line: the sky and air temperature; opens on the forecast saved with the session.
-        <details className={fold}>
-          <summary className={foldHead}>
-            <span aria-hidden className="text-2xl leading-none">
-              {SKY_ICONS[w.sky]}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate font-semibold">Forecast at time of session</span>
-              <span className="block truncate text-sm text-muted">
-                {`${w.air_temp_c > 0 ? "+" : ""}${w.air_temp_c}`.replace("-", "−")} °C · {SKY_LABELS[w.sky]} · {w.venue.name}
-              </span>
-            </span>
-          </summary>
-          <ForecastCard w={w} compact bare />
-          <p className="px-4 pb-4 text-xs text-muted">Saved with the session. Record what the snow was really like when you rate it.</p>
-        </details>
-      ) : forecast?.error ? (
-        <p className="text-sm text-muted">No forecast to save: {forecast.error}</p>
-      ) : null}
-
-      <SessionForm
+      <RecordForm
         options={options}
         save={saveSession.bind(null, null)}
         initial={start}
-        submitLabel="Save"
-        cancelHref="/"
-        hidden={w ? { forecast: encodeDraft(draftFromWindow(w, snowCheck)) } : undefined}
+        window={forecast?.window ?? null}
+        error={forecast?.error ?? null}
       />
     </>
   );

@@ -114,6 +114,7 @@ export function SessionForm({
   submitLabel,
   cancelHref,
   hidden,
+  onWhereWhen,
 }: {
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
@@ -123,6 +124,8 @@ export function SessionForm({
   cancelHref: string;
   /** Extra fields sent with the form, e.g. the forecast "Record today's wax" saves. */
   hidden?: Record<string, string>;
+  /** Told the venue and the moment (ISO, or null while the time is incomplete) whenever either changes. */
+  onWhereWhen?: (venueId: string, at: string | null) => void;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
@@ -202,13 +205,19 @@ export function SessionForm({
             name="occurred_at"
             required
             value={when}
-            onChange={(e) => setWhen(e.target.value)}
+            onChange={(e) => {
+              setWhen(e.target.value);
+              onWhereWhen?.(venue, momentOf(e.target.value));
+            }}
             className={field}
           />
         </label>
         <label className={label}>
           Venue
-          <select name="venue_id" value={venue} onChange={(e) => setVenue(e.target.value)} className={field}>
+          <select name="venue_id" value={venue} onChange={(e) => {
+              setVenue(e.target.value);
+              onWhereWhen?.(e.target.value, momentOf(when));
+            }} className={field}>
             <option value="">Not set</option>
             {options.venues.filter((v) => !v.hidden || v.id === initial?.venue_id).map((v) => (
               <option key={v.id} value={v.id}>
@@ -661,4 +670,10 @@ function LayerRow({
       />
     </li>
   );
+}
+
+/** A datetime-local value (the browser's own clock) as a moment, or null while it is incomplete. */
+function momentOf(local: string): string | null {
+  const t = new Date(local);
+  return local && !Number.isNaN(t.getTime()) ? t.toISOString() : null;
 }

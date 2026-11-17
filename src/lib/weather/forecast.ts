@@ -74,8 +74,11 @@ type OpenMeteo = {
 
 export class ForecastError extends Error {}
 
-/** All forecast hours for a venue: yesterday through six days ahead. */
-export async function fetchHours(venue: Venue): Promise<{ hours: Hour[]; data: OpenMeteo }> {
+/**
+ * All forecast hours for a venue: two days back (or `pastDays`, up to the
+ * weather service's 92, for a wax job recorded later) through six days ahead.
+ */
+export async function fetchHours(venue: Venue, pastDays = 2): Promise<{ hours: Hour[]; data: OpenMeteo }> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(venue.latitude));
   url.searchParams.set("longitude", String(venue.longitude));
@@ -84,7 +87,7 @@ export async function fetchHours(venue: Venue): Promise<{ hours: Hour[]; data: O
   if (venue.elevation_m !== null) url.searchParams.set("elevation", String(venue.elevation_m));
   url.searchParams.set("hourly", HOURLY);
   url.searchParams.set("timezone", "auto");
-  url.searchParams.set("past_days", "2");
+  url.searchParams.set("past_days", String(Math.min(92, Math.max(2, Math.ceil(pastDays)))));
   url.searchParams.set("forecast_days", "7");
   url.searchParams.set("wind_speed_unit", "kmh");
 
