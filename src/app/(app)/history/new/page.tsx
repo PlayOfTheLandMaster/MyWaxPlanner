@@ -185,16 +185,16 @@ async function Record({
           names the setting for an expert, and points a guided waxer at the
           way in that does suggest. A quiet pill, like the skier line. */}
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">
-          {expert ? "Expert mode" : "You choose the waxes"}
-        </span>
+        {expert && (
+          <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">Expert mode</span>
+        )}
         {expert ? (
           <Link href="/account" className="inline-flex min-h-11 items-center text-link underline">
             Change in Account
           </Link>
         ) : (
           <Link href={venue ? `/plan?venue=${venue.id}` : "/plan"} className="inline-flex min-h-11 items-center text-link underline">
-            Want suggestions? Plan a wax session
+            Or do you want suggestions? Plan a wax session
           </Link>
         )}
       </p>
