@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { setWaxStep } from "@/app/(app)/session/actions";
+import { setWaxSteps } from "@/app/(app)/session/actions";
 import { timerMinutes } from "@/lib/history/timer";
 
 /**
  * Wax-along: the plan's steps one at a time, in big text, for a bench with
  * waxy hands. "Done — next" ticks the step on the session (the same ticks as
- * the checklist) and moves on. A step that says how long to wait offers a
+ * the checklist) and moves on at once: the button is never switched off while
+ * a tick saves, because a tap swallowed during the save read as "Done needs
+ * two taps". Saves run one after another, each sending the latest list. A step that says how long to wait offers a
  * timer. The screen is kept awake while this page is open, where the browser
  * allows it.
  */
@@ -27,18 +29,19 @@ export function WaxAlong({
   const [at, setAt] = useState(firstOpen === -1 ? steps.length : firstOpen);
   const [done, setDone] = useState<number[]>(initialDone);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const latest = useRef<number[]>(initialDone);
+  const queue = useRef<Promise<void>>(Promise.resolve());
   useWakeLock();
 
   const mark = (i: number, on: boolean) => {
-    setDone((d) => (on ? [...new Set([...d, i])] : d.filter((n) => n !== i)));
+    const next = on ? [...new Set([...latest.current, i])] : latest.current.filter((n) => n !== i);
+    latest.current = next;
+    setDone(next);
     setError(null);
-    startTransition(async () => {
-      const failed = await setWaxStep(sessionId, i, on);
-      if (failed) {
-        setDone((d) => (on ? d.filter((n) => n !== i) : [...d, i]));
-        setError(failed);
-      }
+    // In order, and always the newest list: a slow save can never undo a later tap.
+    queue.current = queue.current.then(async () => {
+      const failed = await setWaxSteps(sessionId, latest.current).catch(() => "No connection: the tick was not saved.");
+      if (failed) setError(failed);
     });
   };
 
@@ -106,7 +109,6 @@ export function WaxAlong({
         </button>
         <button
           type="button"
-          disabled={pending}
           onClick={() => {
             mark(at, true);
             setAt(at + 1);
