@@ -111,6 +111,13 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   Chrome on iPad; `summary.list-none` hides it.
 - Every tap target is at least 44 px (`min-h-11`).
 
+## Tailwind
+
+- Two classes setting the same property on one element (`bg-surface` and
+  `bg-active`) are decided by their order in the built stylesheet, not in the
+  class list, and nothing warns. Today's tinted session cards stayed white for
+  that reason. Give an element one class per property.
+
 ## Time zones
 
 The server runs in UTC. "Today" and every date shown are the reader's: the
