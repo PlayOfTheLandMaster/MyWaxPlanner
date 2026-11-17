@@ -153,6 +153,17 @@ export async function SessionView({
         </Link>
       )}
 
+      {/* A past session can be today's answer: the same skis, waxes and
+          finish as a new session for now, with today's forecast saved. */}
+      {stage === "done" && s.layers.length > 0 && (
+        <Link
+          href={`/history/new?record=1&from=${s.id}`}
+          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+        >
+          Use this wax today
+        </Link>
+      )}
+
       {stage === "done" && (
         <Link
           href={`/session/${s.id}/share`}
@@ -337,10 +348,10 @@ export async function SessionView({
           Edit everything
         </Link>
         <Link
-          href={`/history/new?from=${id}`}
+          href={`/history/new?record=1&from=${id}`}
           className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
         >
-          Repeat this prep
+          Use this wax today
         </Link>
       </div>
 
