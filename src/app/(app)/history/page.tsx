@@ -329,10 +329,8 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
           <span className="hidden group-open:inline">Hide sessions</span>
         </summary>
         <div className="mt-4 flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <p>
-            {rows.length} {rows.length === 1 ? "session" : "sessions"} · {periodLabel(f.period).toLowerCase()}
-          </p>
+        {/* The count is on the Show sessions button; only the sort is needed here. */}
+        <div className="flex items-center justify-end gap-3 text-sm">
           <nav aria-label="Sort" className="flex flex-wrap justify-end gap-x-3">
             {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
               <Link
