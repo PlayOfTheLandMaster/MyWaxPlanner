@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { SessionForm, type SessionInitial } from "../session-form";
-import { saveSession } from "../actions";
+import { deleteSession, saveSession } from "../actions";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { formOwner, skisOf } from "@/lib/skis/owner";
@@ -178,8 +179,8 @@ async function Record({
       : undefined;
   const base = `/history/new?record=1${venue ? `&venue=${venue.id}` : ""}`;
   const row = (p: PastSession) => (
-    <li key={p.id}>
-      <Link href={`${base}&from=${p.id}`} className="flex min-h-11 items-center justify-between gap-3 py-1 active:bg-tile">
+    <li key={p.id} className="flex items-center gap-1">
+      <Link href={`${base}&from=${p.id}`} className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 py-1 active:bg-tile">
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium">
             <LocalTime iso={p.occurred_at} format="date" />
@@ -195,6 +196,8 @@ async function Record({
           Use →
         </span>
       </Link>
+      {/* Deletes the past session itself, from History too: one tap asks, a second deletes. */}
+      <ConfirmDelete action={deleteSession.bind(null, p.id, "stay")} label="this session" />
     </li>
   );
 

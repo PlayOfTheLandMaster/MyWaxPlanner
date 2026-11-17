@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/nav-trail";
 import { Suspense } from "react";
 import { SkierBanner } from "@/components/skier-banner";
 import Link from "next/link";
@@ -21,6 +22,8 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       {/* The Session tab: its own title, then sessions already planned, a way
           to log a wax done without a plan, and a new plan. */}
+      {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
+      <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Session</h1>
       <Suspense fallback={null}>
         <Copied searchParams={searchParams} />
@@ -37,7 +40,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         >
           <span>
             <span className="block font-semibold">Record a wax</span>
-            <span className="block text-sm text-muted">Already waxed, or picking your own waxes: enter what goes on the skis</span>
+            <span className="block text-sm text-muted">Already waxed, or picking your own waxes? Enter what goes on the skis.</span>
           </span>
           <span aria-hidden className="text-muted">
             →
