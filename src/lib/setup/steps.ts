@@ -63,15 +63,22 @@ export function setupSteps(f: SetupFacts): Step[] {
   ];
 }
 
-/** How far through the steps that count: the checklist goes once `todo` is 0. */
+/**
+ * "x of 5 done" counts every step on the list, as the owner reads it. `todo`
+ * counts only the required ones: the checklist goes once it is 0, so an
+ * optional step left undone never keeps it on Today.
+ */
 export function progress(steps: Step[]): {
   done: number;
   total: number;
   todo: number;
 } {
-  const required = steps.filter((s) => !s.optional);
-  const done = required.filter((s) => s.done).length;
-  return { done, total: required.length, todo: required.length - done };
+  const todo = steps.filter((s) => !s.optional && !s.done).length;
+  return {
+    done: steps.filter((s) => s.done).length,
+    total: steps.length,
+    todo,
+  };
 }
 
 export type NextCard =
@@ -79,18 +86,19 @@ export type NextCard =
       kind: "next";
       doneLabel: string;
       next: Step;
-      skipTo: Step | null;
       left: number;
     }
   | { kind: "finished" }
   | null;
 
+// Said once a step is done. Each says the list is never closed: nobody has
+// every wax to hand on day one, and a new pair or a new skier comes along later.
 const DONE_LABELS: Record<StepKey, string> = {
-  venue: "Home venue set.",
-  skiers: "Skier added.",
-  skis: "Skis added.",
-  waxes: "Waxes added.",
-  tools: "Tools ticked.",
+  venue: "Home venue set. You can change it, or add more venues, any time from Venues.",
+  skiers: "Skier added. Add the rest now, or any time later from your Account page.",
+  skis: "Skis added. Add the rest now, or any time later from Wax box → Skis.",
+  waxes: "Waxes added. Add the rest now, or any time later from the Wax box: you don’t need them all today.",
+  tools: "Tools ticked. You can tick more any time from Wax box → Tools.",
 };
 
 /**
@@ -98,7 +106,6 @@ const DONE_LABELS: Record<StepKey, string> = {
  * first undone one after this, wrapping round), or "all set" when every step
  * that counts is done and the page was opened from the checklist. Nothing
  * while this step itself is still undone, or once setup is long finished.
- * When the next step is optional, `skipTo` is the next required one after it.
  */
 export function nextCard(
   steps: Step[],
@@ -111,16 +118,10 @@ export function nextCard(
   const order = [...steps.slice(i + 1), ...steps.slice(0, i)];
   const next = todo > 0 ? order.find((s) => !s.done) : undefined;
   if (next) {
-    const skipTo = next.optional
-      ? (order
-          .slice(order.indexOf(next) + 1)
-          .find((s) => !s.done && !s.optional) ?? null)
-      : null;
     return {
       kind: "next",
       doneLabel: DONE_LABELS[current],
       next,
-      skipTo,
       left: todo,
     };
   }

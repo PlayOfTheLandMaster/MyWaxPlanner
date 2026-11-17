@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { BackLink } from "@/components/nav-trail";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ConfirmDelete } from "@/components/confirm-delete";
+import { deleteSki } from "./actions";
 import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { WaxBoxNav } from "@/components/wax-box-nav";
@@ -120,11 +122,8 @@ function SkiRows({ skis }: { skis: Ski[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {skis.map((s) => (
-        <li key={s.id}>
-          <Link
-            href={`/wax-box/skis/${s.id}`}
-            className="block rounded-xl border border-line bg-surface p-3 active:bg-tile"
-          >
+        <li key={s.id} className="flex items-center gap-1 rounded-xl border border-line bg-surface pr-2">
+          <Link href={`/wax-box/skis/${s.id}`} className="block min-w-0 flex-1 rounded-xl p-3 active:bg-tile">
             <p className="truncate font-medium">{s.name}</p>
             <p className="truncate text-sm text-muted">
               {[
@@ -137,6 +136,7 @@ function SkiRows({ skis }: { skis: Ski[] }) {
                 .join(" · ")}
             </p>
           </Link>
+          <ConfirmDelete action={deleteSki.bind(null, s.id, "list")} label={s.name} />
         </li>
       ))}
     </ul>

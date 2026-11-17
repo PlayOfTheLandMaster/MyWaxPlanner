@@ -43,7 +43,7 @@ async function Edit({ params }: { params: PageProps<"/wax-box/skis/[id]">["param
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">
           Delete these skis
         </summary>
-        <form action={deleteSki.bind(null, id)} className="flex flex-col gap-2 p-3 pt-0">
+        <form action={deleteSki.bind(null, id, "edit")} className="flex flex-col gap-2 p-3 pt-0">
           <p className="text-sm text-muted">
             Waxing sessions on these skis stay in your history; they just won&apos;t name a pair.
           </p>

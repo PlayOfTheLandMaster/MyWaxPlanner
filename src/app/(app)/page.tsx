@@ -11,6 +11,7 @@ import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
+import { SetupChecklist } from "@/components/setup-checklist";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -77,7 +78,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
   const waxes = box.data ?? [];
   const low = waxes.filter((w) => w.amount_left === "low" || w.amount_left === "empty").length;
   const steps = setupSteps({ home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
-  const { done: doneCount, total, todo } = progress(steps);
+  const { todo } = progress(steps);
 
   // Venues for the chips: home first, then the ones you've skied most recently.
   const usable = venues.filter(forecastable);
@@ -110,29 +111,8 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       </div>
 
       {todo > 0 && (
-        <section className={card} aria-labelledby="start">
-          <h2 id="start" className="font-semibold">
-            Getting started <span className="font-normal text-muted">· {doneCount} of {total} done</span>
-          </h2>
-          <p className="text-sm text-muted">Recommendations come from your own skis, waxes and tools.</p>
-          <ul className="mt-2 flex flex-col">
-            {steps.map((s) => (
-              <li key={s.label}>
-                <Link href={s.href} className="flex min-h-11 items-center gap-3 active:bg-tile">
-                  <span
-                    aria-hidden
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${s.done ? "border-accent bg-accent text-on-accent" : "border-line"}`}
-                  >
-                    {s.done ? "✓" : ""}
-                  </span>
-                  <span className={s.done ? "text-muted line-through" : ""}>
-                    {s.label}
-                    {s.optional && !s.done && <span className="text-sm text-muted"> · optional</span>}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <section className={card} aria-label="Getting started">
+          <SetupChecklist steps={steps} next={steps.find((s) => !s.done)?.key} />
         </section>
       )}
 

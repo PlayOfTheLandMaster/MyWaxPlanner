@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { readSki } from "@/lib/skis/input";
 
@@ -33,9 +34,14 @@ export async function updateSki(id: string, _prev: SkiFormState, formData: FormD
   redirect("/wax-box/skis");
 }
 
-/** Waxing sessions on these skis are kept; they just no longer name a pair. */
-export async function deleteSki(id: string) {
+/**
+ * Waxing sessions on these skis are kept; they just no longer name a pair.
+ * From the list it stays on the list as it was (owner filter included);
+ * from the edit page, whose pair is gone, it goes back to the list.
+ */
+export async function deleteSki(id: string, from: "edit" | "list" = "edit") {
   const { supabase } = await signedIn();
   await supabase.from("skis").delete().eq("id", id);
-  redirect("/wax-box/skis");
+  if (from === "list") refresh();
+  else redirect("/wax-box/skis");
 }
