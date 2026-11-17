@@ -20,6 +20,8 @@ import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
+import { readerTimeZone } from "@/lib/reader-zone";
+import { todayTitle } from "@/lib/today-title";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -39,7 +41,12 @@ export default function TodayPage() {
       {/* Coming back to Today, every card starts folded. */}
       <FoldOnLeave />
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Today</h1>
+        {/* The date reads the reader's time-zone cookie, so it waits in its own boundary. */}
+        <h1 className="min-w-0 text-2xl font-bold">
+          <Suspense fallback="Today">
+            <TodayTitle />
+          </Suspense>
+        </h1>
         <Link
           href="/account"
           aria-label="Account"
@@ -323,4 +330,10 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       </details>
     </>
   );
+}
+
+async function TodayTitle() {
+  // The cookie first: Next refuses the clock before the page has read the request.
+  const tz = await readerTimeZone();
+  return todayTitle(new Date(), tz);
 }
