@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { readName } from "@/lib/profile/name";
+import { NOT_INVITED, isRefusedSignUp } from "@/lib/invites/email";
 
 // `email` is handed back so the form can keep it: React empties a form after
 // its action runs, and retyping an address after a wrong password is a chore.
@@ -46,7 +47,8 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     password,
     options: { emailRedirectTo: `${origin}/auth/confirm`, data: name },
   });
-  if (error) return { error: error.message, ...kept };
+  // No invitation for this address: the database refused the account.
+  if (error) return { error: isRefusedSignUp(error.message) ? NOT_INVITED : error.message, ...kept };
 
   // With email confirmation on (Supabase's default for a hosted project) there
   // is no session yet: the person has to click the link first.

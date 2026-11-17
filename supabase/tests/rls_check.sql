@@ -16,6 +16,8 @@ begin;
 -- Fixtures written as the database owner: two users, a brand, a product and
 -- a shared venue. Catalogue rows have to be written this way, which is itself
 -- part of what is being checked further down.
+-- Sign-up is by invitation, enforced on auth.users itself.
+insert into public.signup_invites (email) values ('a@example.test'), ('b@example.test');
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.test');
@@ -264,6 +266,30 @@ update public.profiles set units = 'f', home_venue_id = '00000000-0000-0000-0000
 select pg_temp.expect((select units from public.profiles) = 'f',
   'B can change their own settings and pick a shared home venue');
 
+-- ---------------------------------------------------------------- invitations
+reset role;
+select pg_temp.expect((select count(*) from public.signup_invites where used_at is not null) = 2,
+  'an invitation is marked used when its account is created');
+select pg_temp.expect_error($$insert into auth.users (id, email)
+  values ('00000000-0000-0000-0000-00000000000c', 'stranger@example.test')$$,
+  'nobody can sign up without an invitation');
+insert into public.app_admins (user_id) values ('00000000-0000-0000-0000-00000000000a');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+insert into public.signup_invites (email, invited_by)
+  values ('friend@example.test', '00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect((select count(*) from public.signup_invites) = 3,
+  'an admin can add and read invitations');
+reset role;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect((select count(*) from public.signup_invites) = 0,
+  'someone who is not an admin cannot read invitations');
+select pg_temp.expect_error($$insert into public.signup_invites (email) values ('mine@example.test')$$,
+  'someone who is not an admin cannot invite');
+delete from public.signup_invites;
+reset role;
+select pg_temp.expect((select count(*) from public.signup_invites) = 3,
+  'someone who is not an admin cannot remove invitations');
+
 -- ---------------------------------------------------------------- anon
 reset role;
 select set_config('role', 'anon', true);
@@ -275,5 +301,7 @@ select pg_temp.expect_error($$select 1 from public.saved_filters limit 1$$,
   'a signed-out visitor cannot read saved filters');
 select pg_temp.expect_error($$select 1 from public.wax_session_list limit 1$$,
   'a signed-out visitor cannot read the history list');
+select pg_temp.expect_error($$select 1 from public.signup_invites limit 1$$,
+  'a signed-out visitor cannot read invitations');
 
 rollback;

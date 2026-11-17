@@ -9,7 +9,7 @@ import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { formOwner, skisOf } from "@/lib/skis/owner";
 import Link from "next/link";
-import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { forecastable, loadHomeVenueId, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { encodeDraft } from "@/lib/plan/draft";
 import { draftFromWindow, similarSessions, type PastSession } from "@/lib/history/record";
@@ -17,7 +17,7 @@ import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import type { FormOptions } from "@/lib/history/load";
 
-export const metadata: Metadata = { title: "I already waxed · My Wax Planner" };
+export const metadata: Metadata = { title: "Record a wax · My Wax Planner" };
 
 export default function NewSessionPage({ searchParams }: PageProps<"/history/new">) {
   return (
@@ -36,11 +36,12 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // the venue Today showed, with its forecast saved alongside.
   const record = sp.record === "1";
   const supabase = await createClient();
-  const [allOptions, source, who, venues] = await Promise.all([
+  const [allOptions, source, who, venues, home] = await Promise.all([
     loadFormOptions(supabase),
     typeof from === "string" ? loadSession(supabase, from) : Promise.resolve(null),
     loadSkierContext(),
     record ? loadVenues(supabase) : Promise.resolve([]),
+    record ? loadHomeVenueId(supabase) : Promise.resolve(null),
   ]);
   // Only the skis of the person this session is for: the skier picked on
   // Today, or for "Repeat this prep" whoever the copied session was for.
@@ -51,7 +52,9 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // planned for now. Ratings, conditions and race details start empty.
   // Layers whose wax has left the box are kept, by name.
   const boxIds = new Set(options.waxes.map((w) => w.id));
-  const recordVenue = record ? (venues.filter(forecastable).find((v) => v.id === sp.venue) ?? null) : null;
+  // The venue Today showed, else (from the Session tab) the home venue.
+  const venueId = typeof sp.venue === "string" ? sp.venue : home;
+  const recordVenue = record ? (venues.filter(forecastable).find((v) => v.id === venueId) ?? null) : null;
   const initial: SessionInitial | undefined = source
     ? {
         occurred_at: new Date().toISOString(),
@@ -106,7 +109,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
     <>
       <div>
         <BackLink fallback={source ? `/history/${source.id}` : "/history"}>{source ? "✕ Cancel" : undefined}</BackLink>
-        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "I already waxed"}</h1>
+        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Record a wax"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>
       {!source && <SkierBanner />}
@@ -199,7 +202,7 @@ async function Record({
     <>
       <div>
         <BackLink fallback="/">{source ? "✕ Cancel" : undefined}</BackLink>
-        <h1 className="text-2xl font-bold">{skierName ? `Record ${skierName}\u2019s wax` : "Record today\u2019s wax"}</h1>
+        <h1 className="text-2xl font-bold">{skierName ? `Record a wax for ${skierName}` : "Record a wax"}</h1>
         <p className="text-sm text-muted">
           {source
             ? "Copied from an earlier session. Change anything before saving."

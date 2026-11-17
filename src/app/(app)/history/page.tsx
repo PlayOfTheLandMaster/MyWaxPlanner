@@ -60,7 +60,7 @@ export default function HistoryPage({ searchParams }: PageProps<"/history">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <h1 className="text-2xl font-bold">History</h1>
-      {/* Looking back only: a new session starts on the Session tab (plan, or "I already waxed"). */}
+      {/* Looking back only: a new session starts on the Session tab (Plan a wax, or Record a wax). */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <History searchParams={searchParams} />
       </Suspense>
