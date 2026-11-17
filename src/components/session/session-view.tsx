@@ -108,7 +108,7 @@ export async function SessionView({
     <>
       <BackLink
         fallback={from === "history" ? "/history" : "/plan"}
-        fallbackLabel={from === "history" ? "History" : "Session"}
+        fallbackLabel={from === "history" ? "History" : "My Sessions"}
         className="inline-flex min-h-11 items-center self-start text-sm text-link underline"
       />
 

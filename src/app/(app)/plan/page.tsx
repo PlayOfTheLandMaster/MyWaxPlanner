@@ -15,7 +15,7 @@ import { ContinueList } from "@/components/session/continue-list";
 import { fold, foldHead } from "@/components/fold";
 import { WeatherFold } from "@/components/weather-fold";
 
-export const metadata: Metadata = { title: "Session · My Wax Planner" };
+export const metadata: Metadata = { title: "My Sessions · My Wax Planner" };
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
@@ -29,7 +29,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
           without a plan. */}
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
-      <h1 className="text-2xl font-bold">Session</h1>
+      <h1 className="text-2xl font-bold">My Sessions</h1>
       <Suspense fallback={null}>
         <Copied searchParams={searchParams} />
       </Suspense>
