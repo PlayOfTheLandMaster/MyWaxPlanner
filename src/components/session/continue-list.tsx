@@ -70,7 +70,10 @@ function Group({ id, title, note, rows, now, offerDone = false }: { id: string; 
           return (
             <li
               key={r.id}
-              className={`flex items-center gap-1 rounded-xl border bg-surface pr-2 ${stage === "rate" ? "border-accent" : "border-line"}`}
+              // Coloured as on Today and the session page: blue while waxing or
+              // skiing, green once skied and waiting for its rating. One
+              // background class only (CLAUDE.md, Tailwind).
+              className={`flex items-center gap-1 rounded-xl border border-l-8 border-line pr-2 ${stage === "rate" ? "border-l-done-edge bg-done" : "border-l-active-edge bg-active"}`}
             >
               <Link
                 href={`/session/${r.id}${stage === "rate" ? "#rate" : ""}`}

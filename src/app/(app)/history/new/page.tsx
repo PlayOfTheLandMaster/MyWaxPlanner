@@ -219,7 +219,7 @@ async function Record({
 
       {(similar.length > 0 || recent.length > 0) && (
         <details open={!source} className="rounded-xl border border-line bg-surface">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Start from an earlier session</summary>
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Use an earlier session</summary>
           <div className="flex flex-col gap-3 px-4 pb-3">
             {similar.length > 0 && (
               <div>

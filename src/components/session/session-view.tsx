@@ -77,6 +77,7 @@ export async function SessionView({
   // Once skiing has started (or it is time to rate), the waxing is over: the
   // steps stay as a record, but nothing invites waxing again.
   const waxing = stage === "wax";
+  const tint = stage === "rate" ? "bg-done border-l-done-edge" : "bg-active border-l-active-edge";
   const compare = comparePlan(s.plan?.picks ?? [], s.layers);
 
   // The waxes in the box, for swapping a layer while the session is under way.
@@ -125,23 +126,27 @@ export async function SessionView({
         </p>
       )}
 
-      <div>
-        <p className="text-sm text-muted">
-          {planned ? "In Progress · " : ""}
-          <LocalTime iso={s.occurred_at} />
-        </p>
-        <h1 className="text-2xl font-bold">{s.event_name ?? s.venue?.name ?? `${TECHNIQUE_LABELS[s.technique]} session`}</h1>
-        <p className="text-muted">
-          {[s.skier ? `${s.skier.name}'s skis` : null, TECHNIQUE_LABELS[s.technique], MODE_LABELS[s.mode], s.ski?.name, s.event_name ? s.venue?.name : null]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        {s.mode === "race" && (s.event_distance_km || s.event_result) && (
-          <p className="text-sm">{[s.event_distance_km ? `${s.event_distance_km} km` : null, s.event_result].filter(Boolean).join(" · ")}</p>
-        )}
+      {/* Coloured as on Today: blue while waxing or skiing, green once skied and
+          waiting for its rating; a rated session stays plain. One background
+          class only (see CLAUDE.md, Tailwind). */}
+      <div className={planned ? `flex flex-col gap-3 rounded-xl border border-l-8 border-line p-4 ${tint}` : ""}>
+        <div>
+          <p className="text-sm text-muted">
+            {stage === "rate" ? "Completed ski · " : planned ? "In Progress · " : ""}
+            <LocalTime iso={s.occurred_at} />
+          </p>
+          <h1 className="text-2xl font-bold">{s.event_name ?? s.venue?.name ?? `${TECHNIQUE_LABELS[s.technique]} session`}</h1>
+          <p className="text-muted">
+            {[s.skier ? `${s.skier.name}'s skis` : null, TECHNIQUE_LABELS[s.technique], MODE_LABELS[s.mode], s.ski?.name, s.event_name ? s.venue?.name : null]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {s.mode === "race" && (s.event_distance_km || s.event_result) && (
+            <p className="text-sm">{[s.event_distance_km ? `${s.event_distance_km} km` : null, s.event_result].filter(Boolean).join(" · ")}</p>
+          )}
+        </div>
+        {planned && <StageStrip stage={stage} />}
       </div>
-
-      {planned && <StageStrip stage={stage} />}
 
       {/* A coach waxing a squad the same way: one session, copied to each pair. */}
       {s.layers.length > 0 && (
