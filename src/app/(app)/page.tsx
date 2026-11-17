@@ -229,13 +229,12 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
         <Shortcut href="/history" title="History" detail="look back" />
         <Shortcut href="/wax-box" title="Wax box" detail={waxes.length ? `${waxes.length} waxes${low ? ` · ${low} low` : ""}` : "Empty"} warn={low > 0} />
-        {venue ? (
-          <Suspense fallback={<Shortcut href="/history" title="Similar to today" detail="from your history" />}>
-            <SimilarLink venue={venue} />
-          </Suspense>
-        ) : (
-          <Shortcut href="/history" title="Similar to today" detail="from your history" />
-        )}
+        {/* Unassigned for now: "Similar to today" moved to History, above its
+            filters. The slot keeps the row of three until it has a new job. */}
+        <div
+          aria-hidden
+          className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-dashed border-line p-2 text-center text-sm text-muted"
+        />
       </nav>
     </>
   );
@@ -250,23 +249,8 @@ function Shortcut({ href, title, detail, warn }: { href: string; title: string; 
   );
 }
 
-// One forecast request per venue per page, shared by the conditions card and "Similar to today".
+// One forecast request per venue per page.
 const nextTwoHours = cache((venue: VenueRow) => forecastFor(venue, { hours: 2 }));
-
-async function SimilarLink({ venue }: { venue: VenueRow }) {
-  const w = (await nextTwoHours(venue)).window;
-  // Past sessions within 3 °C of today's snow, on the same kind of snow, best glide first.
-  const href = w
-    ? `/history?${new URLSearchParams({
-        period: "all",
-        tmin: String(Math.max(-40, Math.floor(w.snow_temp_c - 3))),
-        tmax: String(Math.min(0, Math.ceil(w.snow_temp_c + 3))),
-        snowhum: w.snow_humidity_band,
-        sort: "glide",
-      })}`
-    : "/history";
-  return <Shortcut href={href} title="Similar to today" detail="from your history" />;
-}
 
 async function Conditions({ venue }: { venue: VenueRow }) {
   const result = await nextTwoHours(venue);
