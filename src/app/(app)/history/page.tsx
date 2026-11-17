@@ -432,7 +432,7 @@ function SessionRow({ row: r }: { row: Row }) {
           <div className="min-w-0">
             <p className="text-sm text-muted">
               <LocalTime iso={r.occurred_at} format="date" />
-              {r.status === "planned" && <span className="ml-2 rounded-full bg-tile px-2 text-xs">Planned</span>}
+              {r.status === "planned" && <span className="ml-2 rounded-full bg-tile px-2 text-xs">In Progress</span>}
             </p>
             <p className="truncate font-medium">
               {r.event_name ?? r.venue_name ?? "Session"}
