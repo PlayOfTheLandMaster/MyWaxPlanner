@@ -17,7 +17,7 @@ export function ConditionsForm({
   isToday,
 }: {
   w: ForecastWindow;
-  /** Today's Snow Conditions for this venue and day, if they were checked. */
+  /** Today's Skiing Conditions for this venue and day, if they were checked. */
   check: SnowCheck | null;
   /** The plan is for today, so Today's card is where the snow is checked. */
   isToday: boolean;
@@ -57,7 +57,7 @@ export function ConditionsForm({
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v ?? ""} />
       ))}
-      {/* The snow is checked once a day on Today (Today's Snow Conditions);
+      {/* The snow is checked once a day on Today (Today's Skiing Conditions);
           every plan that day at this venue uses it, so it is not asked again. */}
       <input type="hidden" name="snow_temp_c" value={snow.snow_temp_c} />
       <input type="hidden" name="snow_humidity_band" value={snow.snow_humidity_band} />
@@ -81,7 +81,7 @@ export function ConditionsForm({
         </dl>
         <p className="mt-2 text-sm text-muted">
           {checked ? (
-            <>From Today&apos;s Snow Conditions. </>
+            <>From Today&apos;s Skiing Conditions. </>
           ) : (
             <>Estimated from the forecast. </>
           )}

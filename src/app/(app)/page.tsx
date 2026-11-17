@@ -282,7 +282,7 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       {/* Checked once here, used by every wax job today at this venue. */}
       <details className={fold}>
         <summary className={foldHead}>
-          <span className="font-semibold">Today&apos;s Snow Conditions</span>
+          <span className="font-semibold">Today&apos;s Skiing Conditions</span>
           <span className="truncate text-sm text-muted">
             {check
               ? `· ${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`
