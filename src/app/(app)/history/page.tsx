@@ -22,6 +22,9 @@ import { historyQuery } from "@/lib/history/query";
 import { ExportLink } from "@/components/history/export-link";
 import { deleteFilter, saveFilter } from "./actions";
 import { SaveFilterForm } from "./save-filter-form";
+import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
+import { forecastFor } from "@/lib/weather/window";
+import { similarQuery } from "@/lib/history/similar";
 
 export const metadata: Metadata = { title: "History · My Wax Planner" };
 
@@ -181,6 +184,11 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
           </Link>
         ))}
       </nav>
+
+      {/* Its own boundary: it waits on the forecast, the list does not. */}
+      <Suspense fallback={null}>
+        <SimilarToday skier={f.skier} />
+      </Suspense>
 
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
@@ -418,5 +426,36 @@ function SessionRow({ row: r }: { row: Row }) {
         </div>
       </Link>
     </li>
+  );
+}
+
+/**
+ * "Similar to today" (it was a tile on Today): the home venue's forecast for
+ * the next two hours, and History filtered to sessions in snow like it.
+ * Nothing shows without a home venue or a forecast.
+ */
+async function SimilarToday({ skier }: { skier: string | undefined }) {
+  const supabase = await createClient();
+  const [venues, home] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase)]);
+  const venue = venues.filter(forecastable).find((v) => v.id === home);
+  if (!venue) return null;
+  const w = (await forecastFor(venue, { hours: 2 })).window;
+  if (!w) return null;
+  const href = `/history?${similarQuery(w)}${skier ? `&skier=${encodeURIComponent(skier)}` : ""}`;
+  return (
+    <Link
+      href={href}
+      className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile"
+    >
+      <span className="min-w-0">
+        <span className="block font-semibold">Similar to today</span>
+        <span className="block truncate text-sm text-muted">
+          Snow within 3 °C of today&apos;s {deg(Math.round(w.snow_temp_c * 10) / 10)} at {venue.name}, best glide first
+        </span>
+      </span>
+      <span aria-hidden className="text-muted">
+        →
+      </span>
+    </Link>
   );
 }
