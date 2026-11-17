@@ -8,6 +8,13 @@ test("nothing while the page's own step is still undone", () => {
   assert.equal(nextCard(setupSteps(fresh), "venue", true), null);
 });
 
+test("the count includes the optional step", () => {
+  assert.deepEqual(
+    progress(setupSteps({ ...fresh, home: true, skiers: 1, skis: 1 })),
+    { done: 3, total: 5, todo: 2 },
+  );
+});
+
 test("home venue set: next is skiers, optional", () => {
   const c = nextCard(setupSteps({ ...fresh, home: true }), "venue", false);
   assert.ok(c && c.kind === "next");
@@ -40,7 +47,7 @@ test("no skiers is not unfinished: the checklist completes without them", () => 
     waxes: 1,
     tools: 1,
   });
-  assert.deepEqual(progress(steps), { done: 4, total: 4, todo: 0 });
+  assert.deepEqual(progress(steps), { done: 4, total: 5, todo: 0 });
   assert.deepEqual(nextCard(steps, "tools", true), { kind: "finished" });
   assert.equal(nextCard(steps, "tools", false), null);
 });

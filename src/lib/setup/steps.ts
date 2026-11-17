@@ -63,15 +63,22 @@ export function setupSteps(f: SetupFacts): Step[] {
   ];
 }
 
-/** How far through the steps that count: the checklist goes once `todo` is 0. */
+/**
+ * "x of 5 done" counts every step on the list, as the owner reads it. `todo`
+ * counts only the required ones: the checklist goes once it is 0, so an
+ * optional step left undone never keeps it on Today.
+ */
 export function progress(steps: Step[]): {
   done: number;
   total: number;
   todo: number;
 } {
-  const required = steps.filter((s) => !s.optional);
-  const done = required.filter((s) => s.done).length;
-  return { done, total: required.length, todo: required.length - done };
+  const todo = steps.filter((s) => !s.optional && !s.done).length;
+  return {
+    done: steps.filter((s) => s.done).length,
+    total: steps.length,
+    todo,
+  };
 }
 
 export type NextCard =
