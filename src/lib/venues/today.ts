@@ -1,5 +1,5 @@
 // Today's location: the venue every wax job today uses — Today's forecast and
-// snow check, Plan a wax and Record a wax job. Set on Today; it starts each
+// snow check, Plan a wax session and Record a wax job. Set on Today; it starts each
 // day as the home venue and lasts until the end of that day (the reader's own
 // day), so a morning at Canmore and an afternoon at Shark Mountain is one tap.
 // Pure, so it can be tested.

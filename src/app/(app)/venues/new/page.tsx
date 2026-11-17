@@ -26,7 +26,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
   const q = one(p.q)?.trim().slice(0, 80);
   const country = countryCode(one(p.country));
   const province = provinceName(one(p.province));
-  // Where Add a venue was opened from: Plan a wax, Today's Set location, or Venues.
+  // Where Add a venue was opened from: Plan a wax session, Today's Set location, or Venues.
   const from = one(p.back);
   const back = from === "plan" ? "/plan" : from === "today" ? "/" : "/venues";
   let results: Awaited<ReturnType<typeof searchPlaces>> = [];

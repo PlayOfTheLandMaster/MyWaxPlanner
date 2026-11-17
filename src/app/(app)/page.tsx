@@ -123,7 +123,7 @@ async function Today() {
         </Link>
       )}
       {/* No skier picker on Today: the main button names the skier, and the
-          screen it opens (Plan a wax, Record a wax job) has the picker. */}
+          screen it opens (Plan a wax session, Record a wax job) has the picker. */}
 
       {/* The checklist covers the account's first pair; this is a skier
           picked later, with none of their own yet. */}
@@ -205,7 +205,7 @@ async function Today() {
         </section>
       )}
 
-      {/* Set once here; Plan a wax and Record a wax job follow it until the day ends. */}
+      {/* Set once here; Plan a wax session and Record a wax job follow it until the day ends. */}
       {usable.length > 0 && (
         <details className={fold}>
           {/* The fold's own arrow opens the list, as on the cards below it. */}
@@ -235,7 +235,7 @@ async function Today() {
         </details>
       )}
       {venue ? (
-        // The fallback is the two folds' height, so the Plan a wax button below does not jump when the forecast arrives.
+        // The fallback is the two folds' height, so the Plan a wax session button below does not jump when the forecast arrives.
         <Suspense
           fallback={
             <>
@@ -279,7 +279,7 @@ async function Today() {
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            {who.current ? `Plan a wax for ${who.current.name}` : "Plan a wax"}
+            {who.current ? `Plan a wax session for ${who.current.name}` : "Plan a wax session"}
           </Link>
           <Link
             href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}

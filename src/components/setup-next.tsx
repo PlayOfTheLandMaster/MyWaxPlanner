@@ -44,7 +44,7 @@ async function Card({ step, searchParams }: { step: StepKey; searchParams: Param
             note={
               isExpert((await loadSkierContext()).style)
                 ? "You’re set up. Back on Today, “Record a wax job” is your main button; the app’s suggestion is one tap below it."
-                : "You’re set up. Back on Today, “Plan a wax” suggests waxes from your own skis, waxes and tools."
+                : "You’re set up. Back on Today, “Plan a wax session” suggests waxes from your own skis, waxes and tools."
             }
           />
           <Link

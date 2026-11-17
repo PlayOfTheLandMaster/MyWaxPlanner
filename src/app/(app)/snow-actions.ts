@@ -30,7 +30,7 @@ export async function saveSnowCheck(_prev: SnowCheckState, form: FormData): Prom
 
 /**
  * Sets today's location: every wax job for the rest of the reader's day uses
- * it (Today, Plan a wax, Record a wax job). "home" goes back to the home venue.
+ * it (Today, Plan a wax session, Record a wax job). "home" goes back to the home venue.
  */
 export async function setTodayVenue(venueId: string) {
   const supabase = await createClient();

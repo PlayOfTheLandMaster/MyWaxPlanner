@@ -59,7 +59,7 @@ test("labels for the newer pages", () => {
   assert.equal(backLabel("/session/1/share"), "Share");
   assert.equal(backLabel("/session/1"), "Session");
   assert.equal(backLabel("/wax-box/tools"), "Tools");
-  assert.equal(backLabel("/plan"), "Session");
+  assert.equal(backLabel("/plan"), "My Sessions");
   assert.equal(backLabel("/plan/draft?c=x"), "Plan");
 });
 

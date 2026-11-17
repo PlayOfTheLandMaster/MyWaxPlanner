@@ -69,7 +69,7 @@ export default function HistoryPage({ searchParams }: PageProps<"/history">) {
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">History</h1>
-      {/* Looking back only: a new session starts on the Session tab (Plan a wax, or Record a wax job). */}
+      {/* Looking back only: a new session starts on the Session tab (Plan a wax session, or Record a wax job). */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <History searchParams={searchParams} />
       </Suspense>
