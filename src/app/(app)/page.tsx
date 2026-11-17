@@ -215,7 +215,7 @@ async function Today() {
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
             <LocationPicker
-              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region }))}
+              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null }))}
               current={venue?.id ?? null}
               home={home}
             />

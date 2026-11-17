@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { setTodayVenue } from "@/app/(app)/snow-actions";
+import { deleteVenue } from "@/app/(app)/venues/actions";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { groupByPlace, placeOf } from "@/lib/venues/place";
 
-type V = { id: string; name: string; region: string | null };
+/** `own`: added by this account, so it can be deleted; shared venues cannot. */
+type V = { id: string; name: string; region: string | null; own: boolean };
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const ALL = "";
@@ -91,8 +94,8 @@ export function LocationPicker({ venues, current, home }: { venues: V[]; current
                   {pr.venues.map((v) => {
                     const on = v.id === current;
                     return (
-                      <li key={v.id}>
-                        <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
+                      <li key={v.id} className="flex items-center gap-1">
+                        <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)} className="min-w-0 flex-1">
                           <button type="submit" aria-pressed={on} className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile">
                             <span
                               aria-hidden
@@ -107,6 +110,8 @@ export function LocationPicker({ venues, current, home }: { venues: V[]; current
                             {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
                           </button>
                         </form>
+                        {/* Only venues this account added; sessions there keep their data. */}
+                        {v.own && <ConfirmDelete action={deleteVenue.bind(null, v.id)} label={v.name} />}
                       </li>
                     );
                   })}

@@ -72,6 +72,8 @@ export async function deleteVenue(id: string) {
   const { supabase } = await signedIn();
   await supabase.from("venues").delete().eq("id", id);
   revalidatePath("/venues");
+  // Today's location list offers Delete too.
+  revalidatePath("/");
 }
 
 export async function setHomeVenue(id: string | null) {
