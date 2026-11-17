@@ -120,7 +120,7 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
 /**
  * Deletes a session; `back` is where to land (History by default, or the
  * Session tab's list), or "stay" to keep the page it was deleted from
- * (Record a wax's "Start from an earlier session" list).
+ * (Record a wax job's "Start from an earlier session" list).
  */
 export async function deleteSession(id: string, back: "/history" | "/plan" | "stay" = "/history") {
   const { supabase } = await signedIn();

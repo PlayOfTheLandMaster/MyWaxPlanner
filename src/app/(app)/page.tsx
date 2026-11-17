@@ -145,7 +145,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
             href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            {who.current ? `Record a wax for ${who.current.name}` : "Record a wax"}
+            {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
           </Link>
           <Link
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
@@ -166,7 +166,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
             href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
             className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
           >
-            Already waxed? Record a wax
+            Already waxed? Record a wax job
           </Link>
         </>
       )}
