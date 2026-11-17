@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { saveSnowCheck, type SnowCheckState } from "@/app/(app)/snow-actions";
 import { SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { HUMIDITY_BANDS, SNOW_TYPES, type HumidityBand, type SnowType } from "@/lib/catalogue/vocab";
@@ -28,8 +28,13 @@ export function SnowCheckForm({
   initial: { snow_temp_c: number; snow_humidity_band: HumidityBand; snow_type: SnowType; track: Track | null };
 }) {
   const [state, action, pending] = useActionState<SnowCheckState, FormData>(saveSnowCheck, {});
+  const formRef = useRef<HTMLFormElement>(null);
+  // Saved: fold the card back up. Its title line now shows what was saved.
+  useEffect(() => {
+    if (state.saved) formRef.current?.closest("details")?.removeAttribute("open");
+  }, [state]);
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form ref={formRef} action={action} className="flex flex-col gap-4">
       <input type="hidden" name="venue_id" value={venueId} />
       <input type="hidden" name="day" value={day} />
       <label className={label}>
