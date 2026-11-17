@@ -448,7 +448,7 @@ async function SimilarToday({ skier }: { skier: string | undefined }) {
       className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile"
     >
       <span className="min-w-0">
-        <span className="block font-semibold">Filter - Similar days to today</span>
+        <span className="block font-semibold">Filter - Days similar to today</span>
         <span className="block truncate text-sm text-muted">
           Snow within 3 °C of today&apos;s {deg(Math.round(w.snow_temp_c * 10) / 10)} at {venue.name}, best glide first
         </span>
