@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { countSessionsAt, forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { LocationPicker } from "@/components/location-picker";
+import { FoldOnLeave } from "@/components/fold-on-leave";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
@@ -35,6 +36,8 @@ const foldHead = "flex min-h-16 cursor-pointer items-center gap-3 px-4 py-2 acti
 export default function TodayPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      {/* Coming back to Today, every card starts folded. */}
+      <FoldOnLeave />
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Today</h1>
         <Link
