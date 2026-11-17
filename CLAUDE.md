@@ -1,0 +1,119 @@
+# CLAUDE.md
+
+Guidance for Claude Code working in this repository. It records *why*, not
+*what*: the README describes the features and the setup, and the code says
+what it does. Add something here only when the code alone would mislead.
+
+@AGENTS.md
+
+## The owner
+
+The owner is not a programmer, works on an iPad in **Chrome**, and has no
+terminal. Steps you give them name the application first ("**Supabase:** open
+SQL Editor…"), never ask them to paste a key or secret into the chat, and
+test plans happen on the Vercel preview of the pull request.
+
+The working rhythm:
+
+- change, then `npm run lint`, `npm run typecheck`, `npm test` and `npm run build`;
+- commit, push to the work branch, and open a pull request;
+- the owner tests the preview, and merges only on their "Merge it";
+- after a merge, `git pull origin main` into the work branch and push it.
+
+## Commands
+
+```bash
+npm run dev          # http://localhost:3000
+npm run lint
+npm run typecheck    # next typegen && tsc --noEmit — typegen first, or PageProps is missing
+npm test             # node:test over src/**/*.test.ts — pure logic only, no database
+npm run build
+npm run seed         # optional shared catalogue from data/*.csv
+```
+
+`supabase/tests/rls_check.sql` is the privacy check: two made-up users, every
+rule proved both ways (allowed *and* refused), all rolled back at the end. Run
+it against a **local** database only, never the live project.
+
+There is no Prettier config. The code is wrapped at about 140 columns; running
+Prettier's default (80) over an existing file rewraps all of it and buries the
+real change, so format only new files, with `--print-width 140`.
+
+## Next.js 16 here
+
+- `cacheComponents: true` is on, so anything that reads the request
+  (`searchParams`, cookies, the signed-in user, the database) must sit inside a
+  `<Suspense>`. A page is a thin shell; the async part is a child component.
+- Two pieces that must appear together share **one** boundary. The Session
+  tab's planned-sessions list once loaded a moment after the card beside it and
+  pushed it down the page.
+- `PageProps<"/route">` and `RouteContext` are generated types. `refresh()` from
+  `next/cache` re-renders the current page after a server action that stays put.
+- A server action bound with arguments keeps the form's `FormData` as the last
+  one, so bind *every* argument (`deleteSki.bind(null, id, "edit")`). Binding
+  one of two optional arguments passes `FormData` in as the second.
+
+## Security model: RLS is the enforcement layer
+
+Every table has Row Level Security, and every user's data is theirs alone.
+App-level checks are a second line, never the only one. The app uses only the
+RLS-bound Supabase clients; `createServiceClient()` exists and nothing uses it.
+
+- **Sign-up is by invitation, enforced on `auth.users`.** The trigger
+  `require_signup_invite` refuses any address not in `signup_invites`. It is in
+  the database, not the sign-up form, because the public key ships in the
+  browser bundle and anyone can call Supabase's sign-up directly. A fresh
+  project therefore refuses its own first sign-up until an address is inserted
+  by hand (README, Set up).
+- **Admins are rows in `app_admins`**, which only the service role can change.
+  They manage the Learn library and the invitation list.
+- **Every new table needs explicit `grant`s** as well as policies; without them
+  PostgREST says "permission denied", which no policy explains.
+- **Add a case to `rls_check.sql`** for every new table: an allow and a deny.
+
+## Migrations
+
+The owner cannot run the Supabase CLI. Migrations go live through the Supabase
+MCP tools (`apply_migration`), and then two things are easy to forget:
+
+- `apply_migration` records the migration under today's timestamp, not the file
+  name's. Update `supabase_migrations.schema_migrations` to the file's version,
+  or the order no longer matches `supabase/migrations/`.
+- A statement the server wants confirmed (a `drop`, a `delete`) makes the MCP
+  call time out. Give the owner the SQL to run in **Supabase → SQL Editor**
+  instead, check the result, then record the version by hand.
+
+Run the security advisor (`get_advisors`) after any change to the schema.
+
+## Product rules that are easy to break
+
+- **Two ways in, two names, everywhere:** **Plan a wax** (the app suggests) and
+  **Record a wax** (you enter the waxes). Today once said "Plan today's wax"
+  while the Session tab said "Plan a wax", and the full form had three names.
+  New entry points use these two names.
+- **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from
+  behaviour. Null means not chosen and behaves as guided.
+- **Optional checklist steps never keep the checklist open.** `progress().todo`
+  counts required steps only; the "x of y done" count shows every step.
+- **Each pair of skis is rated on its own.** Copy to other skis makes one
+  session per pair and never copies ratings, results or observed conditions.
+- **A session's skis belong to its skier.** Forms list only that skier's pairs
+  (`skisOf`), and the database fills `skier_id` from the pair.
+- **Deleting a session removes only its observed conditions.** Forecast
+  conditions and recommendations can be shared by copies.
+
+## iPad and Chrome on iOS (WebKit)
+
+- WebKit ignores `height` on a native `<select>`; selects use
+  `appearance: none` with a drawn arrow, and text inputs are pinned to 40 px to
+  match (`globals.css`, deliberately outside any layer).
+- A `<summary>` styled as a plain row still drew a disclosure triangle in
+  Chrome on iPad; `summary.list-none` hides it.
+- Every tap target is at least 44 px (`min-h-11`).
+
+## Time zones
+
+The server runs in UTC. "Today" and every date shown are the reader's: the
+`ReaderZone` component writes the browser's zone to a `tz` cookie and
+`readerTimeZone()` reads it on the server. A forecast's times are the venue's
+own local time, never the phone's.

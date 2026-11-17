@@ -8,6 +8,19 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
+**Sign-up by invitation.** Only email addresses on the invitation list can create an account. The rule lives in the database: a trigger on `auth.users` (`require_signup_invite`, migration `20261206000000_signup_invites.sql`) refuses any other address, so it holds even for a sign-up sent straight to Supabase with the public key. Admins (rows in `app_admins`) manage the list from the **Invitations** card on Account: add an address with an optional note, see who has joined, remove one not yet used. A refused sign-up gets a plain sentence rather than Supabase's "Database error saving new user" (`src/lib/invites/email.ts`, tested). Existing accounts are untouched.
+
+**Getting started.** A new account sees a checklist on Today: **Choose how you wax**, **Pick a home venue**, **Add skiers you wax for** (optional), **Add your skis**, **Add your waxes**, **Tick the tools you own** (optional for experts). Once a step is done, its own page shows the same checklist with the step ticked and the next one as the button, and each says the list can be added to later; when every required step is done the checklist goes for good (`src/lib/setup/`, tested; `components/setup-checklist.tsx`, `components/setup-next.tsx`). Checklist links carry `?start=` so a page knows it was opened from the list. With setup done, Today prompts when the skier picked has no skis of their own ("Anna E. has no skis yet").
+
+**Guided or expert** (`profiles.waxing_style`, migration `20261205000000_waxing_style.sql`; `src/lib/profile/style.ts`). Asked once, changeable on Account under **How you wax**; unset counts as guided. The app uses two names for its two ways in, everywhere:
+
+- **Plan a wax:** the app suggests waxes for the conditions (the plan and recommendation below). Today's main button for a guided waxer.
+- **Record a wax:** you enter the waxes yourself (`/history/new?record=1`). Today's main button for an expert, with **What would the app suggest?** underneath; for a guided waxer, "Already waxed? Record a wax". The form is set to now, the skier picked and Today's venue (the home venue from the Session tab). The venue's forecast is saved with the session as its forecast, recomputed on the server and only if the venue was not changed (`src/lib/history/record.ts`, tested). **Start from an earlier session** lists sessions in similar snow (within 3 °C, same humidity, best glide first) and the most recent ones; **Use** copies skis, layers and finish, and **Delete** removes a past session. It saves as a current session, to mark Done and rate later. For an expert, session pages drop wax-along and the step-by-step list, and "The plan" reads "Your waxes".
+
+**Copy to other skis** (`/session/[id]/copy`): a coach waxing a squad the same way. Every pair of the same technique, grouped by skier, with Tick all and a per-skier All. Each ticked pair gets its own planned session with the same layers, finish, venue and forecast: at the same time when the source is planned, for now when it is finished. Ratings and results stay behind (`src/lib/history/copy.ts`, tested). The copies land under Current sessions.
+
+**Skis** can be deleted straight from the Skis list (one tap asks, a second deletes; `components/confirm-delete.tsx`, shared with planned sessions and Start from). **Back links:** every page has one, the four tabs included: to the page you came from, else Today (`src/lib/nav/trail.ts`).
+
 **Your name:** creating an account asks for a first name and the initial of your last name, so two people called Anna show as "Anna S." and "Anna K.". The name is shown wherever the app used to say "Me": the skier picker, the banners, whose skis, History's filters, Compare and the spreadsheet (`src/lib/profile/name.ts`, tested). It is stored in `profiles.first_name` and `profiles.last_initial`, filled in from the sign-up form by `handle_new_user()` (migration `20261202000000_user_names.sql`, which also split older accounts' optional display name). It can be changed on Account. An account with no name yet still says "Me", and Today asks for one. Skiers are added the same way, first name and last initial, and saved as one name ("Anna S."), so two skiers called Anna can be told apart; an older skier keeps their name until it is next edited. Choosing who you are waxing for is one line on every screen, Today included ("For Anna S. · Change"); **Change** opens the picker in place. Up to six skiers, each has a button; a coach with a bigger squad gets their own name, the skier picked now and the most recently picked as buttons, plus a search for everyone else (`src/lib/skiers/quick.ts`, tested). Recent picks are remembered on the device.
 
 **Learn from history** (phase 3):
@@ -19,7 +32,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 **Session flow** — planning and logging are one session:
 
-- **The Session tab** (titled Session) starts with **Current sessions** (planned for today or later, with what comes next) and **Unrated sessions** (marked **Done** on the session page, or planned on an earlier day, and not rated yet; `done_at`, migration `20261203000000_session_done.sql`), each with Delete; then **I already waxed** for a wax done without a plan, then **Plan a wax**. "Today" is the reader's own: the browser writes its time zone to a `tz` cookie (`ReaderZone`) and the server reads it (`src/lib/reader-zone.ts`, grouping in `src/lib/history/groups.ts`, tested). History is for looking back; "Log a session" is gone from History and Today.
+- **The Session tab** (titled Session) starts with **Current sessions** (planned for today or later, with what comes next) and **Unrated sessions** (marked **Done** on the session page, or planned on an earlier day, and not rated yet; `done_at`, migration `20261203000000_session_done.sql`), each with Delete; then **Record a wax**, then **Plan a wax**. "Today" is the reader's own: the browser writes its time zone to a `tz` cookie (`ReaderZone`) and the server reads it (`src/lib/reader-zone.ts`, grouping in `src/lib/history/groups.ts`, tested). History is for looking back; "Log a session" is gone from History and Today.
 - **Nothing is saved until "Use this plan".** Step 1's conditions travel to step 2 in the address (`src/lib/plan/draft.ts`, checked again on the way in), and "Use this plan" saves the conditions, the recommendation and the session together. Older plan links that point at saved conditions still work.
 - **One session page** (`/session/[id]`, the same page as `/history/[id]`): a Plan ✓ · Wax · Ski · Rate strip (`src/lib/history/stage.ts`), the plan with why each layer was picked, the steps as a tick-off checklist (ticks saved on the session, so every device agrees), and the **How did it go?** card built in — leading once the session is over, folded away before. A rated session shows how it went. `/history/[id]/rate` now forwards to the session page.
 - **Wax-along** (`/session/[id]/wax`): the plan's steps one per screen in big text, with **Done — next** ticking each step on the session. A step that says how long to wait ("let it dry 10–15 minutes") offers a countdown timer (`src/lib/history/timer.ts`) that buzzes at zero where the device can. The screen stays awake while it is open, where the browser allows it. **Done waxing** (here or on the session page, with Undo) moves the session to Ski.
@@ -49,7 +62,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 **Build prompt 2** — the Wax box and the tab bar:
 
-- **A five-tab bar** along the bottom: Today, Plan, History, Wax box, Learn. Plan, History and Learn say what they will hold; they arrive with later build prompts.
+- **A five-tab bar** along the bottom: Today, Session, History, Wax box, Learn.
 - **Wax box** has three sections, switched at the top: **Waxes**, **Tools** and **Skis**.
 - **Waxes:** your waxes grouped by Glide, Grip, Cleaners and Consumables, with anything low or empty gathered under **Running low** at the top. Tap a wax to change how much is left (one tap), add notes, edit it, or remove it from the box. A wax you remove stays saved, and **Add a wax → Find a wax you've added before** puts it back without retyping. Waxes from a shared catalogue, if you ever load one, can be found there too, but not edited.
 - **Tools:** the checklist from the spec, grouped as scrapers, hand brushes, roto brushes, irons, cork and fibertex, and bench tools. Tick what you own and, if you like, how worn it is. Later, waxing plans will only use ticked tools.
@@ -87,8 +100,17 @@ You need a free [Supabase](https://supabase.com) project and Node.js 22 or later
    npx supabase db push
    ```
    The project ref is the part of the project URL before `.supabase.co`.
-5. **Supabase (website):** open **Authentication → URL Configuration**. Set **Site URL** to where the app runs (`http://localhost:3000` for now), and add `http://localhost:3000/auth/confirm` under **Redirect URLs**. Add your Vercel address in the same two places once you deploy.
-6. **Terminal:** start the app:
+5. **Supabase (website):** open **Authentication → URL Configuration**. Set **Site URL** to where the app runs (`http://localhost:3000` for now), and add `http://localhost:3000/auth/confirm` under **Redirect URLs**. Add your live address in the same two places once you deploy.
+6. **Supabase (website):** sign-up is by invitation, and a new project has nobody on the list, so let yourself in first. Open **SQL Editor** and run this with your own address:
+   ```sql
+   insert into public.signup_invites (email) values ('you@example.com');
+   ```
+   After you have created your account (step 7), make yourself the admin who manages invitations:
+   ```sql
+   insert into public.app_admins (user_id)
+   select id from auth.users where email = 'you@example.com';
+   ```
+7. **Terminal:** start the app:
    ```bash
    npm run dev
    ```
@@ -96,7 +118,9 @@ You need a free [Supabase](https://supabase.com) project and Node.js 22 or later
 
 ### Deploying to Vercel
 
-**Vercel (website):** import the GitHub repository, and under **Settings → Environment Variables** add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Do **not** add `SUPABASE_SECRET_KEY` to Vercel: only the seed script uses it, and the seed script runs on your computer.
+**Vercel (website):** import the GitHub repository, and under **Settings → Environment Variables** add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, ticked for **Production** and **Preview** (a preview without them shows "Internal Server Error"). Do **not** add `SUPABASE_SECRET_KEY` to Vercel: only the seed script uses it, and the seed script runs on your computer.
+
+The live app runs at **https://www.mywaxplanner.com** (the bare domain forwards to it). Its sign-up emails come from `noreply@mywaxplanner.com` through Resend: **Supabase → Authentication → Emails → SMTP Settings** holds Resend's server (`smtp.resend.com`, port 465, user `resend`, an API key as the password), and the domain's DNS carries Resend's DKIM, SPF and DMARC records. Supabase's own mailer allows only two emails an hour, which is not enough for sign-ups. The first emails from a new domain can land in Spam.
 
 ## Adding waxes
 
@@ -161,11 +185,11 @@ npm run dev         # the app, at http://localhost:3000
 npm run build       # production build
 npm run lint
 npm run typecheck
-npm test            # the CSV loader's tests; no database needed
+npm test            # the pure-logic tests (lib/**/*.test.ts); no database needed
 npm run seed        # load the catalogue (see above)
 ```
 
-**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 39 rules: what each can do with their own data, and that neither can see or change the other's. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
+**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 56 rules: what each can do with their own data, that neither can see or change the other's, and that nobody can sign up without an invitation or manage invitations without being an admin. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
 
 ```bash
 psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
@@ -179,8 +203,13 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=
 | `src/proxy.ts` | Keeps the sign-in cookie fresh (Next.js 16 renamed `middleware.ts` to `proxy.ts`) |
 | `src/app/(app)/` | Screens that need an account. `layout.tsx` sends signed-out visitors to `/login` |
 | `src/app/login/`, `src/app/auth/confirm/` | Sign in, create account, and the email confirmation link |
+| `src/lib/setup/` | The getting-started checklist and what each step's page offers next |
+| `src/lib/profile/` | Your name, and how you wax (guided or expert) |
+| `src/lib/history/` | History: the list's query, the spreadsheet, Share, Compare, Insights, Record a wax and Copy to other skis |
+| `src/lib/invites/` | The app's half of sign-up by invitation |
+| `src/lib/nav/trail.ts` | Where each back link goes |
 | `src/lib/supabase/` | The two Supabase connections: `client.ts` for the browser, `server.ts` for the server. Both obey the privacy rules; `createServiceClient()` in `server.ts` does not, and nothing in the app uses it yet |
-| `src/components/` | The bottom tab bar and the Waxes / Tools / Skis switcher |
+| `src/components/` | The bottom tab bar, the Waxes / Tools / Skis switcher, the skier picker, the getting-started checklist, the session page and the two-tap Delete |
 | `src/app/(app)/wax-box/` | Waxes (list, add, a wax's page, edit), `tools/` and `skis/`, each with its own `actions.ts` |
 | `src/lib/wax-box/` | Reading the wax box, the wax search, and the temperature line on each wax |
 | `src/lib/skis/` | What a ski save may contain |
