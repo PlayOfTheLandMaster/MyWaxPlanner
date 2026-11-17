@@ -193,7 +193,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-          Filters{n > 0 ? ` (${n})` : ""}
+          Filter{n > 0 ? ` (${n})` : ""}
         </summary>
         {/* A plain GET form: the filters become the page address, so the back
             button, bookmarks and saved filters all just work. */}
