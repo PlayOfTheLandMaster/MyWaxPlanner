@@ -303,7 +303,7 @@ async function Conditions({ venue }: { venue: VenueRow }) {
           <span className="truncate text-sm text-muted">
             {check
               ? `· ${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`
-              : "· not checked yet"}
+              : "· Not Entered yet"}
           </span>
         </summary>
         <div className="flex flex-col gap-3 px-4 pb-4">
