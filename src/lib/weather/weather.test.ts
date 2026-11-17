@@ -77,7 +77,7 @@ test("venue time comes from the venue's offset, not the phone's", () => {
   assert.deepEqual(venueNow(-7 * 3600, new Date("2026-11-15T17:20:00Z")), { date: "2026-11-15", hour: "11:00" });
 });
 
-import { mergePlaces, searchVariants, type Place } from "./forecast";
+import { assumedVariants, isSkiPlace, mergePlaces, searchVariants, type Place } from "./forecast";
 
 test("joined-up names are also searched with a space", () => {
   assert.deepEqual(searchVariants("Silverstar"), ["Silverstar", "Silver Star"]);
@@ -102,4 +102,19 @@ test("the same spot from both gazetteers is listed once, ski places first", () =
   assert.equal(merged.length, 2);
   assert.equal(merged[0].name, "Sovereign Lake Nordic Centre");
   assert.equal(merged[1].elevation_m, 383, "the elevation is taken from the duplicate");
+});
+
+test("each search also asks with the skiing words the skier left out", () => {
+  assert.deepEqual(assumedVariants("Hinton"), ["Hinton Nordic", "Hinton Ski", "Hinton Trails"]);
+  assert.deepEqual(assumedVariants("Hinton nordic"), ["Hinton nordic Ski", "Hinton nordic Trails"]);
+  assert.deepEqual(assumedVariants("Canmore skiing trail"), ["Canmore skiing trail Nordic"]);
+  assert.deepEqual(assumedVariants("  "), []);
+});
+
+test("the extra searches keep only skiing places", () => {
+  assert.equal(isSkiPlace({ name: "Hinton Nordic Centre", kind: "Nordic centre" }), true);
+  assert.equal(isSkiPlace({ name: "Beaver Boardwalk Trail", kind: null }), true);
+  assert.equal(isSkiPlace({ name: "Marmot Basin", kind: "Ski area" }), true);
+  assert.equal(isSkiPlace({ name: "Hinton", kind: "Town" }), false);
+  assert.equal(isSkiPlace({ name: "Hinton Skate Park", kind: "Park" }), false);
 });

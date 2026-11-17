@@ -367,12 +367,43 @@ export function mergePlaces(lists: Place[][]): Place[] {
 }
 
 /** Places matching a name, for adding a venue: OpenStreetMap and GeoNames together. */
+// Words a skier leaves out. "Hinton" finds the town, not "Hinton Nordic
+// Centre", because OpenStreetMap matches every word of the name; so each
+// search also asks with these added. Kept to three: Nominatim asks apps to
+// send few requests, and every word is another one.
+const ASSUMED_WORDS = ["Nordic", "Ski", "Trails"];
+
+/** The search text with each assumed word the skier did not already type, e.g. "Hinton Nordic". */
+export function assumedVariants(text: string): string[] {
+  const t = text.trim().replace(/\s+/g, " ");
+  if (!t) return [];
+  const has = new Set(t.toLowerCase().split(" "));
+  // "Ski" is also covered by "skiing", "trails" by "trail".
+  const covered = (w: string) => has.has(w.toLowerCase()) || [...has].some((h) => h.startsWith(w.toLowerCase().replace(/s$/, "")));
+  return ASSUMED_WORDS.filter((w) => !covered(w)).map((w) => `${t} ${w}`);
+}
+
+/** A place the assumed words may add: one that is about skiing, not a "Hinton Park" picked up by "Trails". */
+export function isSkiPlace(p: Pick<Place, "name" | "kind">): boolean {
+  return (
+    p.kind === "Nordic centre" ||
+    p.kind === "Ski area" ||
+    p.kind === "Ski resort" ||
+    /\b(nordic|ski|skiing|cross[- ]country|trails?|langlauf)\b/i.test(p.name)
+  );
+}
+
 export async function searchPlaces(text: string, area: SearchArea = {}): Promise<Place[]> {
   const variants = searchVariants(text);
   // OpenStreetMap also gets the province in the words, which finds a small
   // place a bare name would rank below the twenty it returns.
   const osmTexts = area.province ? [...variants, `${variants[0]}, ${area.province}`] : variants;
-  const settled = await Promise.allSettled([...osmTexts.map((v) => searchOsm(v, area)), ...variants.map((v) => searchGeonames(v, area))]);
+  const assumed = assumedVariants(variants[variants.length - 1]);
+  const settled = await Promise.allSettled([
+    ...osmTexts.map((v) => searchOsm(v, area)),
+    ...variants.map((v) => searchGeonames(v, area)),
+    ...assumed.map((v) => searchOsm(v, area).then((ps) => ps.filter(isSkiPlace))),
+  ]);
   const province = area.province;
   const lists = settled
     .filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled")
