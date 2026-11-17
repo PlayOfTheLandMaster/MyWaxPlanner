@@ -200,15 +200,7 @@ export async function SessionView({
             </div>
           </details>
 
-          {!expert && steps.length > 0 && waxing && !s.waxed_at && (
-            <Link
-              href={`/session/${s.id}/wax`}
-              className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-            >
-              {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
-            </Link>
-          )}
-          {/* Folded by default, just under Start wax-along, which is the way in;
+          {/* Folded by default, just above Start wax-along, which is the way in;
               the full list is here when wanted. An expert has neither. */}
           {!expert && steps.length > 0 && (
             <details className="rounded-xl border border-line bg-surface">
@@ -219,6 +211,14 @@ export async function SessionView({
                 <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
               </div>
             </details>
+          )}
+          {!expert && steps.length > 0 && waxing && !s.waxed_at && (
+            <Link
+              href={`/session/${s.id}/wax`}
+              className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+            >
+              {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
+            </Link>
           )}
           {/* Outside the fold: it is what moves the session on to Ski (and offers Done). */}
           {s.waxed_at ? (
