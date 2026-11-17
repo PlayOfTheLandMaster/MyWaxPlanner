@@ -18,7 +18,7 @@
   --danger: #b42318;
   /* Today's session cards: blue while a session is under way, green once
      it is skied and waiting only for its rating. A tint and an edge each. */
-  --active: #cfe2fa;
+  --active: #dde9fb;
   --active-edge: #1c5cab;
   --done: #cdebd8;
   --done-edge: #23703f;
@@ -43,7 +43,7 @@
     --on-accent: #0d131b;
     --link: #9cc2f5;
     --danger: #f97066;
-    --active: #1d3a5f;
+    --active: #1a3150;
     --active-edge: #6da7ec;
     --done: #1b4029;
     --done-edge: #6cc98b;
@@ -69,7 +69,7 @@
     --accent: #1d4f91;
     --on-accent: #ffffff;
     --link: #1d4f91;
-    --active: #cfe2fa;
+    --active: #dde9fb;
     --active-edge: #1c5cab;
     --done: #cdebd8;
     --done-edge: #23703f;

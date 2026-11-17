@@ -200,6 +200,18 @@ export async function SessionView({
             </div>
           </details>
 
+          {/* Folded by default, just above Start wax-along, which is the way in;
+              the full list is here when wanted. An expert has neither. */}
+          {!expert && steps.length > 0 && (
+            <details className="rounded-xl border border-line bg-surface">
+              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+                Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
+              </div>
+            </details>
+          )}
           {!expert && steps.length > 0 && waxing && !s.waxed_at && (
             <Link
               href={`/session/${s.id}/wax`}
@@ -220,26 +232,21 @@ export async function SessionView({
             </form>
           ) : waxing ? (
             <form action={finishWaxing.bind(null, s.id)}>
-              <button type="submit" className="min-h-11 w-full rounded-lg border border-line bg-surface px-4 font-semibold active:bg-tile">
-                Done waxing
+              {/* The same size as Start wax-along above: the two steps of waxing. */}
+              <button
+                type="submit"
+                className="flex min-h-14 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-lg font-bold active:bg-tile"
+              >
+                I&apos;m Done Waxing
               </button>
             </form>
           ) : null}
-          {/* Folded by default: Start wax-along, above, is the way in; the full
-              list is here when wanted. An expert has neither. */}
-          {!expert && steps.length > 0 && (
-            <details className="rounded-xl border border-line bg-surface">
-              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-                Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
-              </summary>
-              <div className="flex flex-col gap-4 px-4 pb-4">
-                <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
-              </div>
-            </details>
-          )}
 
-          {/* "Done": skied, rating later. Always offered: wax-along and Done
-              waxing are optional, and a coach with a dozen pairs skips them. */}
+          {/* "I'm Done Skiing": skied, rating later. Offered only at Ski, so
+              there is one "done" button at a time and its name says which
+              step it finishes; while waxing it would read as a second "Done
+              waxing". A coach with a dozen pairs uses Done Skiing on the
+              Session tab's list instead. */}
           {s.done_at ? (
               <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
                 <span>
@@ -249,14 +256,14 @@ export async function SessionView({
                   Undo
                 </button>
               </form>
-            ) : (
+            ) : stage === "ski" ? (
               <form action={markDone.bind(null, s.id, "session")} className={card}>
                 <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
                 <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
-                  Done
+                  I&apos;m Done Skiing
                 </button>
               </form>
-            )}
+            ) : null}
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">
@@ -314,29 +321,42 @@ export async function SessionView({
         </section>
       )}
 
+      {/* Folded to one line: the forecast's snow and air temperatures; opens on
+          the full forecast and, beside it, what was recorded on the day. */}
       {(s.actual || s.forecast) && (
-        <section className="grid gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-2">
-          {s.forecast && (
-            <div>
-              <h2 className="font-semibold">Forecast at time of session</h2>
-              <ul className="text-sm">
-                {conditionsLines(s.forecast).map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {s.actual && (
-            <div>
-              <h2 className="font-semibold">What you recorded on the day</h2>
-              <ul className="text-sm">
-                {conditionsLines(s.actual).map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        <details className="rounded-xl border border-line bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+            <span className="font-semibold">{s.forecast ? "Forecast at time of session" : "What you recorded on the day"}</span>
+            <span className="min-w-0 truncate text-sm text-muted">
+              {conditionsLines((s.forecast ?? s.actual)!)
+                .slice(0, 2)
+                .map((x) => `· ${x}`)
+                .join(" ")}
+            </span>
+          </summary>
+          <section className="grid gap-3 px-4 pb-4 sm:grid-cols-2">
+            {s.forecast && (
+              <div>
+                {s.actual && <h2 className="font-semibold">Forecast at time of session</h2>}
+                <ul className="text-sm">
+                  {conditionsLines(s.forecast).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {s.actual && (
+              <div>
+                {s.forecast && <h2 className="font-semibold">What you recorded on the day</h2>}
+                <ul className="text-sm">
+                  {conditionsLines(s.actual).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        </details>
       )}
 
       <Photos
