@@ -238,8 +238,11 @@ export async function SessionView({
             </details>
           )}
 
-          {/* "Done": skied, rating later. Always offered: wax-along and Done
-              waxing are optional, and a coach with a dozen pairs skips them. */}
+          {/* "I'm Done Skiing": skied, rating later. Offered only at Ski, so
+              there is one "done" button at a time and its name says which
+              step it finishes; while waxing it would read as a second "Done
+              waxing". A coach with a dozen pairs uses Done Skiing on the
+              Session tab's list instead. */}
           {s.done_at ? (
               <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
                 <span>
@@ -249,14 +252,14 @@ export async function SessionView({
                   Undo
                 </button>
               </form>
-            ) : (
+            ) : stage === "ski" ? (
               <form action={markDone.bind(null, s.id, "session")} className={card}>
                 <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
                 <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
-                  Done
+                  I&apos;m Done Skiing
                 </button>
               </form>
-            )}
+            ) : null}
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">

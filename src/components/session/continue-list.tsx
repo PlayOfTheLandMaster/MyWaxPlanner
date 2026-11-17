@@ -44,7 +44,7 @@ export async function ContinueList() {
   return (
     <>
       {current.length > 0 && (
-        <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done when it's skied." rows={current} now={now} offerDone />
+        <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done Skiing when it's skied." rows={current} now={now} offerDone />
       )}
       {unrated.length > 0 && (
         <Group id="unrated-h" title="Unrated sessions" note="From an earlier day and not rated yet. Rate them, or delete the ones that never happened." rows={unrated} now={now} />
@@ -93,10 +93,10 @@ function Group({ id, title, note, rows, now, offerDone = false }: { id: string; 
                 <form action={markDone.bind(null, r.id, "list")} className="shrink-0">
                   <button
                     type="submit"
-                    aria-label={`Mark ${r.event_name ?? r.venue_name ?? "this session"} done`}
+                    aria-label={`Mark ${r.event_name ?? r.venue_name ?? "this session"} done skiing`}
                     className="min-h-11 rounded-lg border border-accent px-3 text-sm font-semibold text-link active:bg-tile"
                   >
-                    Done
+                    Done Skiing
                   </button>
                 </form>
               )}
