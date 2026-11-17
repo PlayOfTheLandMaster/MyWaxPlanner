@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { readSnowForm } from "@/lib/snow/check";
+import { dayIn } from "@/lib/venues/today";
+import { readerTimeZone } from "@/lib/reader-zone";
 
 export type SnowCheckState = { error?: string; saved?: boolean };
 
@@ -24,4 +26,27 @@ export async function saveSnowCheck(_prev: SnowCheckState, form: FormData): Prom
   revalidatePath("/");
   revalidatePath("/plan");
   return { saved: true };
+}
+
+/**
+ * Sets today's location: every wax job for the rest of the reader's day uses
+ * it (Today, Plan a wax, Record a wax job). "home" goes back to the home venue.
+ */
+export async function setTodayVenue(venueId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) redirect("/login");
+  const day = dayIn(new Date(), await readerTimeZone());
+  let current: { venue_id: string; day: string } | null = null;
+  if (venueId !== "home") {
+    if (!UUID.test(venueId)) return;
+    // Only a venue this account can see (its own or a shared one).
+    const { data: v } = await supabase.from("venues").select("id").eq("id", venueId).maybeSingle();
+    if (!v) return;
+    current = { venue_id: venueId, day };
+  }
+  await supabase.from("profiles").update({ current_venue: current }).eq("id", data.user.id);
+  revalidatePath("/");
+  revalidatePath("/plan");
+  revalidatePath("/history");
 }

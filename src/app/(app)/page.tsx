@@ -2,7 +2,9 @@ import { Suspense, cache } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { forecastable, loadHomeVenueId, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { loadTodayVenue } from "@/lib/venues/today-load";
+import { setTodayVenue } from "./snow-actions";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
@@ -25,9 +27,8 @@ export const metadata: Metadata = { title: "Today · My Wax Planner" };
 // New accounts see a short getting-started checklist first.
 
 const card = "rounded-xl border border-line bg-surface p-4";
-const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? undefined;
 
-export default function TodayPage({ searchParams }: PageProps<"/">) {
+export default function TodayPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <header className="flex items-center justify-between gap-3">
@@ -44,7 +45,7 @@ export default function TodayPage({ searchParams }: PageProps<"/">) {
         </Link>
       </header>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Today searchParams={searchParams} />
+        <Today />
       </Suspense>
     </main>
   );
@@ -59,8 +60,7 @@ type Planned = {
   event_name: string | null;
 };
 
-async function Today({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
-  const p = await searchParams;
+async function Today() {
   const supabase = await createClient();
   const now = new Date();
   const who = await loadSkierContext();
@@ -69,9 +69,9 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
     .select("id, occurred_at, technique, mode, venue_name, event_name")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, home, planned, skiCount, box, toolCount, recent, skierCount, theirSkis] = await Promise.all([
+  const [venues, today, planned, skiCount, box, toolCount, recent, skierCount, theirSkis] = await Promise.all([
     loadVenues(supabase),
-    loadHomeVenueId(supabase),
+    loadTodayVenue(supabase),
     plannedQuery.order("occurred_at", { ascending: true }).limit(20),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
@@ -84,20 +84,21 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       : supabase.from("skis").select("id", { count: "exact", head: true }).is("skier_id", null)),
   ]);
 
+  const home = today.home;
   const waxes = box.data ?? [];
   const steps = setupSteps({ style: who.style, home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
   const { todo } = progress(steps);
   const expert = isExpert(who.style);
 
-  // Venues for the chips: home first, then the ones you've skied most recently.
+  // Today's location: picked on this page for every wax job today, else home.
+  // The list offers home first, then the venues skied most recently, then the rest.
   const usable = venues.filter(forecastable);
   const recentIds = [...new Set((recent.data ?? []).map((r) => r.venue_id as string))];
-  const chipVenues = [home, ...recentIds]
+  const ordered = [home, ...recentIds, ...usable.map((v) => v.id)]
     .filter((id, i, all): id is string => !!id && all.indexOf(id) === i)
     .map((id) => usable.find((v) => v.id === id))
-    .filter((v): v is VenueRow & { latitude: number; longitude: number } => !!v)
-    .slice(0, 4);
-  const venue = usable.find((v) => v.id === one(p.venue)) ?? chipVenues[0] ?? null;
+    .filter((v): v is VenueRow & { latitude: number; longitude: number } => !!v);
+  const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
 
   const rows = (planned.data ?? []) as Planned[];
   const upcoming = rows.find((r) => new Date(r.occurred_at) >= new Date(now.getTime() - 3 * 3600_000));
@@ -198,20 +199,48 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
         </Link>
       )}
 
-      {chipVenues.length > 1 && (
-        <nav aria-label="Venue" className="flex flex-wrap gap-2">
-          {chipVenues.map((v) => (
-            <Link
-              key={v.id}
-              href={`/?venue=${v.id}`}
-              aria-current={v.id === venue?.id ? "true" : undefined}
-              className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${v.id === venue?.id ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
-            >
-              {v.id === home ? "⌂ " : ""}
-              {v.name}
-            </Link>
-          ))}
-        </nav>
+      {/* Set once here; Plan a wax and Record a wax job follow it until the day ends. */}
+      {usable.length > 0 && (
+        <details className={`${card} p-0`}>
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+            <span aria-hidden>📍</span>
+            <span className="min-w-0 truncate">
+              <span className="font-semibold">{venue?.name ?? "No location"}</span>
+              {venue && venue.id === home && <span className="text-sm text-muted"> · home</span>}
+            </span>
+            <span className="ml-auto shrink-0 text-sm text-link underline">Set location</span>
+          </summary>
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            <p className="text-sm text-muted">
+              Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
+            </p>
+            <ul className="flex flex-col divide-y divide-line">
+              {ordered.map((v) => {
+                const on = v.id === venue?.id;
+                return (
+                  <li key={v.id}>
+                    <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
+                      <button
+                        type="submit"
+                        aria-pressed={on}
+                        className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile"
+                      >
+                        <span
+                          aria-hidden
+                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
+                        >
+                          {on ? "✓" : ""}
+                        </span>
+                        <span className={`min-w-0 flex-1 truncate ${on ? "font-semibold" : ""}`}>{v.name}</span>
+                        {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
+                      </button>
+                    </form>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </details>
       )}
       {venue ? (
         <Suspense fallback={<p className={`${card} text-muted`}>Loading the forecast for {venue.name}…</p>}>

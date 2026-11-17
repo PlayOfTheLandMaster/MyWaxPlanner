@@ -10,7 +10,8 @@ import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { formOwner, skisOf } from "@/lib/skis/owner";
 import Link from "next/link";
-import { forecastable, loadHomeVenueId, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { loadTodayVenue } from "@/lib/venues/today-load";
 import { forecastFor } from "@/lib/weather/window";
 import { encodeDraft } from "@/lib/plan/draft";
 import { draftFromWindow, similarSessions, type PastSession } from "@/lib/history/record";
@@ -43,7 +44,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
     typeof from === "string" ? loadSession(supabase, from) : Promise.resolve(null),
     loadSkierContext(),
     record ? loadVenues(supabase) : Promise.resolve([]),
-    record ? loadHomeVenueId(supabase) : Promise.resolve(null),
+    record ? loadTodayVenue(supabase).then((t) => t.id) : Promise.resolve(null),
   ]);
   // Only the skis of the person this session is for: the skier picked on
   // Today, or for "Repeat this prep" whoever the copied session was for.
@@ -54,7 +55,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // planned for now. Ratings, conditions and race details start empty.
   // Layers whose wax has left the box are kept, by name.
   const boxIds = new Set(options.waxes.map((w) => w.id));
-  // The venue Today showed, else (from the Session tab) the home venue.
+  // The venue Today showed, else today's location (set on Today, else home).
   const venueId = typeof sp.venue === "string" ? sp.venue : home;
   const recordVenue = record ? (venues.filter(forecastable).find((v) => v.id === venueId) ?? null) : null;
   const initial: SessionInitial | undefined = source

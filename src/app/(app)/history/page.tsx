@@ -24,7 +24,8 @@ import { ExportLink } from "@/components/history/export-link";
 import { deleteFilter, saveFilter } from "./actions";
 import { SaveFilterForm } from "./save-filter-form";
 import { ConfirmDelete } from "@/components/confirm-delete";
-import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
+import { forecastable, loadVenues } from "@/lib/venues/load";
+import { loadTodayVenue } from "@/lib/venues/today-load";
 import { forecastFor } from "@/lib/weather/window";
 import { similarQuery } from "@/lib/history/similar";
 
@@ -466,8 +467,8 @@ function SessionRow({ row: r }: { row: Row }) {
  */
 async function SimilarToday({ skier }: { skier: string | undefined }) {
   const supabase = await createClient();
-  const [venues, home] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase)]);
-  const venue = venues.filter(forecastable).find((v) => v.id === home);
+  const [venues, today] = await Promise.all([loadVenues(supabase), loadTodayVenue(supabase)]);
+  const venue = venues.filter(forecastable).find((v) => v.id === today.id);
   if (!venue) return null;
   const w = (await forecastFor(venue, { hours: 2 })).window;
   if (!w) return null;

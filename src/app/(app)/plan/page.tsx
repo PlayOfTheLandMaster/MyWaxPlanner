@@ -4,10 +4,11 @@ import { SkierBanner } from "@/components/skier-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
+import { forecastable, loadVenues } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { ConditionsForm } from "./conditions-form";
+import { loadTodayVenue } from "@/lib/venues/today-load";
 import { checkFor } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { WhereWhenForm } from "./where-when-form";
@@ -68,7 +69,9 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
 async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["searchParams"] }) {
   const p = await searchParams;
   const supabase = await createClient();
-  const [venues, home, snowCheck] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase), loadSnowCheck(supabase)]);
+  const [venues, today, snowCheck] = await Promise.all([loadVenues(supabase), loadTodayVenue(supabase), loadSnowCheck(supabase)]);
+  // Today's location (set on Today), else home; the form can still pick another.
+  const home = today.id;
   const usable = venues.filter(forecastable);
   const venueId = one(p.venue) ?? home ?? undefined;
   const venue = usable.find((v) => v.id === venueId);
