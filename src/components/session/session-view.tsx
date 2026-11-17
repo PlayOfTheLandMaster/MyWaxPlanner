@@ -127,7 +127,7 @@ export async function SessionView({
 
       <div>
         <p className="text-sm text-muted">
-          {planned ? "Planned · " : ""}
+          {planned ? "In Progress · " : ""}
           <LocalTime iso={s.occurred_at} />
         </p>
         <h1 className="text-2xl font-bold">{s.event_name ?? s.venue?.name ?? `${TECHNIQUE_LABELS[s.technique]} session`}</h1>

@@ -3,23 +3,32 @@
 import { startTransition, useActionState } from "react";
 import { saveConditions, type ConditionsFormState } from "./actions";
 import type { ForecastWindow } from "@/lib/weather/forecast";
-import { SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
-import { HUMIDITY_BANDS, SNOW_TYPES } from "@/lib/catalogue/vocab";
-import { TRACKS, TRACK_LABELS } from "@/lib/history/vocab";
+import Link from "next/link";
+import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
+import { TRACK_LABELS } from "@/lib/history/vocab";
+import type { SnowCheck } from "@/lib/snow/check";
 
-const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
-const label = "flex flex-col gap-1 text-sm font-medium";
-const choice =
-  "flex min-h-11 items-center rounded-lg border border-line bg-surface px-3 text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold";
+const deg = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °C";
 
-const SNOWBALL = {
-  dry: "Falls apart — dry (0–25 %)",
-  mid: "Loose ball — mid (20–35 %)",
-  wet: "Packs into a wet ball — wet (30–100 %)",
-} as const;
-
-/** The forecast's snow guesses, for the skier to confirm or correct. */
-export function ConditionsForm({ w }: { w: ForecastWindow }) {
+/** Step 1's conditions: the forecast, with the snow as checked on Today (or estimated). */
+export function ConditionsForm({
+  w,
+  check,
+  isToday,
+}: {
+  w: ForecastWindow;
+  /** Today's Snow Conditions for this venue and day, if they were checked. */
+  check: SnowCheck | null;
+  /** The plan is for today, so Today's card is where the snow is checked. */
+  isToday: boolean;
+}) {
+  const checked = check !== null;
+  const snow = check ?? {
+    snow_temp_c: Math.min(0, w.snow_temp_c),
+    snow_humidity_band: w.snow_humidity_band,
+    snow_type: w.snow_type,
+    track: null,
+  };
   const [state, action, pending] = useActionState<ConditionsFormState, FormData>(saveConditions, {});
   const hidden: Record<string, string | number | null> = {
     venue_id: w.venue.id,
@@ -48,47 +57,47 @@ export function ConditionsForm({ w }: { w: ForecastWindow }) {
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v ?? ""} />
       ))}
+      {/* The snow is checked once a day on Today (Today's Snow Conditions);
+          every plan that day at this venue uses it, so it is not asked again. */}
+      <input type="hidden" name="snow_temp_c" value={snow.snow_temp_c} />
+      <input type="hidden" name="snow_humidity_band" value={snow.snow_humidity_band} />
+      <input type="hidden" name="snow_type" value={snow.snow_type} />
+      <input type="hidden" name="track" value={snow.track ?? ""} />
       <div>
-        <h2 className="font-semibold">Check the snow</h2>
-        <p className="text-sm text-muted">
-          Filled in from the forecast. If you&apos;re already at the trail, a snowball and a glance at the track beat any estimate.
+        <h2 className="font-semibold">Snow conditions</h2>
+        <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
+          <dt className="text-muted">Snow temperature</dt>
+          <dd>{deg(snow.snow_temp_c)}</dd>
+          <dt className="text-muted">Snowball test</dt>
+          <dd>{HUMIDITY_LABELS[snow.snow_humidity_band]}</dd>
+          <dt className="text-muted">Snow type</dt>
+          <dd>{SNOW_TYPE_LABELS[snow.snow_type]}</dd>
+          {snow.track && (
+            <>
+              <dt className="text-muted">Track</dt>
+              <dd>{TRACK_LABELS[snow.track]}</dd>
+            </>
+          )}
+        </dl>
+        <p className="mt-2 text-sm text-muted">
+          {checked ? (
+            <>From Today&apos;s Snow Conditions. </>
+          ) : (
+            <>Estimated from the forecast. </>
+          )}
+          {isToday ? (
+            <>
+              Change them on{" "}
+              <Link href="/" className="text-link underline">
+                Today
+              </Link>
+              , once for every wax job today.
+            </>
+          ) : (
+            <>On the day, check the snow on Today.</>
+          )}
         </p>
       </div>
-      <label className={label}>
-        Snow temperature at the start, °C
-        <input name="snow_temp_c" inputMode="decimal" defaultValue={w.snow_temp_c} className={field} />
-        <span className="font-normal text-muted">Estimated from the air, the night&apos;s low and the cloud. Change it if you measured it.</span>
-      </label>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Snowball test — squeeze a handful</legend>
-        {HUMIDITY_BANDS.map((b) => (
-          <label key={b} className={choice}>
-            <input type="radio" name="snow_humidity_band" value={b} defaultChecked={w.snow_humidity_band === b} className="sr-only" />
-            {SNOWBALL[b]}
-          </label>
-        ))}
-      </fieldset>
-      <label className={label}>
-        Snow type
-        <select name="snow_type" defaultValue={w.snow_type} className={field}>
-          {SNOW_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {SNOW_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className={label}>
-        Track
-        <select name="track" defaultValue="" className={field}>
-          <option value="">Not sure yet</option>
-          {TRACKS.map((t) => (
-            <option key={t} value={t}>
-              {TRACK_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </label>
       {state.error && (
         <p role="alert" className="text-sm text-danger">
           {state.error}

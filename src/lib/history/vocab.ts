@@ -19,7 +19,7 @@ export type Sky = (typeof SKIES)[number];
 export type Track = (typeof TRACKS)[number];
 
 export const MODE_LABELS: Record<Mode, string> = { recreational: "Recreational", race: "Race day" };
-export const STATUS_LABELS: Record<Status, string> = { planned: "Planned", completed: "Done" };
+export const STATUS_LABELS: Record<Status, string> = { planned: "In Progress", completed: "Done" };
 export const ZONE_LABELS: Record<Zone, string> = { glide: "Glide", grip: "Grip" };
 export const KICK_FEEL_LABELS: Record<KickFeel, string> = {
   slipping: "Slipping",
@@ -34,6 +34,16 @@ export const METHOD_LABELS: Record<Method, string> = {
   cork: "Corked",
   spray: "Spray",
 };
+/** A weather symbol for each sky, for the folded weather line on Today. */
+export const SKY_ICONS: Record<Sky, string> = {
+  sun: "☀️",
+  partly_cloudy: "⛅",
+  overcast: "☁️",
+  snowing: "🌨️",
+  raining: "🌧️",
+  fog: "🌫️",
+};
+
 export const SKY_LABELS: Record<Sky, string> = {
   sun: "Sun",
   partly_cloudy: "Partly cloudy",
