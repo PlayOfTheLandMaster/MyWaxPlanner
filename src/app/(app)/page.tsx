@@ -27,6 +27,10 @@ export const metadata: Metadata = { title: "Today · My Wax Planner" };
 // New accounts see a short getting-started checklist first.
 
 const card = "rounded-xl border border-line bg-surface p-4";
+// The three folding cards (location, weather, snow) share one frame and one
+// header, so their arrows line up and their rows are the same height.
+const fold = "rounded-xl border border-line bg-surface";
+const foldHead = "flex min-h-16 cursor-pointer items-center gap-3 px-4 py-2 active:bg-tile";
 
 export default function TodayPage() {
   return (
@@ -201,14 +205,17 @@ async function Today() {
 
       {/* Set once here; Plan a wax and Record a wax job follow it until the day ends. */}
       {usable.length > 0 && (
-        <details className={`${card} p-0`}>
-          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
-            <span aria-hidden>📍</span>
+        <details className={fold}>
+          {/* The fold's own arrow opens the list, as on the cards below it. */}
+          <summary className={foldHead}>
+            <span aria-hidden className="text-2xl leading-none">
+              📍
+            </span>
             <span className="min-w-0 truncate">
-              <span className="font-semibold">{venue?.name ?? "No location"}</span>
+              <span className="text-sm text-muted">Location: </span>
+              <span className="font-semibold">{venue?.name ?? "none set"}</span>
               {venue && venue.id === home && <span className="text-sm text-muted"> · home</span>}
             </span>
-            <span className="ml-auto shrink-0 text-sm text-link underline">Set location</span>
           </summary>
           <div className="flex flex-col gap-2 px-4 pb-4">
             <p className="text-sm text-muted">
@@ -283,8 +290,8 @@ async function Conditions({ venue }: { venue: VenueRow }) {
   return (
     <>
       {/* Folded, the weather is one line: the air temperature and the sky. */}
-      <details className="flex flex-col gap-2">
-        <summary className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile">
+      <details className={fold}>
+        <summary className={foldHead}>
           <span aria-hidden className="text-4xl leading-none">
             {SKY_ICONS[w.sky]}
           </span>
@@ -294,14 +301,12 @@ async function Conditions({ venue }: { venue: VenueRow }) {
             <span className="block truncate text-sm text-muted">{venue.name}</span>
           </span>
         </summary>
-        <div className="mt-2">
-          <ForecastCard w={w} compact />
-        </div>
+        <ForecastCard w={w} compact bare />
       </details>
 
       {/* Checked once here, used by every wax job today at this venue. */}
-      <details className={`${card} p-0`}>
-        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+      <details className={fold}>
+        <summary className={foldHead}>
           <span className="font-semibold">Today&apos;s Snow Conditions</span>
           <span className="truncate text-sm text-muted">
             {check

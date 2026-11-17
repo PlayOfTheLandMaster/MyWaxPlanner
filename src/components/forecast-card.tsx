@@ -6,12 +6,16 @@ const deg = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °C
 const hhmm = (local: string) => local.slice(11, 16);
 
 /** The forecast for a session window, as the skier will meet it. */
-export function ForecastCard({ w, compact = false }: { w: ForecastWindow; compact?: boolean }) {
+export function ForecastCard({ w, compact = false, bare = false }: { w: ForecastWindow; compact?: boolean; bare?: boolean }) {
   const [cold, warm] = w.snow_temp_range;
   const endLabel = `${String((Number(w.start.slice(11, 13)) + w.hours.length) % 24).padStart(2, "0")}:${w.start.slice(14, 16)}`;
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4" aria-label={`Forecast for ${w.venue.name}`}>
+    // Bare: inside another card (Today's weather fold), so no frame of its own.
+    <section
+      className={bare ? "flex flex-col gap-3 px-4 pb-4" : "flex flex-col gap-3 rounded-xl border border-line bg-surface p-4"}
+      aria-label={`Forecast for ${w.venue.name}`}
+    >
       <div>
         <p className="text-sm text-muted">
           {w.venue.name} · {w.elevation_m} m · {w.start.slice(0, 10)} {hhmm(w.start)}–{endLabel} local
