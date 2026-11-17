@@ -3,6 +3,7 @@ import Link from "next/link";
 import { displayName } from "@/lib/profile/name";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
+import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { currentUser } from "@/lib/auth/current-user";
 import { loadVenues } from "@/lib/venues/load";
@@ -17,7 +18,7 @@ export const metadata: Metadata = { title: "Account · My Wax Planner" };
 
 const card = "rounded-xl border border-line bg-surface p-4";
 
-export default function AccountPage() {
+export default function AccountPage({ searchParams }: PageProps<"/account">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
@@ -25,13 +26,14 @@ export default function AccountPage() {
         <h1 className="text-2xl font-bold">Account</h1>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Account />
+        <Account searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function Account() {
+async function Account({ searchParams }: { searchParams: PageProps<"/account">["searchParams"] }) {
+  const fromChecklist = (await searchParams).start === "1";
   const supabase = await createClient();
   const [user, venues, skiers, profile, skis] = await Promise.all([
     currentUser(),
@@ -51,6 +53,7 @@ async function Account() {
 
   return (
     <>
+      <SetupNext step="skiers" searchParams={searchParams} />
       <section className={card} aria-labelledby="skiers">
         <h2 id="skiers" className="font-semibold">
           Skiers
@@ -92,7 +95,8 @@ async function Account() {
             </li>
           ))}
         </ul>
-        <details>
+        {/* Opened already when the getting-started checklist sent you here. */}
+        <details open={fromChecklist && skiers.length === 0}>
           <summary className="flex min-h-11 cursor-pointer items-center font-medium">Add a skier</summary>
           <div className="pt-2">
             <SkierForm save={addSkier} submitLabel="Add skier" years={years} />

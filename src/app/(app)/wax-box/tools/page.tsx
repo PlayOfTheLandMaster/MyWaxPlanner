@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
+import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { WaxBoxNav } from "@/components/wax-box-nav";
 import { ToolRow } from "./tool-row";
@@ -20,12 +21,13 @@ const SECTIONS: { label: string; types: string[] }[] = [
 
 type Tool = { id: string; type: string; name: string };
 
-export default function ToolsPage() {
+export default function ToolsPage({ searchParams }: PageProps<"/wax-box/tools">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <BackLink fallback="/wax-box" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Wax box</h1>
       <WaxBoxNav current="tools" />
+      <SetupNext step="tools" searchParams={searchParams} />
       <p className="text-sm text-muted">
         Tick the tools you own. Waxing plans will only ask you to use tools that are ticked.
       </p>

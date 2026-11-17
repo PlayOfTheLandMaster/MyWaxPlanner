@@ -2,13 +2,14 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
+import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { deleteVenue, setHomeVenue } from "./actions";
 
 export const metadata: Metadata = { title: "Venues · My Wax Planner" };
 
-export default function VenuesPage() {
+export default function VenuesPage({ searchParams }: PageProps<"/venues">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
@@ -16,6 +17,7 @@ export default function VenuesPage() {
         <h1 className="text-2xl font-bold">Venues</h1>
         <p className="text-sm text-muted">Forecasts are always for the venue you pick, at its trail height — never for where your phone is.</p>
       </div>
+      <SetupNext step="venue" searchParams={searchParams} />
       <Link href="/venues/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
         Add a venue
       </Link>
