@@ -32,6 +32,21 @@ export async function setWaxStep(sessionId: string, step: number, done: boolean)
   return null;
 }
 
+/**
+ * Wax-along's ticks: the whole list, not one step. The screen saves in order,
+ * always sending its latest list, so quick taps cannot overwrite each other
+ * the way two read-then-write saves of single steps would.
+ */
+export async function setWaxSteps(sessionId: string, steps: number[]): Promise<string | null> {
+  const supabase = await signedIn();
+  if (!Array.isArray(steps) || steps.some((n) => !Number.isInteger(n) || n < 0 || n > 199)) return "That step is not part of the plan.";
+  const list = [...new Set(steps)].sort((a, b) => a - b);
+  const { data, error } = await supabase.from("wax_sessions").update({ wax_steps_done: list }).eq("id", sessionId).select("id");
+  if (error) return `Could not save the tick: ${error.message}`;
+  if (!data?.length) return "That session is no longer in your history.";
+  return null;
+}
+
 /** "I'm Done Waxing": the session is ready to ski. */
 export async function finishWaxing(sessionId: string) {
   const supabase = await signedIn();

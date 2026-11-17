@@ -24,20 +24,44 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
-      {/* The Session tab: its own title, then sessions already planned, a way
-          to log a wax done without a plan, and a new plan. */}
+      {/* The Session tab: its own title, then a new plan (where, weather and
+          snow), then sessions already planned and a way to log a wax done
+          without a plan. */}
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Session</h1>
       <Suspense fallback={null}>
         <Copied searchParams={searchParams} />
       </Suspense>
+      <div>
+        <h2 className="text-lg font-semibold">Plan a wax session</h2>
+        <p className="text-sm text-muted">
+          The app suggests waxes from your box. Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.
+        </p>
+      </div>
+      <Suspense fallback={null}>
+        <SkierBanner />
+      </Suspense>
+      {/* At the top, so the list below must not jump when the forecast arrives:
+          the fallback holds the folded cards' height. */}
+      <Suspense
+        fallback={
+          <div className="flex flex-col gap-3" aria-busy>
+            <p className={`${fold} flex min-h-16 items-center px-4 text-muted`}>Loading the forecast…</p>
+            <p className={`${fold} min-h-16`} aria-hidden />
+            <p className={`${fold} min-h-16`} aria-hidden />
+            <p className="min-h-11" aria-hidden />
+          </div>
+        }
+      >
+        <Plan searchParams={searchParams} />
+      </Suspense>
       {/* The list and the card share one boundary: the planned-sessions list
           used to arrive a moment after the card and push it down the page.
-          The plan below waits on the forecast, so it keeps its own. */}
+          The plan above waits on the forecast, so it keeps its own. */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <ContinueList />
-        {/* Near the top, beside the plan: the full form for a wax done without one. */}
+        {/* Beside the list: the full form for a wax done without a plan. */}
         <Link
           href="/history/new?record=1"
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
@@ -50,18 +74,6 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
             →
           </span>
         </Link>
-      </Suspense>
-      <div>
-        <h2 className="text-lg font-semibold">Plan a wax</h2>
-        <p className="text-sm text-muted">
-          The app suggests waxes from your box. Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.
-        </p>
-      </div>
-      <Suspense fallback={null}>
-        <SkierBanner />
-      </Suspense>
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Plan searchParams={searchParams} />
       </Suspense>
     </main>
   );
