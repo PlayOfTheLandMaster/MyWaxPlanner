@@ -64,7 +64,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
     .select("id, occurred_at, technique, mode, venue_name, event_name")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, home, planned, skiCount, box, toolCount, recent, skierCount] = await Promise.all([
+  const [venues, home, planned, skiCount, box, toolCount, recent, skierCount, theirSkis] = await Promise.all([
     loadVenues(supabase),
     loadHomeVenueId(supabase),
     plannedQuery.order("occurred_at", { ascending: true }).limit(20),
@@ -73,6 +73,10 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
     supabase.from("wax_sessions").select("venue_id").not("venue_id", "is", null).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("skiers").select("id", { count: "exact", head: true }),
+    // Pairs belonging to whoever is picked: none means a plan for them has no skis to choose.
+    (who.current
+      ? supabase.from("skis").select("id", { count: "exact", head: true }).eq("skier_id", who.current.id)
+      : supabase.from("skis").select("id", { count: "exact", head: true }).is("skier_id", null)),
   ]);
 
   const waxes = box.data ?? [];
@@ -109,6 +113,21 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       <div id="skier" className="scroll-mt-4">
         <SkierBanner />
       </div>
+
+      {/* The checklist covers the account's first pair; this is a skier
+          picked later, with none of their own yet. */}
+      {(skiCount.count ?? 0) > 0 && theirSkis.count === 0 && (
+        <Link
+          href={`/wax-box/skis/new?skier=${who.key}`}
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-accent bg-tile px-4 py-2 text-sm active:opacity-70"
+        >
+          <span>
+            {who.current ? `${who.current.name} has no skis yet.` : "You have no skis of your own yet."}{" "}
+            <span className="text-link underline">Add skis</span>
+          </span>
+          <span aria-hidden className="text-link">→</span>
+        </Link>
+      )}
 
       {todo > 0 && (
         <section className={card} aria-label="Getting started">
