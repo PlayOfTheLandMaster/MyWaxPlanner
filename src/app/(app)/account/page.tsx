@@ -13,6 +13,9 @@ import { SettingsForm } from "./settings-form";
 import { SkierForm } from "./skier-form";
 import { addSkier } from "./skier-actions";
 import { setWaxingStyle } from "./actions";
+import { removeInvite } from "./invite-actions";
+import { InviteForm } from "./invite-form";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { STYLE_LABELS, WAXING_STYLES, readStyle } from "@/lib/profile/style";
 import { birthYears, describeBody, type Body } from "@/lib/skiers/body";
 
@@ -153,6 +156,8 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
         <span aria-hidden className="text-muted">→</span>
       </Link>
 
+      <Invitations />
+
       <section className="flex items-center justify-between gap-4 rounded-xl border border-line bg-surface p-4">
         <p className="min-w-0 truncate text-sm">
           Signed in as <span className="font-medium">{user?.email}</span>
@@ -164,5 +169,49 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
         </form>
       </section>
     </>
+  );
+}
+
+/**
+ * Admins only: who may create an account. Sign-up is by invitation, enforced
+ * by the database, so an address has to be on this list before its owner can
+ * sign up. Nothing shows for anyone else: the list is not theirs to read.
+ */
+async function Invitations() {
+  const supabase = await createClient();
+  const { data: admin } = await supabase.from("app_admins").select("user_id").maybeSingle();
+  if (!admin) return null;
+  const { data } = await supabase.from("signup_invites").select("email, note, created_at, used_at").order("created_at", { ascending: false });
+  const invites = (data ?? []) as { email: string; note: string | null; created_at: string; used_at: string | null }[];
+  return (
+    <section className={card} aria-labelledby="invites">
+      <h2 id="invites" className="font-semibold">
+        Invitations
+      </h2>
+      <p className="text-sm text-muted">
+        Only these email addresses can create an account. Add someone, then send them the link. Existing accounts are not affected.
+      </p>
+      {invites.length > 0 && (
+        <ul className="my-3 flex flex-col divide-y divide-line">
+          {invites.map((i) => (
+            <li key={i.email} className="flex min-h-11 items-center justify-between gap-3 py-1">
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{i.email}</span>
+                <span className="block truncate text-sm text-muted">
+                  {[i.used_at ? "Joined" : "Not joined yet", i.note].filter(Boolean).join(" · ")}
+                </span>
+              </span>
+              {!i.used_at && <ConfirmDelete action={removeInvite.bind(null, i.email)} label={i.email} />}
+            </li>
+          ))}
+        </ul>
+      )}
+      <details open={invites.length === 0}>
+        <summary className="flex min-h-11 cursor-pointer items-center font-medium">Invite someone</summary>
+        <div className="pt-2">
+          <InviteForm />
+        </div>
+      </details>
+    </section>
   );
 }
