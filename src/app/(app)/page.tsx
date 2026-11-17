@@ -239,6 +239,9 @@ async function Today() {
                 );
               })}
             </ul>
+            <Link href="/venues/new?back=today" className="inline-flex min-h-11 items-center gap-2 self-start text-sm text-link underline">
+              <span aria-hidden>＋</span> Add a location
+            </Link>
           </div>
         </details>
       )}

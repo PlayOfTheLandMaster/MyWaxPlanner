@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { dayIn } from "@/lib/venues/today";
+import { readerTimeZone } from "@/lib/reader-zone";
 
 export type VenueFormState = { error?: string };
 
@@ -55,6 +57,13 @@ export async function addVenue(_prev: VenueFormState, formData: FormData): Promi
   }
   revalidatePath("/venues");
   const back = String(formData.get("back") ?? "");
+  if (back === "/") {
+    // Added from Today's Set location: it becomes today's location straight away.
+    const day = dayIn(new Date(), await readerTimeZone());
+    await supabase.from("profiles").update({ current_venue: { venue_id: data.id, day } }).eq("id", userId);
+    revalidatePath("/");
+    redirect("/");
+  }
   redirect(back.startsWith("/plan") ? `/plan?venue=${data.id}` : "/venues");
 }
 

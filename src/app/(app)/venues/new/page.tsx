@@ -22,7 +22,9 @@ export default function NewVenuePage({ searchParams }: PageProps<"/venues/new">)
 async function Content({ searchParams }: { searchParams: PageProps<"/venues/new">["searchParams"] }) {
   const p = await searchParams;
   const q = one(p.q)?.trim().slice(0, 80);
-  const back = one(p.back) === "plan" ? "/plan" : "/venues";
+  // Where Add a venue was opened from: Plan a wax, Today's Set location, or Venues.
+  const from = one(p.back);
+  const back = from === "plan" ? "/plan" : from === "today" ? "/" : "/venues";
   let results: Awaited<ReturnType<typeof searchPlaces>> = [];
   let error: string | null = null;
   if (q) {
@@ -40,18 +42,19 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
     longitude: one(p.lon),
     elevation_m: one(p.elev),
   };
-  const base = back === "/plan" ? "&back=plan" : "";
+  const base = back === "/plan" ? "&back=plan" : back === "/" ? "&back=today" : "";
 
   return (
     <>
       <div>
-        <BackLink fallback={back} fallbackLabel={`${back === "/plan" ? "Plan" : "Venues"}`} />
+        <BackLink fallback={back} fallbackLabel={back === "/plan" ? "Plan" : back === "/" ? "Today" : "Venues"} />
         <h1 className="text-2xl font-bold">Add a venue</h1>
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
       </div>
 
       <form method="get" className="flex gap-2">
         {back === "/plan" && <input type="hidden" name="back" value="plan" />}
+        {back === "/" && <input type="hidden" name="back" value="today" />}
         <input
           name="q"
           type="search"
