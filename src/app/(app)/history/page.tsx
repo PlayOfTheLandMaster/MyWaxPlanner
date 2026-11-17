@@ -22,6 +22,7 @@ import { historyQuery } from "@/lib/history/query";
 import { ExportLink } from "@/components/history/export-link";
 import { deleteFilter, saveFilter } from "./actions";
 import { SaveFilterForm } from "./save-filter-form";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { similarQuery } from "@/lib/history/similar";
@@ -112,11 +113,12 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const n = activeCount(f);
   const here = toQuery(f);
 
-  type Chip = { label: string; without: Partial<Filters> };
+  type Chip = { field: string; label: string; without: Partial<Filters> };
   const chips = (
     [
-    f.technique && { label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
+    f.technique && { field: "Technique", label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
     f.skier && {
+      field: "Skier",
       label:
         f.skier === "me"
           ? `${who.me}'s skis`
@@ -125,53 +127,37 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             : `${(skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? "Skier"}'s skis`,
       without: { skier: undefined },
     },
-    f.ski && { label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
-    f.venue && { label: venueName.get(f.venue) ?? "Venue", without: { venue: undefined } },
-    f.mode && { label: MODE_LABELS[f.mode as "race"], without: { mode: undefined } },
-    f.status && { label: STATUS_LABELS[f.status as "planned"], without: { status: undefined } },
+    f.ski && { field: "Skis", label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
+    f.venue && { field: "Venue", label: venueName.get(f.venue) ?? "Venue", without: { venue: undefined } },
+    f.mode && { field: "Kind", label: MODE_LABELS[f.mode as "race"], without: { mode: undefined } },
+    f.status && { field: "Status", label: STATUS_LABELS[f.status as "planned"], without: { status: undefined } },
     (f.tmin !== undefined || f.tmax !== undefined) && {
-      label: `Snow ${f.tmin !== undefined ? deg(f.tmin) : "…"} to ${f.tmax !== undefined ? deg(f.tmax) : "…"}`,
+      field: "Snow temperature",
+      label: `${f.tmin !== undefined ? deg(f.tmin) : "…"} to ${f.tmax !== undefined ? deg(f.tmax) : "…"}`,
       without: { tmin: undefined, tmax: undefined },
     },
-    f.snow && { label: SNOW_TYPE_LABELS[f.snow as "wet"], without: { snow: undefined } },
-    f.snowhum && { label: `Snow ${HUMIDITY_LABELS[f.snowhum as "dry"].toLowerCase()}`, without: { snowhum: undefined } },
-    f.airhum && { label: `Air ${HUMIDITY_LABELS[f.airhum as "dry"].toLowerCase()}`, without: { airhum: undefined } },
-    f.brand && { label: f.brand, without: { brand: undefined } },
-    f.product && { label: "One wax", without: { product: undefined } },
-    f.glide && { label: `Glide ≥ ${f.glide}`, without: { glide: undefined } },
-    f.grip && { label: `Grip ≥ ${f.grip}`, without: { grip: undefined } },
-    f.kick && { label: `Kick: ${KICK_FEEL_LABELS[f.kick as "good"].toLowerCase()}`, without: { kick: undefined } },
-    f.q && { label: `“${f.q}”`, without: { q: undefined } },
+    f.snow && { field: "Snow type", label: SNOW_TYPE_LABELS[f.snow as "wet"], without: { snow: undefined } },
+    f.snowhum && { field: "Snow humidity", label: HUMIDITY_LABELS[f.snowhum as "dry"], without: { snowhum: undefined } },
+    f.airhum && { field: "Air humidity", label: HUMIDITY_LABELS[f.airhum as "dry"], without: { airhum: undefined } },
+    f.brand && { field: "Brand", label: f.brand, without: { brand: undefined } },
+    f.product && { field: "Wax", label: "One wax", without: { product: undefined } },
+    f.glide && { field: "Glide", label: `${f.glide} or better`, without: { glide: undefined } },
+    f.grip && { field: "Grip", label: `${f.grip} or better`, without: { grip: undefined } },
+    f.kick && { field: "Kick", label: KICK_FEEL_LABELS[f.kick as "good"], without: { kick: undefined } },
+    f.q && { field: "Search", label: `“${f.q}”`, without: { q: undefined } },
     ] as (Chip | false | "" | 0 | undefined)[]
   ).filter((c): c is Chip => Boolean(c));
 
   const periodLabel = (p: string) =>
     p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${p.replace("-", "–")}`;
 
+  const savedList = (saved.data ?? []) as { id: string; name: string; query: string }[];
+  // The saved filter the page is showing now, if any.
+  const active = savedList.find((sf) => here === `?${sf.query}`) ?? null;
+
   return (
     <div className="flex flex-col gap-4">
       <SkierBanner returnTo={`/history${toQuery(f, { skier: undefined })}`} everyone={skier === "all"} override={f.skier && f.skier !== "all" ? (f.skier === "me" ? who.me : (skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? null) : null} />
-      {(saved.data ?? []).length > 0 && (
-        <nav aria-label="Saved filters" className="flex flex-wrap gap-2">
-          {(saved.data ?? []).map((s) => {
-            // Tapping the active saved filter again turns it off.
-            const on = here === `?${s.query}`;
-            return (
-              <Link
-                key={s.id}
-                href={on ? "/history" : `/history?${s.query}`}
-                aria-current={on ? "true" : undefined}
-                aria-label={on ? `Turn off saved filter: ${s.name}` : `Saved filter: ${s.name}`}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm ${on ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
-              >
-                ★ {s.name}
-                {on && <span aria-hidden>✕</span>}
-              </Link>
-            );
-          })}
-        </nav>
-      )}
-
       <nav aria-label="Period" className="flex gap-1 overflow-x-auto rounded-xl bg-tile p-1">
         {["season", "30d", "all"].map((p) => (
           <Link
@@ -192,8 +178,16 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
 
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
-        <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-          Filters{n > 0 ? ` (${n})` : ""}
+        {/* No justify-between: on iPad the fold's triangle is a flex item too,
+            and spreading the items pushed "Filter" away from it. */}
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
+          <span>Filter{n > 0 ? ` (${n})` : ""}</span>
+          {/* On the fold itself, so clearing needs no opening first. */}
+          {n > 0 && (
+            <Link href="/history" className="ml-auto inline-flex min-h-11 items-center px-1 text-sm font-normal text-link underline">
+              Clear
+            </Link>
+          )}
         </summary>
         {/* A plain GET form: the filters become the page address, so the back
             button, bookmarks and saved filters all just work. */}
@@ -254,57 +248,118 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             Search notes, events and waxes
             <input name="q" type="search" defaultValue={f.q ?? ""} className={field} />
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/history" className="flex min-h-11 items-center justify-center rounded-lg border border-line text-sm">
-              Clear all
-            </Link>
-            <button type="submit" className="min-h-11 rounded-lg bg-accent font-semibold text-on-accent">
-              Show sessions
-            </button>
-          </div>
+          {/* A full page load, so the fold closes and the active filters show below it. */}
+          <button type="submit" className="min-h-11 rounded-lg bg-accent font-semibold text-on-accent active:opacity-70">
+            Apply Filter
+          </button>
         </form>
       </details>
 
-      {chips.length > 0 && (
-        <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
-          {chips.map((c) => (
-            <li key={c.label}>
-              <Link
-                href={`/history${toQuery(f, c.without)}`}
-                aria-label={`Remove filter: ${c.label}`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-accent bg-tile px-3 text-sm"
-              >
-                {c.label} <span aria-hidden>✕</span>
-              </Link>
-            </li>
-          ))}
-          {chips.length > 1 && (
-            <li>
-              <Link href="/history" className="inline-flex min-h-11 items-center px-2 text-sm text-link underline">
-                Clear all filters
-              </Link>
-            </li>
+      {/* Saved filters: a pick list under the Filter fold. Tapping one applies
+          it; tapping the one in use turns it off. The current filter can be
+          saved from here too. */}
+      <details className="rounded-xl border border-line bg-surface">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
+          Saved filters
+          <span className="truncate font-normal text-muted">
+            {active ? `· ${active.name}` : ""}
+          </span>
+        </summary>
+        <div className="flex flex-col gap-3 p-4 pt-0">
+          {savedList.length === 0 ? (
+            <p className="text-sm text-muted">None yet. Set a filter above, then save it here to use it again with one tap.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-line">
+              {savedList.map((sf) => {
+                const on = active?.id === sf.id;
+                return (
+                  <li key={sf.id} className="flex items-center gap-1">
+                    <Link
+                      href={on ? "/history" : `/history?${sf.query}`}
+                      aria-current={on ? "true" : undefined}
+                      className="flex min-h-11 min-w-0 flex-1 items-center gap-3 active:bg-tile"
+                    >
+                      <span
+                        aria-hidden
+                        className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
+                      >
+                        {on ? "✓" : ""}
+                      </span>
+                      <span className={`min-w-0 flex-1 truncate ${on ? "font-semibold" : ""}`}>{sf.name}</span>
+                      {on && <span className="shrink-0 text-sm text-link underline">Turn off</span>}
+                    </Link>
+                    <ConfirmDelete action={deleteFilter.bind(null, sf.id)} label={`saved filter ${sf.name}`} />
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </ul>
+          {n > 0 && !active && (
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              <h2 className="text-sm font-semibold">Save the current filter</h2>
+              <SaveFilterForm save={saveFilter.bind(null, here)} />
+            </div>
+          )}
+        </div>
+      </details>
+
+      {/* What the list is filtered by: a plain, compact summary. Changing or
+          clearing it happens on the Filter fold above. */}
+      {chips.length > 0 && (
+        <section aria-label="Active filters" className="rounded-xl border border-line bg-surface px-4 py-3">
+          <h2 className="mb-1 text-sm font-semibold">{active ? `Saved filter: ${active.name}` : "Filtered by"}</h2>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
+            {chips.map((c) => (
+              <div key={c.field} className="contents">
+                <dt className="text-muted">{c.field}</dt>
+                <dd className="truncate">{c.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
 
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <p>
-          {rows.length} {rows.length === 1 ? "session" : "sessions"} · {periodLabel(f.period).toLowerCase()}
-        </p>
-        <nav aria-label="Sort" className="flex flex-wrap justify-end gap-x-3">
-          {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
-            <Link
-              key={s}
-              href={`/history${toQuery(f, { sort: s })}`}
-              aria-current={f.sort === s ? "true" : undefined}
-              className={`inline-flex min-h-11 items-center ${f.sort === s ? "font-semibold" : "text-link underline"}`}
-            >
-              {SORT_LABELS[s]}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      {/* The list itself is one tap away, so the filters and their summary
+          stay at the top of a short page. */}
+      <details className="group">
+        <summary className="list-none flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
+          <span className="group-open:hidden">
+            Show sessions ({rows.length})
+          </span>
+          <span className="hidden group-open:inline">Hide sessions</span>
+        </summary>
+        <div className="mt-4 flex flex-col gap-4">
+        {/* The count is on the Show sessions button; only the sort is needed here. */}
+        <div className="flex items-center gap-3 text-sm">
+          <nav aria-label="Sort" className="flex flex-wrap gap-x-3">
+            {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
+              <Link
+                key={s}
+                href={`/history${toQuery(f, { sort: s })}`}
+                aria-current={f.sort === s ? "true" : undefined}
+                className={`inline-flex min-h-11 items-center ${f.sort === s ? "font-semibold" : "text-link underline"}`}
+              >
+                {SORT_LABELS[s]}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="rounded-xl border border-line bg-surface p-4 text-muted">
+            {n > 0 || f.period !== "all"
+              ? "No sessions match. Try fewer filters or a longer period."
+              : "No sessions yet. Log each time you wax and ski; after a few, the filters turn this into your own wax chart."}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {rows.map((r) => (
+              <SessionRow key={r.id} row={r} />
+            ))}
+          </ul>
+        )}
+        </div>
+      </details>
 
       <div className="flex flex-wrap gap-2">
         <Link href="/history/compare" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
@@ -315,47 +370,6 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </Link>
         {rows.length > 0 && <ExportLink href={`/history/export${toQuery(f, { skier })}`} />}
       </div>
-
-      {rows.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface p-4 text-muted">
-          {n > 0 || f.period !== "all"
-            ? "No sessions match. Try fewer filters or a longer period."
-            : "No sessions yet. Log each time you wax and ski; after a few, the filters turn this into your own wax chart."}
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {rows.map((r) => (
-            <SessionRow key={r.id} row={r} />
-          ))}
-        </ul>
-      )}
-
-      {n > 0 && (
-        <section aria-labelledby="save-filter" className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <h2 id="save-filter" className="font-semibold">
-            Save this filter
-          </h2>
-          <SaveFilterForm save={saveFilter.bind(null, here)} />
-        </section>
-      )}
-
-      {(saved.data ?? []).length > 0 && (
-        <details className="rounded-xl border border-line">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm">Manage saved filters</summary>
-          <ul className="flex flex-col p-2">
-            {(saved.data ?? []).map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm">{s.name}</span>
-                <form action={deleteFilter.bind(null, s.id)}>
-                  <button type="submit" className="min-h-11 px-3 text-sm text-danger">
-                    Delete
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
     </div>
   );
 }
@@ -448,7 +462,7 @@ async function SimilarToday({ skier }: { skier: string | undefined }) {
       className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile"
     >
       <span className="min-w-0">
-        <span className="block font-semibold">Filter - Similar days to today</span>
+        <span className="block font-semibold">Filter - Days similar to today</span>
         <span className="block truncate text-sm text-muted">
           Snow within 3 °C of today&apos;s {deg(Math.round(w.snow_temp_c * 10) / 10)} at {venue.name}, best glide first
         </span>

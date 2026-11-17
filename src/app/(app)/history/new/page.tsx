@@ -49,7 +49,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   const owner = formOwner(allOptions.skis, source, who.current?.id ?? null);
   const options = { ...allOptions, skis: skisOf(allOptions.skis, owner) };
 
-  // "Repeat this prep": the same skis, layers and finish as a past session,
+  // "Use this wax today" (was Repeat this prep): the same skis, layers and finish as a past session,
   // planned for now. Ratings, conditions and race details start empty.
   // Layers whose wax has left the box are kept, by name.
   const boxIds = new Set(options.waxes.map((w) => w.id));
