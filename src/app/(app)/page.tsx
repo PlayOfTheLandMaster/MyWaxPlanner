@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
+import { groupByPlace } from "@/lib/venues/place";
 import { setTodayVenue } from "./snow-actions";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
@@ -73,14 +74,13 @@ async function Today() {
     .select("id, occurred_at, technique, mode, venue_name, event_name")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, today, planned, skiCount, box, toolCount, recent, skierCount, theirSkis] = await Promise.all([
+  const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis] = await Promise.all([
     loadVenues(supabase),
     loadTodayVenue(supabase),
     plannedQuery.order("occurred_at", { ascending: true }).limit(20),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
-    supabase.from("wax_sessions").select("venue_id").not("venue_id", "is", null).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("skiers").select("id", { count: "exact", head: true }),
     // Pairs belonging to whoever is picked: none means a plan for them has no skis to choose.
     (who.current
@@ -95,13 +95,7 @@ async function Today() {
   const expert = isExpert(who.style);
 
   // Today's location: picked on this page for every wax job today, else home.
-  // The list offers home first, then the venues skied most recently, then the rest.
   const usable = venues.filter(forecastable);
-  const recentIds = [...new Set((recent.data ?? []).map((r) => r.venue_id as string))];
-  const ordered = [home, ...recentIds, ...usable.map((v) => v.id)]
-    .filter((id, i, all): id is string => !!id && all.indexOf(id) === i)
-    .map((id) => usable.find((v) => v.id === id))
-    .filter((v): v is VenueRow & { latitude: number; longitude: number } => !!v);
   const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
 
   const rows = (planned.data ?? []) as Planned[];
@@ -221,31 +215,45 @@ async function Today() {
             <p className="text-sm text-muted">
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
-            <ul className="flex flex-col divide-y divide-line">
-              {ordered.map((v) => {
-                const on = v.id === venue?.id;
-                return (
-                  <li key={v.id}>
-                    <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
-                      <button
-                        type="submit"
-                        aria-pressed={on}
-                        className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile"
-                      >
-                        <span
-                          aria-hidden
-                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
-                        >
-                          {on ? "✓" : ""}
-                        </span>
-                        <span className={`min-w-0 flex-1 truncate ${on ? "font-semibold" : ""}`}>{v.name}</span>
-                        {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
-                      </button>
-                    </form>
-                  </li>
-                );
-              })}
-            </ul>
+            {/* By country, then province or state, then A–Z. */}
+            {groupByPlace(usable).map((c) => (
+              <section key={c.country} aria-label={c.country} className="flex flex-col gap-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{c.country}</h3>
+                {c.provinces.map((pr) => (
+                  <div key={pr.province ?? "-"}>
+                    {pr.province && <h4 className="text-sm font-semibold">{pr.province}</h4>}
+                    <ul className="flex flex-col divide-y divide-line">
+                      {pr.venues.map((v) => {
+                        const on = v.id === venue?.id;
+                        return (
+                          <li key={v.id}>
+                            <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
+                              <button
+                                type="submit"
+                                aria-pressed={on}
+                                className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile"
+                              >
+                                <span
+                                  aria-hidden
+                                  className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
+                                >
+                                  {on ? "✓" : ""}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className={`block truncate ${on ? "font-semibold" : ""}`}>{v.name}</span>
+                                  {v.region && <span className="block truncate text-xs text-muted">{v.region}</span>}
+                                </span>
+                                {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
+                              </button>
+                            </form>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </section>
+            ))}
             <Link href="/venues/new?back=today" className="inline-flex min-h-11 items-center gap-2 self-start text-sm text-link underline">
               <span aria-hidden>＋</span> Add a location
             </Link>
