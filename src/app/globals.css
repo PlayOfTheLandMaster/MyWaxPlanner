@@ -16,6 +16,12 @@
   --on-accent: #ffffff;
   --link: #1d4f91;
   --danger: #b42318;
+  /* Today's session cards: blue while a session is under way, green once
+     it is skied and waiting only for its rating. A tint and an edge each. */
+  --active: #e8f1fc;
+  --active-edge: #2a78d6;
+  --done: #e7f5ec;
+  --done-edge: #2f8a4e;
   /* Ratings 1–5 on charts: one blue, light to dark (checked for colour-blind
      and contrast use against the surface; see Insights). */
   --rate-1: #86b6ef;
@@ -37,6 +43,10 @@
     --on-accent: #0d131b;
     --link: #9cc2f5;
     --danger: #f97066;
+    --active: #16263a;
+    --active-edge: #3987e5;
+    --done: #14291d;
+    --done-edge: #4cb06e;
     /* On a dark surface the scale runs the other way: a better rating is brighter. */
     --rate-1: #184f95;
     --rate-2: #256abf;
@@ -59,6 +69,10 @@
     --accent: #1d4f91;
     --on-accent: #ffffff;
     --link: #1d4f91;
+    --active: #e8f1fc;
+    --active-edge: #2a78d6;
+    --done: #e7f5ec;
+    --done-edge: #2f8a4e;
     --rate-1: #86b6ef;
     --rate-2: #5598e7;
     --rate-3: #2a78d6;
@@ -78,6 +92,10 @@
   --color-on-accent: var(--on-accent);
   --color-link: var(--link);
   --color-danger: var(--danger);
+  --color-active: var(--active);
+  --color-active-edge: var(--active-edge);
+  --color-done: var(--done);
+  --color-done-edge: var(--done-edge);
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
