@@ -15,6 +15,7 @@ import {
 } from "./snow";
 import type { HumidityBand, SnowType } from "@/lib/catalogue/vocab";
 import type { Sky } from "@/lib/history/vocab";
+import { inProvince } from "@/lib/venues/search-area";
 
 export type Venue = { id: string; name: string; latitude: number; longitude: number; elevation_m: number | null };
 
@@ -263,11 +264,16 @@ const kmBetween = (a: { latitude: number; longitude: number }, b: { latitude: nu
 };
 
 /** OpenStreetMap's gazetteer: knows ski areas, Nordic centres, trailheads and huts. */
-async function searchOsm(text: string): Promise<Place[]> {
+/** Narrowing a place search: an ISO country code, and a province or state name. */
+export type SearchArea = { country?: string | null; province?: string | null };
+
+async function searchOsm(text: string, area: SearchArea = {}): Promise<Place[]> {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", text);
   url.searchParams.set("format", "jsonv2");
-  url.searchParams.set("limit", "8");
+  // A province is checked afterwards, so ask for more to keep enough after it.
+  url.searchParams.set("limit", area.province ? "20" : "8");
+  if (area.country) url.searchParams.set("countrycodes", area.country);
   url.searchParams.set("addressdetails", "1");
   url.searchParams.set("accept-language", "en");
   // Nominatim's usage policy asks every app to identify itself.
@@ -300,10 +306,11 @@ async function searchOsm(text: string): Promise<Place[]> {
 }
 
 /** Open-Meteo's gazetteer (GeoNames): towns, peaks and lakes, with elevations. */
-async function searchGeonames(text: string): Promise<Place[]> {
+async function searchGeonames(text: string, area: SearchArea = {}): Promise<Place[]> {
   const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
   url.searchParams.set("name", text);
-  url.searchParams.set("count", "8");
+  url.searchParams.set("count", area.province ? "30" : "8");
+  if (area.country) url.searchParams.set("countryCode", area.country.toUpperCase());
   url.searchParams.set("language", "en");
   url.searchParams.set("format", "json");
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
@@ -360,10 +367,16 @@ export function mergePlaces(lists: Place[][]): Place[] {
 }
 
 /** Places matching a name, for adding a venue: OpenStreetMap and GeoNames together. */
-export async function searchPlaces(text: string): Promise<Place[]> {
+export async function searchPlaces(text: string, area: SearchArea = {}): Promise<Place[]> {
   const variants = searchVariants(text);
-  const settled = await Promise.allSettled(variants.flatMap((v) => [searchOsm(v), searchGeonames(v)]));
-  const lists = settled.filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled").map((r) => r.value);
+  // OpenStreetMap also gets the province in the words, which finds a small
+  // place a bare name would rank below the twenty it returns.
+  const osmTexts = area.province ? [...variants, `${variants[0]}, ${area.province}`] : variants;
+  const settled = await Promise.allSettled([...osmTexts.map((v) => searchOsm(v, area)), ...variants.map((v) => searchGeonames(v, area))]);
+  const province = area.province;
+  const lists = settled
+    .filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled")
+    .map((r) => (province ? r.value.filter((p) => inProvince(p.detail, province)) : r.value));
   if (settled.every((r) => r.status === "rejected")) {
     throw new ForecastError("The place search did not answer. Try again in a minute.");
   }

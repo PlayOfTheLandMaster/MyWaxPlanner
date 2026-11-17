@@ -3,7 +3,7 @@
 // ("Canmore, AB"), so both full names and postal abbreviations are read.
 // Pure, so it can be tested.
 
-const CA: Record<string, string> = {
+export const CA: Record<string, string> = {
   AB: "Alberta",
   BC: "British Columbia",
   MB: "Manitoba",
@@ -19,7 +19,7 @@ const CA: Record<string, string> = {
   YT: "Yukon",
 };
 
-const US: Record<string, string> = {
+export const US: Record<string, string> = {
   AK: "Alaska",
   AZ: "Arizona",
   CA: "California",
