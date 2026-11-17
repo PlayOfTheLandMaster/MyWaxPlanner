@@ -39,7 +39,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
         >
           <span>
-            <span className="block font-semibold">Record a wax</span>
+            <span className="block font-semibold">Record a wax job</span>
             <span className="block text-sm text-muted">Already waxed, or picking your own waxes? Enter what goes on the skis.</span>
           </span>
           <span aria-hidden className="text-muted">

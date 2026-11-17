@@ -88,7 +88,7 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 ## Product rules that are easy to break
 
 - **Two ways in, two names, everywhere:** **Plan a wax** (the app suggests) and
-  **Record a wax** (you enter the waxes). Today once said "Plan today's wax"
+  **Record a wax job** (you enter the waxes). Today once said "Plan today's wax"
   while the Session tab said "Plan a wax", and the full form had three names.
   New entry points use these two names.
 - **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from

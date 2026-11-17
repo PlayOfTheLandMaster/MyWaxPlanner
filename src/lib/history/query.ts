@@ -9,9 +9,17 @@ type Client = Awaited<ReturnType<typeof createClient>>;
  * `skier` is the resolved skier: the one in the address, or else the one
  * picked on Today ("me", "all" or a skier id).
  */
-export function historyQuery(supabase: Client, select: string, f: Filters, skier: string | undefined, now: Date) {
+export function historyQuery(
+  supabase: Client,
+  select: string,
+  f: Filters,
+  skier: string | undefined,
+  now: Date,
+  /** The account's season start month (1–12), for "this season" and named seasons. */
+  startMonth?: number,
+) {
   let query = supabase.from("wax_session_list").select(select);
-  const range = periodRange(f.period, now);
+  const range = periodRange(f.period, now, startMonth);
   if (range?.from) query = query.gte("occurred_at", range.from);
   if (range?.to) query = query.lt("occurred_at", range.to);
   if (f.technique) query = query.eq("technique", f.technique);

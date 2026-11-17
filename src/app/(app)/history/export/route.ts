@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       f,
       skier,
       now,
+      who.seasonStart,
     ).range(from, from + PAGE - 1);
     if (error) return failed(error.message);
     const page = (data ?? []) as unknown as ExportSession[];

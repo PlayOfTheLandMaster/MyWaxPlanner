@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { localToIso, readSession, statusFor } from "./input";
-import { parseFilters, periodRange, seasonOf, seasonRange, toQuery } from "./filters";
+import { parseFilters, periodRange, seasonLabel, seasonOf, seasonRange, seasonStart, toQuery } from "./filters";
 import { KICK_FEELS, METHODS, SKIES, TRACKS } from "./vocab";
 
 const form = (fields: Record<string, string>) => {
@@ -139,4 +139,18 @@ test("the form's status no longer decides: ratings do", () => {
   assert.equal(rated.payload?.session.status, "completed");
   const unrated = readSession(form({ ...base }));
   assert.equal(unrated.payload?.session.status, "planned");
+});
+
+test("a season starts in the account's own month", () => {
+  // November start: October 2026 still belongs to the season that began in November 2025.
+  assert.equal(seasonOf(new Date("2026-10-15T00:00:00Z"), 11), "2025-26");
+  assert.equal(seasonOf(new Date("2026-11-01T00:00:00Z"), 11), "2026-27");
+  assert.deepEqual(seasonRange("2026-27", 11), { from: "2026-11-01T00:00:00Z", to: "2027-11-01T00:00:00Z" });
+  // Southern hemisphere, May start.
+  assert.equal(seasonOf(new Date("2026-08-01T00:00:00Z"), 5), "2026-27");
+  assert.equal(seasonLabel("2026-27", 1), "2026");
+  assert.equal(seasonLabel("2026-27", 8), "2026–27");
+  assert.equal(seasonStart("13"), 8);
+  assert.equal(seasonStart(null), 8);
+  assert.equal(seasonStart(11), 11);
 });

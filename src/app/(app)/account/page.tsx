@@ -13,6 +13,7 @@ import { SettingsForm } from "./settings-form";
 import { SkierForm } from "./skier-form";
 import { addSkier } from "./skier-actions";
 import { setWaxingStyle } from "./actions";
+import { seasonStart } from "@/lib/history/filters";
 import { removeInvite } from "./invite-actions";
 import { InviteForm } from "./invite-form";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -44,7 +45,7 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
     currentUser(),
     loadVenues(supabase),
     loadSkiers(supabase),
-    supabase.from("profiles").select("home_venue_id, default_mode, waxing_style, first_name, last_initial, birth_year, birth_month, weight_kg").maybeSingle(),
+    supabase.from("profiles").select("home_venue_id, default_mode, waxing_style, season_start_month, first_name, last_initial, birth_year, birth_month, weight_kg").maybeSingle(),
     supabase.from("skis").select("skier_id"),
   ]);
   const pairs = (id: string | null) => (skis.data ?? []).filter((k) => k.skier_id === id).length;
@@ -148,6 +149,7 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
           lastInitial={(profile.data?.last_initial as string | null) ?? null}
           me={me}
           years={years}
+          seasonStart={seasonStart(profile.data?.season_start_month)}
         />
       </section>
 

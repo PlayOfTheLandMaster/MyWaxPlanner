@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { readBody } from "@/lib/skiers/body";
 import { readName } from "@/lib/profile/name";
 import { readStyle, type WaxingStyle } from "@/lib/profile/style";
+import { seasonStart } from "@/lib/history/filters";
 
 export type SettingsState = { error?: string; saved?: boolean };
 
@@ -17,17 +18,19 @@ export async function saveSettings(_prev: SettingsState, form: FormData): Promis
   if (!data.user) redirect("/login");
   const home = String(form.get("home_venue_id") ?? "");
   const mode = form.get("default_mode") === "race" ? "race" : "recreational";
+  const season_start_month = seasonStart(form.get("season_start_month"));
   const name = readName(form);
   if ("error" in name) return { error: name.error };
   const body = readBody(form);
   if ("error" in body) return { error: body.error };
   const { error } = await supabase
     .from("profiles")
-    .update({ home_venue_id: UUID.test(home) ? home : null, default_mode: mode, ...name, ...body })
+    .update({ home_venue_id: UUID.test(home) ? home : null, default_mode: mode, season_start_month, ...name, ...body })
     .eq("id", data.user.id);
   if (error) return { error: `Could not save: ${error.message}` };
   revalidatePath("/");
   revalidatePath("/account");
+  revalidatePath("/history");
   return { saved: true };
 }
 

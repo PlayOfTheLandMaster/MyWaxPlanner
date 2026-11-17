@@ -12,6 +12,7 @@ import {
   activeCount,
   parseFilters,
   recentSeasons,
+  seasonLabel,
   toQuery,
   type Filters,
   type Sort,
@@ -67,7 +68,7 @@ export default function HistoryPage({ searchParams }: PageProps<"/history">) {
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">History</h1>
-      {/* Looking back only: a new session starts on the Session tab (Plan a wax, or Record a wax). */}
+      {/* Looking back only: a new session starts on the Session tab (Plan a wax, or Record a wax job). */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <History searchParams={searchParams} />
       </Suspense>
@@ -89,6 +90,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
     f,
     skier,
     now,
+    who.seasonStart,
   ).limit(300);
 
   const [list, skis, skiers, venues, brands, saved] = await Promise.all([
@@ -149,7 +151,21 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   ).filter((c): c is Chip => Boolean(c));
 
   const periodLabel = (p: string) =>
-    p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${p.replace("-", "–")}`;
+    p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${seasonLabel(p, who.seasonStart)}`;
+
+  // The card always says whose sessions and which skis, even when they come
+  // from the skier picked on Today rather than from the filter itself.
+  const skierName =
+    skier === undefined || skier === "all"
+      ? null
+      : skier === "me"
+        ? who.me
+        : ((skiers.data ?? []).find((k) => k.id === skier)?.name ?? null);
+  const summaryRows = [
+    ...(chips.some((c) => c.field === "Skier") || !skierName ? [] : [{ field: "Skier", label: skierName }]),
+    ...(chips.some((c) => c.field === "Skis") ? [] : [{ field: "Skis", label: "All pairs" }]),
+    ...chips,
+  ];
 
   const savedList = (saved.data ?? []) as { id: string; name: string; query: string }[];
   // The saved filter the page is showing now, if any.
@@ -198,7 +214,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             <select name="period" defaultValue={f.period} className={field}>
               <option value="season">This season</option>
               <option value="30d">Last 30 days</option>
-              {recentSeasons(now).slice(1).map((s) => (
+              {recentSeasons(now, 5, who.seasonStart).slice(1).map((s) => (
                 <option key={s} value={s}>
                   {periodLabel(s)}
                 </option>
@@ -309,7 +325,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         <section aria-label="Active filters" className="rounded-xl border border-line bg-surface px-4 py-3">
           <h2 className="mb-1 text-sm font-semibold">{active ? `Saved filter: ${active.name}` : "Filtered by"}</h2>
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
-            {chips.map((c) => (
+            {summaryRows.map((c) => (
               <div key={c.field} className="contents">
                 <dt className="text-muted">{c.field}</dt>
                 <dd className="truncate">{c.label}</dd>
