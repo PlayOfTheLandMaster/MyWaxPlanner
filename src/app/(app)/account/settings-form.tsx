@@ -93,7 +93,7 @@ export function SettingsForm({
         <div className="grid grid-cols-2 gap-2">
           {[
             ["recreational", "Recreational"],
-            ["race", "Race day"],
+            ["race", "Race"],
           ].map(([v, l]) => (
             <label key={v} className={choice}>
               <input type="radio" name="default_mode" value={v} defaultChecked={mode === v} className="sr-only" />

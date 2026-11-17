@@ -58,7 +58,7 @@ test("a race is titled by its event, with the venue, distance and result", () =>
     { ...base, mode: "race", event_name: "Alberta Cup", event_distance_km: 10, event_result: " 3rd U16 " },
     { notes: false, timeZone: tz },
   );
-  assert.equal(s.kicker, "Classic · Race day · 10 km");
+  assert.equal(s.kicker, "Classic · Race · 10 km");
   assert.equal(s.title, "Alberta Cup");
   assert.equal(s.place, "Canmore Nordic Centre");
   assert.equal(s.result, "3rd U16");

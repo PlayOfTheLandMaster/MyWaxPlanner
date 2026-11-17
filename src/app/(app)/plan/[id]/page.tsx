@@ -294,7 +294,7 @@ function RecommendationView({ r, catalogueSize, mode }: { r: Recommendation; cat
       )}
       <p className="text-xs text-muted">
         A starting point worked out from the conditions and your own history, not a guarantee.
-        {mode === "race" ? " On race day, test on the snow before the start; only fluoro-free waxes are used." : ""}
+        {mode === "race" ? " For a race, test on the snow before the start; only fluoro-free waxes are used." : ""}
       </p>
     </section>
   );
