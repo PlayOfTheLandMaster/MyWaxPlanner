@@ -1,8 +1,9 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import type { SessionFormState } from "@/app/(app)/history/actions";
 import { KICK_FEELS, KICK_FEEL_LABELS, RATING_WORDS } from "@/lib/history/vocab";
+import { SnowFields, type SnowInitial } from "@/components/snow-check-form";
 
 const choice =
   "flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold";
@@ -18,6 +19,7 @@ export function RateForm({
   hasLayers,
   askSnow,
   initialNotes,
+  snowInitial,
   save,
 }: {
   classic: boolean;
@@ -25,9 +27,12 @@ export function RateForm({
   /** Only when there is a forecast to confirm and no actual conditions yet. */
   askSnow: boolean;
   initialNotes: string | null;
+  /** Where the snow questions start when the snow was different: the forecast's guesses. */
+  snowInitial: SnowInitial;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
+  const [snow, setSnow] = useState("");
 
   return (
     <form
@@ -80,23 +85,32 @@ export function RateForm({
               <legend className="mb-1 text-sm font-medium">The snow</legend>
               <div className="grid grid-cols-3 gap-2">
                 <label className={choice}>
-                  <input type="radio" name="snow" value="forecast" className="sr-only" />
+                  <input type="radio" name="snow" value="forecast" onChange={() => setSnow("forecast")} className="sr-only" />
                   As forecast
                 </label>
                 <label className={choice}>
-                  <input type="radio" name="snow" value="different" className="sr-only" />
+                  <input type="radio" name="snow" value="different" onChange={() => setSnow("different")} className="sr-only" />
                   Different
                 </label>
                 <label className={choice}>
-                  <input type="radio" name="snow" value="" defaultChecked className="sr-only" />
+                  <input type="radio" name="snow" value="" defaultChecked onChange={() => setSnow("")} className="sr-only" />
                   Not sure
                 </label>
               </div>
             </fieldset>
           )}
-          <p className="text-xs text-muted">
-            &ldquo;I changed something&rdquo; or &ldquo;Different&rdquo; opens the full form next, so you can correct it.
-          </p>
+          {/* Different: the snow questions open here, rather than on another
+              page. Hidden, not removed, so switching back and forth keeps
+              what was entered; the server reads them only for Different. */}
+          {askSnow && (
+            <div hidden={snow !== "different"} className="flex flex-col gap-4 border-t border-line pt-4">
+              <p className="text-sm font-medium">What was the snow like?</p>
+              <SnowFields initial={snowInitial} />
+            </div>
+          )}
+          {hasLayers && (
+            <p className="text-xs text-muted">&ldquo;I changed something&rdquo; opens the full form next, so you can correct the waxes.</p>
+          )}
         </section>
       )}
 

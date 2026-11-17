@@ -5,6 +5,7 @@ import { forecastFor } from "@/lib/weather/window";
 import { forecastable, loadVenues } from "@/lib/venues/load";
 import { draftFromWindow } from "@/lib/history/record";
 import { loadSnowCheck } from "@/lib/snow/load";
+import { readSnowForm } from "@/lib/snow/check";
 import { redirect } from "next/navigation";
 import { refresh, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -106,6 +107,37 @@ export async function rateSession(
   if (error !== undefined) return { error };
 
   let actualId = s.actual_conditions_id as string | null;
+  // Different: the snow as the skier found it, from the card's own questions,
+  // with the forecast's air, sky and wind kept beside it.
+  if (rating.snow === "different" && !actualId) {
+    const read = readSnowForm(formData, { day: "", venue_id: "" }, new Date());
+    if ("error" in read) return { error: read.error };
+    const { data: f } = s.forecast_conditions_id
+      ? await supabase
+          .from("conditions")
+          .select("venue_id, air_temp_c, air_rh_pct, new_snow_cm, sky, wind_kmh")
+          .eq("id", s.forecast_conditions_id)
+          .maybeSingle()
+      : { data: null };
+    const { data: row, error: rowError } = await supabase
+      .from("conditions")
+      .insert({
+        ...(f ?? {}),
+        venue_id: f?.venue_id ?? s.venue_id,
+        snow_temp_c: read.check.snow_temp_c,
+        snow_temp_estimated: false,
+        snow_humidity_band: read.check.snow_humidity_band,
+        snow_type: read.check.snow_type,
+        track: read.check.track,
+        user_id: userId,
+        observed_at: s.occurred_at,
+        source: "observed",
+      })
+      .select("id")
+      .single();
+    if (rowError) return { error: `Could not save the conditions: ${rowError.message}` };
+    actualId = row.id as string;
+  }
   if (rating.snow === "forecast" && s.forecast_conditions_id && !actualId) {
     const { data: f } = await supabase
       .from("conditions")

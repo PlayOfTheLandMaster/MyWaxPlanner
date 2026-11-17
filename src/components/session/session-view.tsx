@@ -14,6 +14,7 @@ import {
   RATING_WORDS,
   SKY_LABELS,
   TRACK_LABELS,
+  TRACKS,
   ZONE_LABELS,
 } from "@/lib/history/vocab";
 import { STAGES, stageOf, type Stage } from "@/lib/history/stage";
@@ -21,6 +22,8 @@ import { LocalTime } from "@/components/local-time";
 import { BackLink } from "@/components/nav-trail";
 import { Photos } from "@/app/(app)/history/[id]/photos";
 import { RateForm } from "./rate-form";
+import type { SnowInitial } from "@/components/snow-check-form";
+import { HUMIDITY_BANDS, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { deleteSession, rateSession } from "@/app/(app)/history/actions";
 import { WaxChecklist } from "./wax-checklist";
 import { comparePlan, type LayerComparison } from "@/lib/history/plan-compare";
@@ -103,6 +106,7 @@ export async function SessionView({
       hasLayers={s.layers.length > 0}
       askSnow={s.forecast !== null && s.actual === null}
       initialNotes={s.notes}
+      snowInitial={snowStart(s.forecast)}
       save={rateSession.bind(null, id, back)}
     />
   );
@@ -526,4 +530,18 @@ function Layers({
       })}
     </>
   );
+}
+
+/** The snow questions' starting answers: the forecast's own guesses, else middling ones. */
+function snowStart(f: Conditions | null): SnowInitial {
+  return {
+    snow_temp_c: Math.min(0, f?.snow_temp_c ?? -5),
+    snow_humidity_band: oneOf(HUMIDITY_BANDS, f?.snow_humidity_band) ?? "mid",
+    snow_type: oneOf(SNOW_TYPES, f?.snow_type) ?? "fine_grained",
+    track: oneOf(TRACKS, f?.track),
+  };
+}
+
+function oneOf<T extends string>(list: readonly T[], v: string | null | undefined): T | null {
+  return list.includes(v as T) ? (v as T) : null;
 }
