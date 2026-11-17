@@ -7,7 +7,7 @@ const temp = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °
 
 /**
  * The weather as one folded line, the air temperature and the sky, opening on
- * the full forecast. Today and Plan a wax both use it, so it looks the same.
+ * the full forecast. Today and Plan a wax session both use it, so it looks the same.
  */
 export function WeatherFold({ w, compact = false }: { w: ForecastWindow; compact?: boolean }) {
   return (

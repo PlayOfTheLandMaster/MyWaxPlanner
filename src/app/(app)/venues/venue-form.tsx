@@ -102,7 +102,7 @@ export function VenueForm({ prefill, back }: { prefill: VenuePrefill; back: stri
         >
           {pending ? "Saving…" : "Save venue"}
         </button>
-        {/* Back to where Add a venue was opened from: Today, Plan a wax or Venues. Nothing is saved. */}
+        {/* Back to where Add a venue was opened from: Today, Plan a wax session or Venues. Nothing is saved. */}
         <Link href={back} className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
           Cancel
         </Link>
