@@ -22,6 +22,7 @@ import { historyQuery } from "@/lib/history/query";
 import { ExportLink } from "@/components/history/export-link";
 import { deleteFilter, saveFilter } from "./actions";
 import { SaveFilterForm } from "./save-filter-form";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { similarQuery } from "@/lib/history/similar";
@@ -148,30 +149,13 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const periodLabel = (p: string) =>
     p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${p.replace("-", "–")}`;
 
+  const savedList = (saved.data ?? []) as { id: string; name: string; query: string }[];
+  // The saved filter the page is showing now, if any.
+  const active = savedList.find((sf) => here === `?${sf.query}`) ?? null;
+
   return (
     <div className="flex flex-col gap-4">
       <SkierBanner returnTo={`/history${toQuery(f, { skier: undefined })}`} everyone={skier === "all"} override={f.skier && f.skier !== "all" ? (f.skier === "me" ? who.me : (skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? null) : null} />
-      {(saved.data ?? []).length > 0 && (
-        <nav aria-label="Saved filters" className="flex flex-wrap gap-2">
-          {(saved.data ?? []).map((s) => {
-            // Tapping the active saved filter again turns it off.
-            const on = here === `?${s.query}`;
-            return (
-              <Link
-                key={s.id}
-                href={on ? "/history" : `/history?${s.query}`}
-                aria-current={on ? "true" : undefined}
-                aria-label={on ? `Turn off saved filter: ${s.name}` : `Saved filter: ${s.name}`}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm ${on ? "border-accent bg-tile font-semibold" : "border-line bg-surface"}`}
-              >
-                ★ {s.name}
-                {on && <span aria-hidden>✕</span>}
-              </Link>
-            );
-          })}
-        </nav>
-      )}
-
       <nav aria-label="Period" className="flex gap-1 overflow-x-auto rounded-xl bg-tile p-1">
         {["season", "30d", "all"].map((p) => (
           <Link
@@ -265,6 +249,54 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </form>
       </details>
 
+      {/* Saved filters: a pick list under the Filter fold. Tapping one applies
+          it; tapping the one in use turns it off. The current filter can be
+          saved from here too. */}
+      <details className="rounded-xl border border-line bg-surface">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
+          Saved filters
+          <span className="truncate font-normal text-muted">
+            {active ? `· ${active.name}` : savedList.length > 0 ? `(${savedList.length})` : ""}
+          </span>
+        </summary>
+        <div className="flex flex-col gap-3 p-4 pt-0">
+          {savedList.length === 0 ? (
+            <p className="text-sm text-muted">None yet. Set a filter above, then save it here to use it again with one tap.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-line">
+              {savedList.map((sf) => {
+                const on = active?.id === sf.id;
+                return (
+                  <li key={sf.id} className="flex items-center gap-1">
+                    <Link
+                      href={on ? "/history" : `/history?${sf.query}`}
+                      aria-current={on ? "true" : undefined}
+                      className="flex min-h-11 min-w-0 flex-1 items-center gap-3 active:bg-tile"
+                    >
+                      <span
+                        aria-hidden
+                        className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
+                      >
+                        {on ? "✓" : ""}
+                      </span>
+                      <span className={`min-w-0 flex-1 truncate ${on ? "font-semibold" : ""}`}>{sf.name}</span>
+                      {on && <span className="shrink-0 text-sm text-link underline">Turn off</span>}
+                    </Link>
+                    <ConfirmDelete action={deleteFilter.bind(null, sf.id)} label={`saved filter ${sf.name}`} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {n > 0 && !active && (
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              <h2 className="text-sm font-semibold">Save the current filter</h2>
+              <SaveFilterForm save={saveFilter.bind(null, here)} />
+            </div>
+          )}
+        </div>
+      </details>
+
       {chips.length > 0 && (
         <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
           {chips.map((c) => (
@@ -330,32 +362,6 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </ul>
       )}
 
-      {n > 0 && (
-        <section aria-labelledby="save-filter" className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
-          <h2 id="save-filter" className="font-semibold">
-            Save this filter
-          </h2>
-          <SaveFilterForm save={saveFilter.bind(null, here)} />
-        </section>
-      )}
-
-      {(saved.data ?? []).length > 0 && (
-        <details className="rounded-xl border border-line">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm">Manage saved filters</summary>
-          <ul className="flex flex-col p-2">
-            {(saved.data ?? []).map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm">{s.name}</span>
-                <form action={deleteFilter.bind(null, s.id)}>
-                  <button type="submit" className="min-h-11 px-3 text-sm text-danger">
-                    Delete
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
     </div>
   );
 }
