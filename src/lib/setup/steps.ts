@@ -2,7 +2,7 @@
 // steps shows once it is done. A new account used to set a home venue and then
 // find nothing on the Venues page pointing anywhere else.
 
-export type StepKey = "venue" | "skiers" | "skis" | "waxes" | "tools";
+export type StepKey = "style" | "venue" | "skiers" | "skis" | "waxes" | "tools";
 
 export type Step = {
   key: StepKey;
@@ -18,6 +18,8 @@ export type Step = {
 };
 
 export type SetupFacts = {
+  /** Guided or expert was chosen; `expert` makes the tools step optional. */
+  style: "guided" | "expert" | null;
   home: boolean;
   skiers: number;
   skis: number;
@@ -25,9 +27,19 @@ export type SetupFacts = {
   tools: number;
 };
 
-/** The steps in order. Links carry ?start=1 so a page knows it was opened from the checklist. */
+/**
+ * The steps in order. Links carry ?start= so a page knows it was opened from
+ * the checklist (Account holds two steps, so its links name which one).
+ */
 export function setupSteps(f: SetupFacts): Step[] {
   return [
+    // First: it decides what Today's main button does, and whether tools matter.
+    {
+      key: "style",
+      done: f.style !== null,
+      label: "Choose how you wax",
+      href: "/account?start=style#style",
+    },
     {
       key: "venue",
       done: f.home,
@@ -39,7 +51,7 @@ export function setupSteps(f: SetupFacts): Step[] {
       key: "skiers",
       done: f.skiers > 0,
       label: "Add skiers you wax for",
-      href: "/account?start=1#skiers",
+      href: "/account?start=skiers#skiers",
       optional: true,
     },
     {
@@ -59,6 +71,8 @@ export function setupSteps(f: SetupFacts): Step[] {
       done: f.tools > 0,
       label: "Tick the tools you own",
       href: "/wax-box/tools?start=1",
+      // Tools only feed the step-by-step instructions, which an expert skips.
+      optional: f.style === "expert",
     },
   ];
 }
@@ -94,6 +108,7 @@ export type NextCard =
 // Said once a step is done. Each says the list is never closed: nobody has
 // every wax to hand on day one, and a new pair or a new skier comes along later.
 const DONE_LABELS: Record<StepKey, string> = {
+  style: "Saved. You can change how you wax any time on your Account page.",
   venue: "Home venue set. You can change it, or add more venues, any time from Venues.",
   skiers: "Skier added. Add the rest now, or any time later from your Account page.",
   skis: "Skis added. Add the rest now, or any time later from Wax box → Skis.",
@@ -107,11 +122,7 @@ const DONE_LABELS: Record<StepKey, string> = {
  * that counts is done and the page was opened from the checklist. Nothing
  * while this step itself is still undone, or once setup is long finished.
  */
-export function nextCard(
-  steps: Step[],
-  current: StepKey,
-  fromChecklist: boolean,
-): NextCard {
+export function nextCard(steps: Step[], current: StepKey, fromChecklist: boolean): NextCard {
   const i = steps.findIndex((s) => s.key === current);
   if (i < 0 || !steps[i].done) return null;
   const { todo } = progress(steps);

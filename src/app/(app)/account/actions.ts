@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { readBody } from "@/lib/skiers/body";
 import { readName } from "@/lib/profile/name";
+import { readStyle, type WaxingStyle } from "@/lib/profile/style";
 
 export type SettingsState = { error?: string; saved?: boolean };
 
@@ -28,4 +29,15 @@ export async function saveSettings(_prev: SettingsState, form: FormData): Promis
   revalidatePath("/");
   revalidatePath("/account");
   return { saved: true };
+}
+
+/** "How you wax": guided or expert. One tap, saved at once. */
+export async function setWaxingStyle(style: WaxingStyle) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) redirect("/login");
+  if (!readStyle(style)) return;
+  await supabase.from("profiles").update({ waxing_style: style }).eq("id", data.user.id);
+  revalidatePath("/");
+  revalidatePath("/account");
 }

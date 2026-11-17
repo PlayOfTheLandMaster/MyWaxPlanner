@@ -6,15 +6,7 @@ import { progress, type Step, type StepKey } from "@/lib/setup/steps";
  * step is done, so a new account always sees where it is in the list rather
  * than a lone "next" button. `next` is drawn as the button to tap.
  */
-export function SetupChecklist({
-  steps,
-  next,
-  note,
-}: {
-  steps: Step[];
-  next?: StepKey;
-  note?: string;
-}) {
+export function SetupChecklist({ steps, next, note }: { steps: Step[]; next?: StepKey; note?: string }) {
   const { done, total } = progress(steps);
   return (
     <>
@@ -24,9 +16,7 @@ export function SetupChecklist({
           · {done} of {total} done
         </span>
       </h2>
-      <p className="text-sm text-muted">
-        {note ?? "Recommendations come from your own skis, waxes and tools."}
-      </p>
+      <p className="text-sm text-muted">{note ?? "Recommendations come from your own skis, waxes and tools."}</p>
       <ul className="mt-2 flex flex-col gap-1">
         {steps.map((s) => {
           const isNext = s.key === next;
@@ -43,18 +33,9 @@ export function SetupChecklist({
                 >
                   {s.done ? "✓" : ""}
                 </span>
-                <span
-                  className={`min-w-0 flex-1 ${s.done ? "text-muted line-through" : ""}`}
-                >
+                <span className={`min-w-0 flex-1 ${s.done ? "text-muted line-through" : ""}`}>
                   {s.label}
-                  {s.optional && !s.done && (
-                    <span
-                      className={`text-sm font-normal ${isNext ? "" : "text-muted"}`}
-                    >
-                      {" "}
-                      · optional
-                    </span>
-                  )}
+                  {s.optional && !s.done && <span className={`text-sm font-normal ${isNext ? "" : "text-muted"}`}> · optional</span>}
                 </span>
                 {isNext && <span aria-hidden>Next →</span>}
               </Link>

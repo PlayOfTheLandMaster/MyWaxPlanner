@@ -12,6 +12,7 @@ import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
 import { SetupChecklist } from "@/components/setup-checklist";
+import { isExpert } from "@/lib/profile/style";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -81,8 +82,9 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
 
   const waxes = box.data ?? [];
   const low = waxes.filter((w) => w.amount_left === "low" || w.amount_left === "empty").length;
-  const steps = setupSteps({ home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
+  const steps = setupSteps({ style: who.style, home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
   const { todo } = progress(steps);
+  const expert = isExpert(who.style);
 
   // Venues for the chips: home first, then the ones you've skied most recently.
   const usable = venues.filter(forecastable);
@@ -135,15 +137,36 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
         </section>
       )}
 
-      <Link
-        href={venue ? `/plan?venue=${venue.id}` : "/plan"}
-        className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-      >
-        {who.current ? `Plan ${who.current.name}'s wax` : "Plan today\u2019s wax"}
-      </Link>
-      <Link href="/history/new" className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline">
-        Already waxed? Log it in full
-      </Link>
+      {expert ? (
+        // An expert picks their own waxes: the main button records them, and
+        // the app's suggestion stays one tap away underneath.
+        <>
+          <Link
+            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+          >
+            {who.current ? `Record ${who.current.name}'s wax` : "Record today\u2019s wax"}
+          </Link>
+          <Link
+            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
+          >
+            What would the app suggest?
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link
+            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+          >
+            {who.current ? `Plan ${who.current.name}'s wax` : "Plan today\u2019s wax"}
+          </Link>
+          <Link href="/history/new" className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline">
+            Already waxed? Log it in full
+          </Link>
+        </>
+      )}
 
       {waiting && (
         <Link href={`/session/${waiting.id}#rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>

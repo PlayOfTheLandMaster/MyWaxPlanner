@@ -1,5 +1,6 @@
 "use server";
 
+import { decodeDraft } from "@/lib/plan/draft";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -26,9 +27,24 @@ export async function saveSession(
   const { payload, error } = readSession(formData);
   if (error !== undefined) return { error };
 
+  // "Record today's wax" sends the venue's forecast: saved with a new session
+  // as its forecast, so History and "Similar to today" have conditions. Only
+  // when the session is still at that venue; the draft is checked again here.
+  let session: typeof payload.session & { forecast_conditions_id?: string } = payload.session;
+  const draft = id ? null : decodeDraft(String(formData.get("forecast") ?? ""));
+  if (draft && draft.venue_id === payload.session.venue_id) {
+    const { data: auth } = await supabase.auth.getUser();
+    const { data: row } = await supabase
+      .from("conditions")
+      .insert({ ...draft, observed_at: payload.session.occurred_at, user_id: auth.user?.id, source: "forecast" })
+      .select("id")
+      .single();
+    if (row) session = { ...session, forecast_conditions_id: row.id as string };
+  }
+
   const { data, error: saveError } = await supabase.rpc("save_wax_session", {
     p_id: id,
-    p_session: payload.session,
+    p_session: session,
     p_actual: payload.actual,
     p_layers: payload.layers,
   });
