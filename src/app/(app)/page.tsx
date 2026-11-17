@@ -152,7 +152,7 @@ async function Today() {
 
 
       {active.length > 0 && (
-        <section aria-label="Active sessions" className={`${tinted} flex flex-col gap-1 border-l-4 border-l-active-edge bg-active py-2`}>
+        <section aria-label="Active sessions" className={`${tinted} flex flex-col gap-1 border-l-8 border-l-active-edge bg-active py-2`}>
           <h2 className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted">
             {active.length === 1 ? "Active session" : `Active sessions · ${active.length}`}
           </h2>
@@ -181,7 +181,7 @@ async function Today() {
       {toRate.length > 0 && (
         <section
           aria-label="Completed ski - how did it go?"
-          className={`${tinted} flex flex-col gap-1 border-l-4 border-l-done-edge bg-done py-2`}
+          className={`${tinted} flex flex-col gap-1 border-l-8 border-l-done-edge bg-done py-2`}
         >
           <h2 className="pt-1 font-semibold">Completed ski - how did it go?</h2>
           <ul className="flex flex-col divide-y divide-line">

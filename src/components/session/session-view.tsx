@@ -129,7 +129,7 @@ export async function SessionView({
       {/* Coloured as on Today: blue while waxing or skiing, green once skied and
           waiting for its rating; a rated session stays plain. One background
           class only (see CLAUDE.md, Tailwind). */}
-      <div className={planned ? `flex flex-col gap-3 rounded-xl border border-l-4 border-line p-4 ${tint}` : ""}>
+      <div className={planned ? `flex flex-col gap-3 rounded-xl border border-l-8 border-line p-4 ${tint}` : ""}>
         <div>
           <p className="text-sm text-muted">
             {stage === "rate" ? "Completed ski · " : planned ? "In Progress · " : ""}
