@@ -10,7 +10,7 @@ import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
-import { setupSteps } from "@/lib/setup/steps";
+import { progress, setupSteps } from "@/lib/setup/steps";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -63,7 +63,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
     .select("id, occurred_at, technique, mode, venue_name, event_name")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, home, planned, skiCount, box, toolCount, recent] = await Promise.all([
+  const [venues, home, planned, skiCount, box, toolCount, recent, skierCount] = await Promise.all([
     loadVenues(supabase),
     loadHomeVenueId(supabase),
     plannedQuery.order("occurred_at", { ascending: true }).limit(20),
@@ -71,12 +71,13 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
     supabase.from("wax_sessions").select("venue_id").not("venue_id", "is", null).order("occurred_at", { ascending: false }).limit(30),
+    supabase.from("skiers").select("id", { count: "exact", head: true }),
   ]);
 
   const waxes = box.data ?? [];
   const low = waxes.filter((w) => w.amount_left === "low" || w.amount_left === "empty").length;
-  const steps = setupSteps({ home: home !== null, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
-  const todo = steps.filter((s) => !s.done).length;
+  const steps = setupSteps({ home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
+  const { done: doneCount, total, todo } = progress(steps);
 
   // Venues for the chips: home first, then the ones you've skied most recently.
   const usable = venues.filter(forecastable);
@@ -111,7 +112,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       {todo > 0 && (
         <section className={card} aria-labelledby="start">
           <h2 id="start" className="font-semibold">
-            Getting started <span className="font-normal text-muted">· {steps.length - todo} of {steps.length} done</span>
+            Getting started <span className="font-normal text-muted">· {doneCount} of {total} done</span>
           </h2>
           <p className="text-sm text-muted">Recommendations come from your own skis, waxes and tools.</p>
           <ul className="mt-2 flex flex-col">
@@ -124,7 +125,10 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
                   >
                     {s.done ? "✓" : ""}
                   </span>
-                  <span className={s.done ? "text-muted line-through" : ""}>{s.label}</span>
+                  <span className={s.done ? "text-muted line-through" : ""}>
+                    {s.label}
+                    {s.optional && !s.done && <span className="text-sm text-muted"> · optional</span>}
+                  </span>
                 </Link>
               </li>
             ))}

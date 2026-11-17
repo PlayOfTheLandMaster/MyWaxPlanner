@@ -54,7 +54,8 @@ async function Card({
             href={card.next.href}
             className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
           >
-            Next: {card.next.label} →
+            Next: {card.next.label}
+            {card.next.optional ? " (optional)" : ""} →
           </Link>
         </>
       ) : (
@@ -72,12 +73,22 @@ async function Card({
         </>
       )}
       {card.kind === "next" && (
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
-        >
-          Back to Today
-        </Link>
+        <div className="flex flex-wrap justify-center gap-x-6">
+          {card.skipTo && (
+            <Link
+              href={card.skipTo.href}
+              className="inline-flex min-h-11 items-center text-sm text-link underline"
+            >
+              Just me — skip to {card.skipTo.label.toLowerCase()}
+            </Link>
+          )}
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center text-sm text-link underline"
+          >
+            Back to Today
+          </Link>
+        </div>
       )}
     </section>
   );
