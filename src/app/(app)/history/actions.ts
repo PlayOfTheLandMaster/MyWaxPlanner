@@ -2,7 +2,7 @@
 
 import { decodeDraft } from "@/lib/plan/draft";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { claimForCurrentSkier } from "@/lib/skiers/current";
 import { readSession } from "@/lib/history/input";
@@ -117,8 +117,12 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */
-/** Deletes a session; `back` is where to land (History by default, or the Session tab's list). */
-export async function deleteSession(id: string, back: "/history" | "/plan" = "/history") {
+/**
+ * Deletes a session; `back` is where to land (History by default, or the
+ * Session tab's list), or "stay" to keep the page it was deleted from
+ * (Record a wax's "Start from an earlier session" list).
+ */
+export async function deleteSession(id: string, back: "/history" | "/plan" | "stay" = "/history") {
   const { supabase } = await signedIn();
   const { data: photos } = await supabase.from("wax_session_photos").select("storage_path").eq("session_id", id);
   const { data: session } = await supabase
@@ -132,6 +136,10 @@ export async function deleteSession(id: string, back: "/history" | "/plan" = "/h
   if (photos?.length) await supabase.storage.from("session-photos").remove(photos.map((p) => p.storage_path));
   revalidatePath("/history");
   revalidatePath("/plan");
+  if (back === "stay") {
+    refresh();
+    return;
+  }
   redirect(back === "/plan" ? "/plan" : "/history");
 }
 
