@@ -208,6 +208,18 @@ export async function SessionView({
               {s.wax_steps_done.length > 0 ? "Carry on waxing along" : "Start wax-along"}
             </Link>
           )}
+          {/* Folded by default, just under Start wax-along, which is the way in;
+              the full list is here when wanted. An expert has neither. */}
+          {!expert && steps.length > 0 && (
+            <details className="rounded-xl border border-line bg-surface">
+              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+                Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
+              </div>
+            </details>
+          )}
           {/* Outside the fold: it is what moves the session on to Ski (and offers Done). */}
           {s.waxed_at ? (
             <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
@@ -229,18 +241,6 @@ export async function SessionView({
               </button>
             </form>
           ) : null}
-          {/* Folded by default: Start wax-along, above, is the way in; the full
-              list is here when wanted. An expert has neither. */}
-          {!expert && steps.length > 0 && (
-            <details className="rounded-xl border border-line bg-surface">
-              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-                Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
-              </summary>
-              <div className="flex flex-col gap-4 px-4 pb-4">
-                <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
-              </div>
-            </details>
-          )}
 
           {/* "I'm Done Skiing": skied, rating later. Offered only at Ski, so
               there is one "done" button at a time and its name says which
