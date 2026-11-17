@@ -193,7 +193,7 @@ export async function SessionView({
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
               {expert ? "Your waxes" : "The plan"}
-              {s.layers.length ? ` · ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
+              {s.layers.length ? ` - apply ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
               <Layers layers={s.layers} plan={s.plan} compare={compare} change={{ sessionId: s.id, box }} />
