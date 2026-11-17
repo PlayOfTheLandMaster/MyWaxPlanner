@@ -22,7 +22,7 @@ import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
 import { readerTimeZone } from "@/lib/reader-zone";
 import { todayDate } from "@/lib/today-title";
-import { sortOpenSessions, stageOf, type OpenSession } from "@/lib/today/sessions";
+import { sortOpenSessions, stageLabel, type OpenSession } from "@/lib/today/sessions";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -166,7 +166,7 @@ async function Today() {
                     </span>
                     <span className="block truncate text-sm text-muted">
                       {TECHNIQUE_LABELS[r.technique]}
-                      {r.mode === "race" ? " race" : ""} · {stageOf(r)}
+                      {r.mode === "race" ? " race" : ""} · {stageLabel(r, now)}
                     </span>
                   </span>
                   <span aria-hidden className="text-muted">

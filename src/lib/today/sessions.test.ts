@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sortOpenSessions, stageOf, type OpenSession } from "./sessions";
+import { sortOpenSessions, stageLabel, type OpenSession } from "./sessions";
 
 const s = (id: string, occurred_at: string, more: Partial<OpenSession> = {}): OpenSession => ({
   id,
@@ -35,8 +35,8 @@ test("every session not marked Done is active, earliest first", () => {
   );
 });
 
-test("a session left open from long ago is asked to be rated, not shown as active", () => {
-  const out = sortOpenSessions([s("old", "2026-11-15T18:00:00Z")], now);
+test("a session past its skiing hours is asked to be rated, as on the session page", () => {
+  const out = sortOpenSessions([s("old", "2026-11-17T17:00:00Z")], now);
   assert.equal(out.active.length, 0);
   assert.deepEqual(
     out.toRate.map((r) => r.id),
@@ -58,7 +58,9 @@ test("to rate: newest three, and a count of the rest", () => {
   assert.equal(out.moreToRate, 2);
 });
 
-test("the stage says whether the skis are waxed", () => {
-  assert.equal(stageOf({ waxed_at: null }), "Not waxed yet");
-  assert.equal(stageOf({ waxed_at: "2026-11-17T20:00:00Z" }), "Waxed — ready to ski");
+test("the row says where the session is", () => {
+  const later = "2026-11-17T23:00:00Z";
+  assert.equal(stageLabel({ waxed_at: null, occurred_at: later }, now), "Not waxed yet");
+  assert.equal(stageLabel({ waxed_at: "2026-11-17T20:00:00Z", occurred_at: later }, now), "Waxed — ready to ski");
+  assert.equal(stageLabel({ waxed_at: null, occurred_at: "2026-11-17T20:00:00Z" }, now), "Skiing now");
 });
