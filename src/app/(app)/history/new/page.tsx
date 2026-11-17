@@ -18,7 +18,7 @@ import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import type { FormOptions } from "@/lib/history/load";
 
-export const metadata: Metadata = { title: "Record a wax · My Wax Planner" };
+export const metadata: Metadata = { title: "Record a wax job · My Wax Planner" };
 
 export default function NewSessionPage({ searchParams }: PageProps<"/history/new">) {
   return (
@@ -110,7 +110,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
     <>
       <div>
         <BackLink fallback={source ? `/history/${source.id}` : "/history"}>{source ? "✕ Cancel" : undefined}</BackLink>
-        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Record a wax"}</h1>
+        <h1 className="text-2xl font-bold">{source ? "Repeat a prep" : "Record a wax job"}</h1>
         {source && <p className="text-sm text-muted">Copied from a past session. Change anything before saving.</p>}
       </div>
       {!source && <SkierBanner />}
@@ -205,7 +205,7 @@ async function Record({
     <>
       <div>
         <BackLink fallback="/">{source ? "✕ Cancel" : undefined}</BackLink>
-        <h1 className="text-2xl font-bold">{skierName ? `Record a wax for ${skierName}` : "Record a wax"}</h1>
+        <h1 className="text-2xl font-bold">{skierName ? `Record a wax job for ${skierName}` : "Record a wax job"}</h1>
         <p className="text-sm text-muted">
           {source
             ? "Copied from an earlier session. Change anything before saving."
