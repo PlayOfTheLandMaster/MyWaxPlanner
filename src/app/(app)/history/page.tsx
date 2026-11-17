@@ -176,8 +176,14 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
 
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
-        <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-          Filter{n > 0 ? ` (${n})` : ""}
+        <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 font-semibold">
+          <span>Filter{n > 0 ? ` (${n})` : ""}</span>
+          {/* On the fold itself, so clearing needs no opening first. */}
+          {n > 0 && (
+            <Link href="/history" className="inline-flex min-h-11 items-center px-1 text-sm font-normal text-link underline">
+              Clear
+            </Link>
+          )}
         </summary>
         {/* A plain GET form: the filters become the page address, so the back
             button, bookmarks and saved filters all just work. */}
@@ -238,14 +244,10 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             Search notes, events and waxes
             <input name="q" type="search" defaultValue={f.q ?? ""} className={field} />
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/history" className="flex min-h-11 items-center justify-center rounded-lg border border-line text-sm">
-              Clear all
-            </Link>
-            <button type="submit" className="min-h-11 rounded-lg bg-accent font-semibold text-on-accent">
-              Show sessions
-            </button>
-          </div>
+          {/* A full page load, so the fold closes and the active filters show below it. */}
+          <button type="submit" className="min-h-11 rounded-lg bg-accent font-semibold text-on-accent active:opacity-70">
+            Apply Filter
+          </button>
         </form>
       </details>
 
@@ -297,7 +299,8 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </div>
       </details>
 
-      {chips.length > 0 && (
+      {/* A saved filter in use is named on its fold; its parts need no bubbles. */}
+      {chips.length > 0 && !active && (
         <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
           {chips.map((c) => (
             <li key={c.label}>
