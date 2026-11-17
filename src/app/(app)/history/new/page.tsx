@@ -14,6 +14,8 @@ import { forecastFor } from "@/lib/weather/window";
 import { encodeDraft } from "@/lib/plan/draft";
 import { draftFromWindow } from "@/lib/history/record";
 import { ForecastCard } from "@/components/forecast-card";
+import { fold, foldHead } from "@/components/fold";
+import { SKY_ICONS, SKY_LABELS } from "@/lib/history/vocab";
 import { loadSnowCheck } from "@/lib/snow/load";
 import type { FormOptions } from "@/lib/history/load";
 
@@ -176,13 +178,22 @@ async function Record({
 
 
       {w ? (
-        <section aria-labelledby="fc" className="flex flex-col gap-2">
-          <h2 id="fc" className="font-semibold">
-            Forecast at time of session
-          </h2>
-          <ForecastCard w={w} compact />
-          <p className="text-xs text-muted">Saved with the session. Record what the snow was really like when you rate it.</p>
-        </section>
+        // Folded to one line: the sky and air temperature; opens on the forecast saved with the session.
+        <details className={fold}>
+          <summary className={foldHead}>
+            <span aria-hidden className="text-2xl leading-none">
+              {SKY_ICONS[w.sky]}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-semibold">Forecast at time of session</span>
+              <span className="block truncate text-sm text-muted">
+                {`${w.air_temp_c > 0 ? "+" : ""}${w.air_temp_c}`.replace("-", "−")} °C · {SKY_LABELS[w.sky]} · {w.venue.name}
+              </span>
+            </span>
+          </summary>
+          <ForecastCard w={w} compact bare />
+          <p className="px-4 pb-4 text-xs text-muted">Saved with the session. Record what the snow was really like when you rate it.</p>
+        </details>
       ) : forecast?.error ? (
         <p className="text-sm text-muted">No forecast to save: {forecast.error}</p>
       ) : null}
