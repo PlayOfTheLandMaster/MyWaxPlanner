@@ -20,6 +20,8 @@ import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
+import { readerTimeZone } from "@/lib/reader-zone";
+import { todayDate } from "@/lib/today-title";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -39,7 +41,14 @@ export default function TodayPage() {
       {/* Coming back to Today, every card starts folded. */}
       <FoldOnLeave />
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Today</h1>
+        {/* The date reads the reader's time-zone cookie, so it waits in its own boundary. */}
+        <h1 className="min-w-0 text-2xl font-bold">
+          Today
+          <Suspense fallback={null}>
+            {/* One size smaller than "Today". */}
+            <span className="text-xl"> - <TodayDate /></span>
+          </Suspense>
+        </h1>
         <Link
           href="/account"
           aria-label="Account"
@@ -140,39 +149,6 @@ async function Today() {
         </section>
       )}
 
-      {expert ? (
-        // An expert picks their own waxes: the main button records them, and
-        // the app's suggestion stays one tap away underneath.
-        <>
-          <Link
-            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
-            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-          >
-            {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
-          </Link>
-          <Link
-            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
-            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
-          >
-            What would the app suggest?
-          </Link>
-        </>
-      ) : (
-        <>
-          <Link
-            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
-            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-          >
-            {who.current ? `Plan a wax for ${who.current.name}` : "Plan a wax"}
-          </Link>
-          <Link
-            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
-            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
-          >
-            Already waxed? Record a wax job
-          </Link>
-        </>
-      )}
 
       {waiting && (
         <Link href={`/session/${waiting.id}#rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
@@ -231,7 +207,15 @@ async function Today() {
         </details>
       )}
       {venue ? (
-        <Suspense fallback={<p className={`${card} text-muted`}>Loading the forecast for {venue.name}…</p>}>
+        // The fallback is the two folds' height, so the Plan a wax button below does not jump when the forecast arrives.
+        <Suspense
+          fallback={
+            <>
+              <p className={`${fold} flex min-h-16 items-center px-4 text-muted`}>Loading the forecast for {venue.name}…</p>
+              <p className={`${fold} min-h-16`} aria-hidden />
+            </>
+          }
+        >
           <Conditions venue={venue} />
         </Suspense>
       ) : (
@@ -243,6 +227,40 @@ async function Today() {
         </p>
       )}
 
+      {/* At the bottom: location, weather and the snow are set first, then the wax. */}
+      {expert ? (
+        // An expert picks their own waxes: the main button records them, and
+        // the app's suggestion stays one tap away underneath.
+        <>
+          <Link
+            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+          >
+            {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
+          </Link>
+          <Link
+            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
+          >
+            What would the app suggest?
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link
+            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+          >
+            {who.current ? `Plan a wax for ${who.current.name}` : "Plan a wax"}
+          </Link>
+          <Link
+            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
+          >
+            Already waxed? Record a wax job
+          </Link>
+        </>
+      )}
     </>
   );
 }
@@ -314,4 +332,10 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       </details>
     </>
   );
+}
+
+async function TodayDate() {
+  // The cookie first: Next refuses the clock before the page has read the request.
+  const tz = await readerTimeZone();
+  return todayDate(new Date(), tz);
 }
