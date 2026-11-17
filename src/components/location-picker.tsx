@@ -17,14 +17,16 @@ const ALL = "";
 
 /**
  * Today's Set location list: narrowed by country, province or state, and
- * name, then grouped and A–Z. It opens on the home venue's country and
- * province, so the usual list is short.
+ * name, then grouped and A–Z. It opens on the home venue's country with
+ * every province showing: opening on the home province hid the BC venues of
+ * an Alberta skier, who took them for deleted. Whenever the filters hide
+ * anything, the list says how many and offers Show all.
  */
 export function LocationPicker({ venues, current, home }: { venues: V[]; current: string | null; home: string | null }) {
   const places = useMemo(() => venues.map((v) => ({ v, p: placeOf(v.region) })), [venues]);
   const homePlace = places.find((x) => x.v.id === home)?.p ?? null;
   const [country, setCountry] = useState(homePlace?.country ?? ALL);
-  const [province, setProvince] = useState(homePlace?.province ?? ALL);
+  const [province, setProvince] = useState(ALL);
   const [query, setQuery] = useState("");
   const [removing, setRemoving] = useState<string | null>(null);
 
@@ -41,6 +43,12 @@ export function LocationPicker({ venues, current, home }: { venues: V[]; current
     .filter((x) => !province || x.p.province === province)
     .filter((x) => !q || `${x.v.name} ${x.v.region ?? ""}`.toLowerCase().includes(q))
     .map((x) => x.v);
+  const filteredOut = venues.length - shown.length;
+  const showAll = () => {
+    setCountry(ALL);
+    setProvince(ALL);
+    setQuery("");
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -90,8 +98,18 @@ export function LocationPicker({ venues, current, home }: { venues: V[]; current
         className={field}
       />
 
+      {filteredOut > 0 && (
+        <p className="flex items-center gap-2 text-sm text-muted">
+          <span>
+            {filteredOut === 1 ? "1 more location is" : `${filteredOut} more locations are`} outside these filters.
+          </span>
+          <button type="button" onClick={showAll} className="min-h-11 px-1 text-link underline">
+            Show all
+          </button>
+        </p>
+      )}
       {shown.length === 0 ? (
-        <p className="text-sm text-muted">No locations match. Try All, or add one below.</p>
+        <p className="text-sm text-muted">No locations match. Tap Show all, or add one below.</p>
       ) : (
         groupByPlace(shown).map((c) => (
           <section key={c.country} aria-label={c.country} className="flex flex-col gap-1">
