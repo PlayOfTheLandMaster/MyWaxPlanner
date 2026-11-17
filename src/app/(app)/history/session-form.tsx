@@ -164,6 +164,10 @@ export function SessionForm({
 
   return (
     <form
+      // The server checks every field and says what is missing beside Save.
+      // The browser's own check is off: Classic/Skate are visually hidden
+      // radios, so on iPad a missing technique blocked Save with no message.
+      noValidate
       // Submitted by hand so a refused save keeps what was typed.
       onSubmit={(e) => {
         e.preventDefault();

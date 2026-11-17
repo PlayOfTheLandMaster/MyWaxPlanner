@@ -110,6 +110,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - A `<summary>` styled as a plain row still drew a disclosure triangle in
   Chrome on iPad; `summary.list-none` hides it.
 - Every tap target is at least 44 px (`min-h-11`).
+- A `required` field the browser cannot show (the Classic/Skate radios are
+  `sr-only`) blocks submit with no message at all: Save on Record a wax job
+  "did nothing". Forms use `noValidate` and show the server's message instead.
 
 ## Tailwind
 
