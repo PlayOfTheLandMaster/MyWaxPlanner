@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
-import { setTodayVenue } from "./snow-actions";
+import { LocationPicker } from "@/components/location-picker";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
@@ -27,6 +27,10 @@ export const metadata: Metadata = { title: "Today · My Wax Planner" };
 // New accounts see a short getting-started checklist first.
 
 const card = "rounded-xl border border-line bg-surface p-4";
+// The three folding cards (location, weather, snow) share one frame and one
+// header, so their arrows line up and their rows are the same height.
+const fold = "rounded-xl border border-line bg-surface";
+const foldHead = "flex min-h-16 cursor-pointer items-center gap-3 px-4 py-2 active:bg-tile";
 
 export default function TodayPage() {
   return (
@@ -69,14 +73,13 @@ async function Today() {
     .select("id, occurred_at, technique, mode, venue_name, event_name")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, today, planned, skiCount, box, toolCount, recent, skierCount, theirSkis] = await Promise.all([
+  const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis] = await Promise.all([
     loadVenues(supabase),
     loadTodayVenue(supabase),
     plannedQuery.order("occurred_at", { ascending: true }).limit(20),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
-    supabase.from("wax_sessions").select("venue_id").not("venue_id", "is", null).order("occurred_at", { ascending: false }).limit(30),
     supabase.from("skiers").select("id", { count: "exact", head: true }),
     // Pairs belonging to whoever is picked: none means a plan for them has no skis to choose.
     (who.current
@@ -91,13 +94,7 @@ async function Today() {
   const expert = isExpert(who.style);
 
   // Today's location: picked on this page for every wax job today, else home.
-  // The list offers home first, then the venues skied most recently, then the rest.
   const usable = venues.filter(forecastable);
-  const recentIds = [...new Set((recent.data ?? []).map((r) => r.venue_id as string))];
-  const ordered = [home, ...recentIds, ...usable.map((v) => v.id)]
-    .filter((id, i, all): id is string => !!id && all.indexOf(id) === i)
-    .map((id) => usable.find((v) => v.id === id))
-    .filter((v): v is VenueRow & { latitude: number; longitude: number } => !!v);
   const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
 
   const rows = (planned.data ?? []) as Planned[];
@@ -201,44 +198,27 @@ async function Today() {
 
       {/* Set once here; Plan a wax and Record a wax job follow it until the day ends. */}
       {usable.length > 0 && (
-        <details className={`${card} p-0`}>
-          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
-            <span aria-hidden>📍</span>
+        <details className={fold}>
+          {/* The fold's own arrow opens the list, as on the cards below it. */}
+          <summary className={foldHead}>
+            <span aria-hidden className="text-2xl leading-none">
+              📍
+            </span>
             <span className="min-w-0 truncate">
-              <span className="font-semibold">{venue?.name ?? "No location"}</span>
+              <span className="text-sm text-muted">Location: </span>
+              <span className="font-semibold">{venue?.name ?? "none set"}</span>
               {venue && venue.id === home && <span className="text-sm text-muted"> · home</span>}
             </span>
-            <span className="ml-auto shrink-0 text-sm text-link underline">Set location</span>
           </summary>
           <div className="flex flex-col gap-2 px-4 pb-4">
             <p className="text-sm text-muted">
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
-            <ul className="flex flex-col divide-y divide-line">
-              {ordered.map((v) => {
-                const on = v.id === venue?.id;
-                return (
-                  <li key={v.id}>
-                    <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
-                      <button
-                        type="submit"
-                        aria-pressed={on}
-                        className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile"
-                      >
-                        <span
-                          aria-hidden
-                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
-                        >
-                          {on ? "✓" : ""}
-                        </span>
-                        <span className={`min-w-0 flex-1 truncate ${on ? "font-semibold" : ""}`}>{v.name}</span>
-                        {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
-                      </button>
-                    </form>
-                  </li>
-                );
-              })}
-            </ul>
+            <LocationPicker
+              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null }))}
+              current={venue?.id ?? null}
+              home={home}
+            />
             <Link href="/venues/new?back=today" className="inline-flex min-h-11 items-center gap-2 self-start text-sm text-link underline">
               <span aria-hidden>＋</span> Add a location
             </Link>
@@ -283,8 +263,8 @@ async function Conditions({ venue }: { venue: VenueRow }) {
   return (
     <>
       {/* Folded, the weather is one line: the air temperature and the sky. */}
-      <details className="flex flex-col gap-2">
-        <summary className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile">
+      <details className={fold}>
+        <summary className={foldHead}>
           <span aria-hidden className="text-4xl leading-none">
             {SKY_ICONS[w.sky]}
           </span>
@@ -294,14 +274,12 @@ async function Conditions({ venue }: { venue: VenueRow }) {
             <span className="block truncate text-sm text-muted">{venue.name}</span>
           </span>
         </summary>
-        <div className="mt-2">
-          <ForecastCard w={w} compact />
-        </div>
+        <ForecastCard w={w} compact bare />
       </details>
 
       {/* Checked once here, used by every wax job today at this venue. */}
-      <details className={`${card} p-0`}>
-        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+      <details className={fold}>
+        <summary className={foldHead}>
           <span className="font-semibold">Today&apos;s Snow Conditions</span>
           <span className="truncate text-sm text-muted">
             {check
