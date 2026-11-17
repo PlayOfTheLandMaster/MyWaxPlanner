@@ -151,6 +151,20 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const periodLabel = (p: string) =>
     p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${p.replace("-", "–")}`;
 
+  // The card always says whose sessions and which skis, even when they come
+  // from the skier picked on Today rather than from the filter itself.
+  const skierName =
+    skier === undefined || skier === "all"
+      ? null
+      : skier === "me"
+        ? who.me
+        : ((skiers.data ?? []).find((k) => k.id === skier)?.name ?? null);
+  const summaryRows = [
+    ...(chips.some((c) => c.field === "Skier") || !skierName ? [] : [{ field: "Skier", label: skierName }]),
+    ...(chips.some((c) => c.field === "Skis") ? [] : [{ field: "Skis", label: "All pairs" }]),
+    ...chips,
+  ];
+
   const savedList = (saved.data ?? []) as { id: string; name: string; query: string }[];
   // The saved filter the page is showing now, if any.
   const active = savedList.find((sf) => here === `?${sf.query}`) ?? null;
@@ -309,7 +323,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         <section aria-label="Active filters" className="rounded-xl border border-line bg-surface px-4 py-3">
           <h2 className="mb-1 text-sm font-semibold">{active ? `Saved filter: ${active.name}` : "Filtered by"}</h2>
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
-            {chips.map((c) => (
+            {summaryRows.map((c) => (
               <div key={c.field} className="contents">
                 <dt className="text-muted">{c.field}</dt>
                 <dd className="truncate">{c.label}</dd>
