@@ -3,18 +3,22 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadSetupSteps } from "@/lib/setup/load";
 import { nextCard, type StepKey } from "@/lib/setup/steps";
+import { SetupChecklist } from "./setup-checklist";
+
+type Params = Promise<Record<string, string | string[] | undefined>>;
 
 /**
- * On a getting-started page, once its step is done: what to do next, so a new
- * account is never left on a page with nowhere obvious to go. Renders nothing
- * while the step is undone or once setup is long finished.
+ * On a getting-started page, once its step is done: the checklist itself, with
+ * this step ticked and the next one as the button, so a new account sees where
+ * it is in the list rather than being left on a page with nowhere obvious to
+ * go. Nothing while the step is undone or once setup is long finished.
  */
 export function SetupNext({
   step,
   searchParams,
 }: {
   step: StepKey;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Params;
 }) {
   return (
     <Suspense fallback={null}>
@@ -28,67 +32,44 @@ async function Card({
   searchParams,
 }: {
   step: StepKey;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Params;
 }) {
   const fromChecklist = (await searchParams).start === "1";
-  const card = nextCard(
-    await loadSetupSteps(await createClient()),
-    step,
-    fromChecklist,
-  );
+  const steps = await loadSetupSteps(await createClient());
+  const card = nextCard(steps, step, fromChecklist);
   if (!card) return null;
   return (
     <section
       aria-label="Getting started"
-      className="flex flex-col gap-3 rounded-xl border border-accent bg-tile p-4"
+      className="flex flex-col gap-1 rounded-xl border border-accent bg-tile p-4"
     >
       {card.kind === "next" ? (
         <>
-          <p className="text-sm">
-            <span className="font-semibold">{card.doneLabel}</span>{" "}
-            <span className="text-muted">
-              {card.left === 1 ? "One step left." : `${card.left} steps left.`}
-            </span>
-          </p>
+          <SetupChecklist
+            steps={steps}
+            next={card.next.key}
+            note={`${card.doneLabel} Add more here, or carry on with the next step.`}
+          />
           <Link
-            href={card.next.href}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+            href="/"
+            className="inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
           >
-            Next: {card.next.label}
-            {card.next.optional ? " (optional)" : ""} →
+            Back to Today
           </Link>
         </>
       ) : (
         <>
-          <p className="text-sm font-semibold">
-            You’re set up. Recommendations now use your own skis, waxes and
-            tools.
-          </p>
+          <SetupChecklist
+            steps={steps}
+            note="You’re set up. Recommendations now use your own skis, waxes and tools."
+          />
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+            className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
           >
             Back to Today →
           </Link>
         </>
-      )}
-      {card.kind === "next" && (
-        <div className="flex flex-wrap justify-center gap-x-6">
-          {card.skipTo && (
-            <Link
-              href={card.skipTo.href}
-              className="inline-flex min-h-11 items-center text-sm text-link underline"
-            >
-              Just me — skip to {card.skipTo.label.toLowerCase()}
-            </Link>
-          )}
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center text-sm text-link underline"
-          >
-            Back to Today
-          </Link>
-        </div>
       )}
     </section>
   );

@@ -79,7 +79,6 @@ export type NextCard =
       kind: "next";
       doneLabel: string;
       next: Step;
-      skipTo: Step | null;
       left: number;
     }
   | { kind: "finished" }
@@ -98,7 +97,6 @@ const DONE_LABELS: Record<StepKey, string> = {
  * first undone one after this, wrapping round), or "all set" when every step
  * that counts is done and the page was opened from the checklist. Nothing
  * while this step itself is still undone, or once setup is long finished.
- * When the next step is optional, `skipTo` is the next required one after it.
  */
 export function nextCard(
   steps: Step[],
@@ -111,16 +109,10 @@ export function nextCard(
   const order = [...steps.slice(i + 1), ...steps.slice(0, i)];
   const next = todo > 0 ? order.find((s) => !s.done) : undefined;
   if (next) {
-    const skipTo = next.optional
-      ? (order
-          .slice(order.indexOf(next) + 1)
-          .find((s) => !s.done && !s.optional) ?? null)
-      : null;
     return {
       kind: "next",
       doneLabel: DONE_LABELS[current],
       next,
-      skipTo,
       left: todo,
     };
   }

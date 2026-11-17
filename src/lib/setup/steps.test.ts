@@ -8,11 +8,10 @@ test("nothing while the page's own step is still undone", () => {
   assert.equal(nextCard(setupSteps(fresh), "venue", true), null);
 });
 
-test("home venue set: next is skiers, optional, with a way past to the skis", () => {
+test("home venue set: next is skiers, optional", () => {
   const c = nextCard(setupSteps({ ...fresh, home: true }), "venue", false);
   assert.ok(c && c.kind === "next");
   assert.equal(c.next.key, "skiers");
-  assert.equal(c.skipTo?.key, "skis");
   assert.equal(c.left, 3);
 });
 
@@ -24,7 +23,6 @@ test("skips steps already done and wraps round to earlier ones", () => {
   );
   assert.ok(c && c.kind === "next");
   assert.equal(c.next.key, "tools");
-  assert.equal(c.skipTo, null);
   const d = nextCard(
     setupSteps({ ...fresh, skiers: 1, skis: 2, waxes: 1, tools: 3 }),
     "tools",
