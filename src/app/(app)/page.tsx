@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { forecastable, loadHomeVenueId, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
+import { SnowCheckForm } from "@/components/snow-check-form";
+import { checkFor } from "@/lib/snow/check";
+import { loadSnowCheck } from "@/lib/snow/load";
+import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
+import { SKY_LABELS } from "@/lib/history/vocab";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -80,7 +85,6 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
   ]);
 
   const waxes = box.data ?? [];
-  const low = waxes.filter((w) => w.amount_left === "low" || w.amount_left === "empty").length;
   const steps = setupSteps({ style: who.style, home: home !== null, skiers: skierCount.count ?? 0, skis: skiCount.count ?? 0, waxes: waxes.length, tools: toolCount.count ?? 0 });
   const { todo } = progress(steps);
   const expert = isExpert(who.style);
@@ -222,26 +226,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
         </p>
       )}
 
-      <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
-        <Shortcut href="/history" title="History" detail="look back" />
-        <Shortcut href="/wax-box" title="Wax box" detail={waxes.length ? `${waxes.length} waxes${low ? ` · ${low} low` : ""}` : "Empty"} warn={low > 0} />
-        {/* Unassigned for now: "Similar to today" moved to History, above its
-            filters. The slot keeps the row of three until it has a new job. */}
-        <div
-          aria-hidden
-          className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-dashed border-line p-2 text-center text-sm text-muted"
-        />
-      </nav>
     </>
-  );
-}
-
-function Shortcut({ href, title, detail, warn }: { href: string; title: string; detail?: string; warn?: boolean }) {
-  return (
-    <Link href={href} className="flex min-h-16 flex-col items-center justify-center rounded-xl border border-line bg-surface p-2 text-center text-sm active:bg-tile">
-      <span className="font-semibold">{title}</span>
-      {detail && <span className={`text-xs ${warn ? "text-danger" : "text-muted"}`}>{detail}</span>}
-    </Link>
   );
 }
 
@@ -249,7 +234,8 @@ function Shortcut({ href, title, detail, warn }: { href: string; title: string; 
 const nextTwoHours = cache((venue: VenueRow) => forecastFor(venue, { hours: 2 }));
 
 async function Conditions({ venue }: { venue: VenueRow }) {
-  const result = await nextTwoHours(venue);
+  const supabase = await createClient();
+  const [result, saved] = await Promise.all([nextTwoHours(venue), loadSnowCheck(supabase)]);
   if (!result.window) {
     return (
       <p role="alert" className={`${card} text-sm text-danger`}>
@@ -257,5 +243,56 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       </p>
     );
   }
-  return <ForecastCard w={result.window} compact />;
+  const w = result.window;
+  // The venue's own date: the check is for this place, today, wherever the phone is.
+  const day = w.start.slice(0, 10);
+  const check = checkFor(saved, venue.id, day);
+  const temp = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °C";
+  return (
+    <>
+      {/* Folded, the weather is one line: the air temperature and the sky. */}
+      <details className="flex flex-col gap-2">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile">
+          <span className="text-lg font-bold">{temp(w.air_temp_c)}</span>
+          <span className="truncate text-muted">
+            {SKY_LABELS[w.sky]} · {venue.name}
+          </span>
+        </summary>
+        <div className="mt-2">
+          <ForecastCard w={w} compact />
+        </div>
+      </details>
+
+      {/* Checked once here, used by every wax job today at this venue. */}
+      <details className={`${card} p-0`}>
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+          <span className="font-semibold">Today&apos;s Snow Conditions</span>
+          <span className="truncate text-sm text-muted">
+            {check
+              ? `· ${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`
+              : "· not checked yet"}
+          </span>
+        </summary>
+        <div className="flex flex-col gap-3 px-4 pb-4">
+          <p className="text-sm text-muted">
+            {check
+              ? "Checked today. Every wax job today at this venue uses these; change them if the snow changes."
+              : "Filled in from the forecast. At the trail, a snowball and a glance at the track beat any estimate. Save once; every wax job today uses it."}
+          </p>
+          <SnowCheckForm
+            venueId={venue.id}
+            day={day}
+            initial={
+              check ?? {
+                snow_temp_c: Math.min(0, w.snow_temp_c),
+                snow_humidity_band: w.snow_humidity_band,
+                snow_type: w.snow_type,
+                track: null,
+              }
+            }
+          />
+        </div>
+      </details>
+    </>
+  );
 }

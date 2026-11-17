@@ -4,10 +4,15 @@
 
 import type { ForecastWindow } from "@/lib/weather/forecast";
 import type { DraftConditions } from "@/lib/plan/draft";
+import type { SnowCheck } from "@/lib/snow/check";
 
-/** The forecast as the conditions a plan would save, untouched by the skier. */
-export function draftFromWindow(w: ForecastWindow): DraftConditions {
-  return {
+/**
+ * The forecast as the conditions a plan would save. With Today's Snow
+ * Conditions for the same venue and day, the skier's own check replaces the
+ * forecast's snow guesses.
+ */
+export function draftFromWindow(w: ForecastWindow, check: SnowCheck | null = null): DraftConditions {
+  const base: DraftConditions = {
     venue_id: w.venue.id,
     observed_at: w.startIso,
     air_temp_c: w.air_temp_c,
@@ -24,6 +29,15 @@ export function draftFromWindow(w: ForecastWindow): DraftConditions {
     wind_kmh: w.wind_kmh,
     track: null,
     notes: `${w.start.slice(0, 16)} local, ${w.hours.length} h`,
+  };
+  if (!check || check.venue_id !== w.venue.id || check.day !== w.start.slice(0, 10)) return base;
+  return {
+    ...base,
+    snow_temp_c: check.snow_temp_c,
+    snow_temp_estimated: false,
+    snow_humidity_band: check.snow_humidity_band,
+    snow_type: check.snow_type,
+    track: check.track,
   };
 }
 

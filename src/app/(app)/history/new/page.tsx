@@ -15,6 +15,7 @@ import { forecastFor } from "@/lib/weather/window";
 import { encodeDraft } from "@/lib/plan/draft";
 import { draftFromWindow, similarSessions, type PastSession } from "@/lib/history/record";
 import { ForecastCard } from "@/components/forecast-card";
+import { loadSnowCheck } from "@/lib/snow/load";
 import { LocalTime } from "@/components/local-time";
 import type { FormOptions } from "@/lib/history/load";
 
@@ -147,7 +148,7 @@ async function Record({
   skierName: string | null;
 }) {
   const supabase = await createClient();
-  const [forecast, pastRows] = await Promise.all([
+  const [forecast, pastRows, snowCheck] = await Promise.all([
     venue ? forecastFor(venue, { hours: 2 }) : Promise.resolve(null),
     (owner
       ? supabase
@@ -161,6 +162,7 @@ async function Record({
     )
       .order("occurred_at", { ascending: false })
       .limit(60),
+    loadSnowCheck(supabase),
   ]);
   const w = forecast?.window ?? null;
   const past = ((pastRows.data ?? []) as PastSession[]).filter((p) => p.id !== source?.id);
@@ -252,7 +254,7 @@ async function Record({
         initial={start}
         submitLabel="Save"
         cancelHref="/"
-        hidden={w ? { forecast: encodeDraft(draftFromWindow(w)) } : undefined}
+        hidden={w ? { forecast: encodeDraft(draftFromWindow(w, snowCheck)) } : undefined}
       />
     </>
   );

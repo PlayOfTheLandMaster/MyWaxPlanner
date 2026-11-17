@@ -8,6 +8,8 @@ import { forecastable, loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { ConditionsForm } from "./conditions-form";
+import { checkFor } from "@/lib/snow/check";
+import { loadSnowCheck } from "@/lib/snow/load";
 import { WhereWhenForm } from "./where-when-form";
 import { ContinueList } from "@/components/session/continue-list";
 
@@ -66,7 +68,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
 async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["searchParams"] }) {
   const p = await searchParams;
   const supabase = await createClient();
-  const [venues, home] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase)]);
+  const [venues, home, snowCheck] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase), loadSnowCheck(supabase)]);
   const usable = venues.filter(forecastable);
   const venueId = one(p.venue) ?? home ?? undefined;
   const venue = usable.find((v) => v.id === venueId);
@@ -131,7 +133,12 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
       {result?.window && (
         <>
           <ForecastCard w={result.window} />
-          <ConditionsForm key={`${result.window.venue.id}${result.window.start}${result.hours}`} w={result.window} />
+          <ConditionsForm
+            key={`${result.window.venue.id}${result.window.start}${result.hours}`}
+            w={result.window}
+            check={checkFor(snowCheck, result.window.venue.id, result.window.start.slice(0, 10))}
+            isToday={result.window.start.slice(0, 10) === new Date().toLocaleDateString("en-CA", { timeZone: result.window.timezone })}
+          />
         </>
       )}
     </>
