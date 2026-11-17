@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { loadSetupSteps } from "@/lib/setup/load";
 import { nextCard, type StepKey } from "@/lib/setup/steps";
 import { SetupChecklist } from "./setup-checklist";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { isExpert } from "@/lib/profile/style";
 
 type Params = Promise<Record<string, string | string[] | undefined>>;
 
@@ -37,7 +39,14 @@ async function Card({ step, searchParams }: { step: StepKey; searchParams: Param
         </>
       ) : (
         <>
-          <SetupChecklist steps={steps} note="You’re set up. Recommendations now use your own skis, waxes and tools." />
+          <SetupChecklist
+            steps={steps}
+            note={
+              isExpert((await loadSkierContext()).style)
+                ? "You’re set up. Back on Today, “Record today’s wax” is your main button; the app’s suggestion is one tap below it."
+                : "You’re set up. Back on Today, “Plan today’s wax” suggests waxes from your own skis, waxes and tools."
+            }
+          />
           <Link
             href="/"
             className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
