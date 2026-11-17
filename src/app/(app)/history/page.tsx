@@ -12,6 +12,7 @@ import {
   activeCount,
   parseFilters,
   recentSeasons,
+  seasonLabel,
   toQuery,
   type Filters,
   type Sort,
@@ -89,6 +90,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
     f,
     skier,
     now,
+    who.seasonStart,
   ).limit(300);
 
   const [list, skis, skiers, venues, brands, saved] = await Promise.all([
@@ -149,7 +151,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   ).filter((c): c is Chip => Boolean(c));
 
   const periodLabel = (p: string) =>
-    p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${p.replace("-", "–")}`;
+    p === "season" ? "This season" : p === "30d" ? "Last 30 days" : p === "all" ? "All time" : `Season ${seasonLabel(p, who.seasonStart)}`;
 
   // The card always says whose sessions and which skis, even when they come
   // from the skier picked on Today rather than from the filter itself.
@@ -212,7 +214,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             <select name="period" defaultValue={f.period} className={field}>
               <option value="season">This season</option>
               <option value="30d">Last 30 days</option>
-              {recentSeasons(now).slice(1).map((s) => (
+              {recentSeasons(now, 5, who.seasonStart).slice(1).map((s) => (
                 <option key={s} value={s}>
                   {periodLabel(s)}
                 </option>

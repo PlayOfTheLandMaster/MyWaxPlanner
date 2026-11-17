@@ -48,22 +48,38 @@ const numberIn = (v: string | undefined, min: number, max: number) => {
   return Number.isFinite(n) && n >= min && n <= max ? n : undefined;
 };
 
+/** August: the season start for an account that has not chosen one. */
+export const DEFAULT_SEASON_START = 8;
+
+/** A month 1–12, or the default. */
+export function seasonStart(v: unknown): number {
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 1 && n <= 12 ? n : DEFAULT_SEASON_START;
+}
+
 /**
- * A cross-country season runs from August to July and is named by both years:
- * November 2026 is in "2026-27".
+ * A season runs for 12 months from the account's start month (August unless
+ * changed on Account) and is named by the year it starts in and the next:
+ * with an August start, November 2026 is in "2026-27".
  */
-export function seasonOf(date: Date): string {
+export function seasonOf(date: Date, startMonth = DEFAULT_SEASON_START): string {
   const y = date.getUTCFullYear();
-  const start = date.getUTCMonth() >= 7 ? y : y - 1;
+  const start = date.getUTCMonth() + 1 >= startMonth ? y : y - 1;
   return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
 }
 
-export function seasonRange(season: string): { from: string; to: string } | null {
+export function seasonRange(season: string, startMonth = DEFAULT_SEASON_START): { from: string; to: string } | null {
   const m = /^(\d{4})-(\d{2})$/.exec(season);
   if (!m) return null;
   const start = Number(m[1]);
   if (String((start + 1) % 100).padStart(2, "0") !== m[2]) return null;
-  return { from: `${start}-08-01T00:00:00Z`, to: `${start + 1}-08-01T00:00:00Z` };
+  const mm = String(startMonth).padStart(2, "0");
+  return { from: `${start}-${mm}-01T00:00:00Z`, to: `${start + 1}-${mm}-01T00:00:00Z` };
+}
+
+/** "2026–27", or "2026" when the season starts in January and stays in one year. */
+export function seasonLabel(season: string, startMonth = DEFAULT_SEASON_START): string {
+  return startMonth === 1 ? season.slice(0, 4) : season.replace("-", "–");
 }
 
 export function parseFilters(params: Params): Filters {
@@ -107,10 +123,14 @@ export function toQuery(f: Filters, change: Partial<Filters> = {}): string {
 }
 
 /** The date range a period covers, or null for all time. */
-export function periodRange(period: string, now: Date): { from?: string; to?: string } | null {
+export function periodRange(
+  period: string,
+  now: Date,
+  startMonth = DEFAULT_SEASON_START,
+): { from?: string; to?: string } | null {
   if (period === "all") return null;
   if (period === "30d") return { from: new Date(now.getTime() - 30 * 86_400_000).toISOString() };
-  return seasonRange(period === "season" ? seasonOf(now) : period);
+  return seasonRange(period === "season" ? seasonOf(now, startMonth) : period, startMonth);
 }
 
 /** How many filters are set, not counting the period and the sort. */
@@ -119,7 +139,7 @@ export function activeCount(f: Filters): number {
 }
 
 /** Recent seasons to offer in the period list, newest first. */
-export function recentSeasons(now: Date, count = 5): string[] {
-  const start = Number(seasonOf(now).slice(0, 4));
+export function recentSeasons(now: Date, count = 5, startMonth = DEFAULT_SEASON_START): string[] {
+  const start = Number(seasonOf(now, startMonth).slice(0, 4));
   return Array.from({ length: count }, (_, i) => `${start - i}-${String((start - i + 1) % 100).padStart(2, "0")}`);
 }

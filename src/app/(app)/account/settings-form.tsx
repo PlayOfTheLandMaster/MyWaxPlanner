@@ -5,6 +5,10 @@ import { saveSettings, type SettingsState } from "./actions";
 import { BodyFields } from "@/components/body-fields";
 import type { Body } from "@/lib/skiers/body";
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const YEAR = new Date().getFullYear();
+
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
 const choice =
@@ -18,6 +22,7 @@ export function SettingsForm({
   lastInitial,
   me,
   years,
+  seasonStart,
 }: {
   venues: { id: string; name: string }[];
   home: string | null;
@@ -26,6 +31,8 @@ export function SettingsForm({
   lastInitial: string | null;
   me: Body;
   years: number[];
+  /** Month 1–12 the season starts in. */
+  seasonStart: number;
 }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettings, {});
   return (
@@ -66,6 +73,20 @@ export function SettingsForm({
             </option>
           ))}
         </select>
+      </label>
+      <label className={label}>
+        Ski season starts in
+        <select name="season_start_month" defaultValue={String(seasonStart)} className={field}>
+          {MONTHS.map((m, i) => (
+            <option key={m} value={i + 1}>
+              {m}
+            </option>
+          ))}
+        </select>
+        <span className="font-normal text-muted">
+          A season always runs for 12 months from this month, for example {MONTHS[seasonStart - 1]} {YEAR} to{" "}
+          {MONTHS[(seasonStart + 10) % 12]} {seasonStart === 1 ? YEAR : YEAR + 1}. History&apos;s &ldquo;This season&rdquo; uses it.
+        </span>
       </label>
       <fieldset className="flex flex-col gap-1">
         <legend className="mb-1 text-sm font-medium">Plans start as</legend>

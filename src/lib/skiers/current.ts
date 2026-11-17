@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadSkiers, type Skier } from "./load";
 import { displayName } from "@/lib/profile/name";
 import { readStyle, type WaxingStyle } from "@/lib/profile/style";
+import { seasonStart } from "@/lib/history/filters";
 
 // The skier being waxed for, picked on Today. Other screens start with that
 // skier chosen; each can still look at someone else for the moment.
@@ -20,6 +21,8 @@ export type SkierContext = {
   me: string;
   /** How the account holder waxes; null when not chosen yet (treated as guided). */
   style: WaxingStyle | null;
+  /** The month (1–12) the account's ski season starts in; a season runs 12 months from it. */
+  seasonStart: number;
 };
 
 /** Read once per request, however many parts of the page ask. */
@@ -27,12 +30,12 @@ export const loadSkierContext = cache(async (): Promise<SkierContext> => {
   const supabase = await createClient();
   const [skiers, profile] = await Promise.all([
     loadSkiers(supabase),
-    supabase.from("profiles").select("current_skier_id, first_name, last_initial, waxing_style").maybeSingle(),
+    supabase.from("profiles").select("current_skier_id, first_name, last_initial, waxing_style, season_start_month").maybeSingle(),
   ]);
   const id = (profile.data?.current_skier_id as string | null) ?? null;
   const current = skiers.find((k) => k.id === id) ?? null;
   const me = displayName(profile.data?.first_name as string | null, profile.data?.last_initial as string | null);
-  return { skiers, current, key: current?.id ?? "me", me, style: readStyle(profile.data?.waxing_style) };
+  return { skiers, current, key: current?.id ?? "me", me, style: readStyle(profile.data?.waxing_style), seasonStart: seasonStart(profile.data?.season_start_month) };
 });
 
 /**
