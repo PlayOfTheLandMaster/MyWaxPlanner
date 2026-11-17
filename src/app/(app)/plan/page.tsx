@@ -40,7 +40,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         >
           <span>
             <span className="block font-semibold">Record a wax</span>
-            <span className="block text-sm text-muted">Already waxed, or picking your own waxes: enter what goes on the skis</span>
+            <span className="block text-sm text-muted">Already waxed, or picking your own waxes? Enter what goes on the skis.</span>
           </span>
           <span aria-hidden className="text-muted">
             →
