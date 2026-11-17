@@ -2,9 +2,10 @@ import { Suspense, cache } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { countSessionsAt, forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { LocationPicker } from "@/components/location-picker";
+import { FoldOnLeave } from "@/components/fold-on-leave";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
@@ -35,6 +36,8 @@ const foldHead = "flex min-h-16 cursor-pointer items-center gap-3 px-4 py-2 acti
 export default function TodayPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      {/* Coming back to Today, every card starts folded. */}
+      <FoldOnLeave />
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Today</h1>
         <Link
@@ -96,6 +99,8 @@ async function Today() {
   // Today's location: picked on this page for every wax job today, else home.
   const usable = venues.filter(forecastable);
   const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
+  // For ✕ on your own locations: one with sessions asks where they go.
+  const sessionsAt = await countSessionsAt(supabase, usable.filter((v) => v.user_id).map((v) => v.id));
 
   const rows = (planned.data ?? []) as Planned[];
   const upcoming = rows.find((r) => new Date(r.occurred_at) >= new Date(now.getTime() - 3 * 3600_000));
@@ -215,7 +220,7 @@ async function Today() {
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
             <LocationPicker
-              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null }))}
+              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null, sessions: sessionsAt.get(v.id) ?? 0 }))}
               current={venue?.id ?? null}
               home={home}
             />
@@ -280,7 +285,7 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       {/* Checked once here, used by every wax job today at this venue. */}
       <details className={fold}>
         <summary className={foldHead}>
-          <span className="font-semibold">Today&apos;s Snow Conditions</span>
+          <span className="font-semibold">Today&apos;s Skiing Conditions</span>
           <span className="truncate text-sm text-muted">
             {check
               ? `· ${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`

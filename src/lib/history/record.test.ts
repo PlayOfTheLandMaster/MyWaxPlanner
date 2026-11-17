@@ -31,7 +31,7 @@ test("similar: unrated sessions last, newest first among equals", () => {
   );
 });
 
-test("Today's Snow Conditions replace the forecast's snow guesses, for the same venue and day only", () => {
+test("Today's Skiing Conditions replace the forecast's snow guesses, for the same venue and day only", () => {
   const w = {
     venue: { id: "v1" }, startIso: "2026-11-17T16:00:00Z", start: "2026-11-17T09:00", hours: [1, 2],
     air_temp_c: -3, air_temp_min_c: -4, air_temp_max_c: -2, overnight_low_c: -9, air_rh_pct: 60,

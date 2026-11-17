@@ -17,7 +17,7 @@ const SNOWBALL = {
   wet: "Packs into a wet ball — wet (30–100 %)",
 } as const;
 
-/** Today's Snow Conditions: the snow check every wax job today will use. */
+/** Today's Skiing Conditions: the snow check every wax job today will use. */
 export function SnowCheckForm({
   venueId,
   day,

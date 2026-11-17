@@ -67,13 +67,73 @@ export async function addVenue(_prev: VenueFormState, formData: FormData): Promi
   redirect(back.startsWith("/plan") ? `/plan?venue=${data.id}` : "/venues");
 }
 
+function revalidateVenues() {
+  for (const p of ["/", "/venues", "/plan", "/history"]) revalidatePath(p);
+}
+
 /** Sessions and conditions at this venue keep their data; they just stop naming it. */
 export async function deleteVenue(id: string) {
   const { supabase } = await signedIn();
   await supabase.from("venues").delete().eq("id", id);
-  revalidatePath("/venues");
-  // Today's location list offers Delete too.
-  revalidatePath("/");
+  revalidateVenues();
+}
+
+/** If home or today's location is `from`, point it at `to` (null: clear it). */
+async function repoint(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, from: string, to: string | null) {
+  const { data } = await supabase.from("profiles").select("home_venue_id, current_venue").eq("id", userId).maybeSingle();
+  const patch: Record<string, unknown> = {};
+  if (data?.home_venue_id === from) patch.home_venue_id = to;
+  const cur = data?.current_venue as { venue_id?: string; day?: string } | null;
+  if (cur?.venue_id === from) patch.current_venue = to ? { ...cur, venue_id: to } : null;
+  if (Object.keys(patch).length) await supabase.from("profiles").update(patch).eq("id", userId);
+}
+
+/**
+ * ✕ on one of your own locations. `target` says what happens to the sessions
+ * that name it: a venue id moves them (and their conditions) there first;
+ * "keep" keeps the old name on each session as plain text; "none" is for a
+ * location with no sessions. Then the venue is deleted.
+ */
+export async function removeVenue(id: string, target: string) {
+  const { supabase, userId } = await signedIn();
+  const { data: venue } = await supabase.from("venues").select("id, user_id, name").eq("id", id).maybeSingle();
+  if (!venue || venue.user_id !== userId) return; // shared venues are hidden, never deleted
+
+  if (target !== "keep" && target !== "none") {
+    if (target === id) return;
+    const { data: to } = await supabase.from("venues").select("id").eq("id", target).maybeSingle();
+    if (!to) return; // not a venue this account can see
+    const moved = await supabase.from("wax_sessions").update({ venue_id: target }).eq("venue_id", id);
+    if (moved.error) throw new Error(`Could not move the sessions: ${moved.error.message}`);
+    await supabase.from("conditions").update({ venue_id: target }).eq("venue_id", id);
+    await repoint(supabase, userId, id, target);
+  } else if (target === "keep") {
+    const kept = await supabase.from("wax_sessions").update({ venue_label: venue.name }).eq("venue_id", id);
+    if (kept.error) throw new Error(`Could not keep the name on the sessions: ${kept.error.message}`);
+  }
+  await supabase.from("venues").delete().eq("id", id);
+  revalidateVenues();
+}
+
+/** ✕ on a shared location: off this account's lists, for this account only. */
+export async function hideVenue(id: string) {
+  const { supabase, userId } = await signedIn();
+  const { data: venue } = await supabase.from("venues").select("id, user_id").eq("id", id).maybeSingle();
+  if (!venue || venue.user_id !== null) return;
+  const { data } = await supabase.from("profiles").select("hidden_venues").eq("id", userId).maybeSingle();
+  const hidden = new Set(((data?.hidden_venues as string[] | null) ?? []).map(String));
+  hidden.add(id);
+  await supabase.from("profiles").update({ hidden_venues: [...hidden] }).eq("id", userId);
+  await repoint(supabase, userId, id, null);
+  revalidateVenues();
+}
+
+export async function unhideVenue(id: string) {
+  const { supabase, userId } = await signedIn();
+  const { data } = await supabase.from("profiles").select("hidden_venues").eq("id", userId).maybeSingle();
+  const hidden = ((data?.hidden_venues as string[] | null) ?? []).map(String).filter((v) => v !== id);
+  await supabase.from("profiles").update({ hidden_venues: hidden }).eq("id", userId);
+  revalidateVenues();
 }
 
 export async function setHomeVenue(id: string | null) {

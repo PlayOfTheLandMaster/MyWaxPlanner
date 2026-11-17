@@ -4,6 +4,8 @@ import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { ForecastError, searchPlaces } from "@/lib/weather/forecast";
 import { VenueForm } from "../venue-form";
+import { AreaFields } from "./area-fields";
+import { countryCode, provinceName } from "@/lib/venues/search-area";
 
 export const metadata: Metadata = { title: "Add a venue · My Wax Planner" };
 
@@ -22,6 +24,8 @@ export default function NewVenuePage({ searchParams }: PageProps<"/venues/new">)
 async function Content({ searchParams }: { searchParams: PageProps<"/venues/new">["searchParams"] }) {
   const p = await searchParams;
   const q = one(p.q)?.trim().slice(0, 80);
+  const country = countryCode(one(p.country));
+  const province = provinceName(one(p.province));
   // Where Add a venue was opened from: Plan a wax, Today's Set location, or Venues.
   const from = one(p.back);
   const back = from === "plan" ? "/plan" : from === "today" ? "/" : "/venues";
@@ -29,7 +33,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
   let error: string | null = null;
   if (q) {
     try {
-      results = await searchPlaces(q);
+      results = await searchPlaces(q, { country, province });
     } catch (e) {
       error = e instanceof ForecastError ? e.message : "The place search failed.";
     }
@@ -52,27 +56,30 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
       </div>
 
-      <form method="get" className="flex gap-2">
+      <form method="get" className="flex flex-col gap-2">
         {back === "/plan" && <input type="hidden" name="back" value="plan" />}
         {back === "/" && <input type="hidden" name="back" value="today" />}
-        <input
-          name="q"
-          type="search"
-          defaultValue={q}
-          placeholder="Search a place, e.g. Lake Louise"
-          aria-label="Search for a place"
-          className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
-        />
-        <button type="submit" className="min-h-11 shrink-0 rounded-lg border border-line px-4 text-sm font-semibold">
-          Search
-        </button>
+        <AreaFields country={country ?? ""} province={province ?? ""} />
+        <div className="flex gap-2">
+          <input
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="Search a place, e.g. Lake Louise"
+            aria-label="Search for a place"
+            className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
+          />
+          <button type="submit" className="min-h-11 shrink-0 rounded-lg border border-line px-4 text-sm font-semibold">
+            Search
+          </button>
+        </div>
       </form>
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       {q && !error && results.length === 0 && (
         <p className="text-sm text-muted">
-          No places found. Try the Nordic centre&apos;s full name (e.g. &ldquo;Sovereign Lake Nordic&rdquo;), the nearest town, or
-          enter the position below.
+          No places found{country || province ? " in that area" : ""}. Try the Nordic centre&apos;s full name (e.g. &ldquo;Sovereign
+          Lake Nordic&rdquo;), the nearest town, Any for the area, or enter the position below.
         </p>
       )}
       {results.length > 0 && (

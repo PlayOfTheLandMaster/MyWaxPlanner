@@ -1,4 +1,4 @@
-// Today's Snow Conditions: the skier's own check of the snow (snowball test,
+// Today's Skiing Conditions: the skier's own check of the snow (snowball test,
 // thermometer, a look at the track), made once on Today and used by every wax
 // job that day at that venue — Plan a wax and Record a wax job alike. Stored
 // on the profile as one record; a check from another day or venue is ignored.
