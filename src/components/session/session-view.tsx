@@ -197,10 +197,18 @@ export async function SessionView({
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
               {/* A recorded wax job has no plan: these are the waxes already on the skis. */}
               {expert || !s.plan ? "Your waxes" : "The plan"}
-              {s.layers.length ? ` - ${s.plan ? "apply " : ""}${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
+              {/* Still waxing: what to apply, and each layer can be swapped or
+                  skipped. Once waxed (Ski, Rate) the waxes are on the skis:
+                  past tense, and fixed. A change made after all is "I changed
+                  something" when rating, which opens the full form. */}
+              {s.layers.length
+                ? stage === "wax"
+                  ? ` - ${s.plan ? "apply " : ""}${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}`
+                  : ` - ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"} applied`
+                : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              <Layers layers={s.layers} plan={s.plan} compare={compare} change={{ sessionId: s.id, box }} />
+              <Layers layers={s.layers} plan={s.plan} compare={compare} change={stage === "wax" ? { sessionId: s.id, box } : null} />
             </div>
           </details>
 
