@@ -173,12 +173,14 @@ async function Record({
       <div>
         <BackLink fallback="/">{source ? "✕ Cancel" : undefined}</BackLink>
         <h1 className="text-2xl font-bold">{skierName ? `Record a wax job for ${skierName}` : "Record a wax job"}</h1>
-        <p className="text-sm text-muted">
-          {source
-            ? "Copied from an earlier session. Change anything before saving."
-            : "Pick your waxes as you put them on. Rate it after skiing."}
-        </p>
       </div>
+      {/* Straight under the title: who this wax job is for. */}
+      <SkierBanner />
+      <p className="-mt-2 text-sm text-muted">
+        {source
+          ? "Copied from an earlier session. Change anything before saving."
+          : "Pick your waxes as you put them on. Rate it after skiing."}
+      </p>
       {/* Says who chooses the waxes here: the waxer, never the app. An expert
           sees their Account setting named; a guided waxer is pointed at the
           way in that does suggest. A quiet pill, like the skier line. */}
@@ -197,7 +199,6 @@ async function Record({
           </Link>
         )}
       </p>
-      <SkierBanner />
 
 
       {w ? (
