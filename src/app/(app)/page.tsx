@@ -5,14 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { countSessionsAt, forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { LocationPicker } from "@/components/location-picker";
+import { fold, foldHead } from "@/components/fold";
+import { WeatherFold } from "@/components/weather-fold";
 import { FoldOnLeave } from "@/components/fold-on-leave";
 import { forecastFor } from "@/lib/weather/window";
-import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
 import { checkFor } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
-import { SKY_ICONS, SKY_LABELS } from "@/lib/history/vocab";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -35,10 +35,6 @@ const card = "rounded-xl border border-line bg-surface p-4";
 // plus a colour: two background classes on one element are decided by the
 // stylesheet's order, not the class list's, and bg-surface comes later.
 const tinted = "rounded-xl border border-line p-4";
-// The three folding cards (location, weather, snow) share one frame and one
-// header, so their arrows line up and their rows are the same height.
-const fold = "rounded-xl border border-line bg-surface";
-const foldHead = "flex min-h-16 cursor-pointer items-center gap-3 px-4 py-2 active:bg-tile";
 
 export default function TodayPage() {
   return (
@@ -318,19 +314,7 @@ async function Conditions({ venue }: { venue: VenueRow }) {
   return (
     <>
       {/* Folded, the weather is one line: the air temperature and the sky. */}
-      <details className={fold}>
-        <summary className={foldHead}>
-          <span aria-hidden className="text-4xl leading-none">
-            {SKY_ICONS[w.sky]}
-          </span>
-          <span className="text-2xl font-bold">{temp(w.air_temp_c)}</span>
-          <span className="min-w-0">
-            <span className="block truncate font-medium">{SKY_LABELS[w.sky]}</span>
-            <span className="block truncate text-sm text-muted">{venue.name}</span>
-          </span>
-        </summary>
-        <ForecastCard w={w} compact bare />
-      </details>
+      <WeatherFold w={w} compact />
 
       {/* Checked once here, used by every wax job today at this venue. */}
       <details className={fold}>

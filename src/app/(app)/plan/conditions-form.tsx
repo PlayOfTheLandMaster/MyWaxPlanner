@@ -7,6 +7,7 @@ import Link from "next/link";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { TRACK_LABELS } from "@/lib/history/vocab";
 import type { SnowCheck } from "@/lib/snow/check";
+import { fold, foldHead } from "@/components/fold";
 
 const deg = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °C";
 
@@ -52,7 +53,7 @@ export function ConditionsForm({
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-4"
+      className="flex flex-col gap-3"
     >
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v ?? ""} />
@@ -63,41 +64,50 @@ export function ConditionsForm({
       <input type="hidden" name="snow_humidity_band" value={snow.snow_humidity_band} />
       <input type="hidden" name="snow_type" value={snow.snow_type} />
       <input type="hidden" name="track" value={snow.track ?? ""} />
-      <div>
-        <h2 className="font-semibold">Snow conditions</h2>
-        <dl className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
-          <dt className="text-muted">Snow temperature</dt>
-          <dd>{deg(snow.snow_temp_c)}</dd>
-          <dt className="text-muted">Snowball test</dt>
-          <dd>{HUMIDITY_LABELS[snow.snow_humidity_band]}</dd>
-          <dt className="text-muted">Snow type</dt>
-          <dd>{SNOW_TYPE_LABELS[snow.snow_type]}</dd>
-          {snow.track && (
-            <>
-              <dt className="text-muted">Track</dt>
-              <dd>{TRACK_LABELS[snow.track]}</dd>
-            </>
-          )}
-        </dl>
-        <p className="mt-2 text-sm text-muted">
-          {checked ? (
-            <>From Today&apos;s Skiing Conditions. </>
-          ) : (
-            <>Estimated from the forecast. </>
-          )}
-          {isToday ? (
-            <>
-              Change them on{" "}
-              <Link href="/" className="text-link underline">
-                Today
-              </Link>
-              , once for every wax job today.
-            </>
-          ) : (
-            <>On the day, check the snow on Today.</>
-          )}
-        </p>
-      </div>
+      {/* Folded, the snow is one line; the button that uses it sits outside the fold. */}
+      <details className={fold}>
+        <summary className={foldHead}>
+          <span className="font-semibold">Snow conditions</span>
+          <span className="min-w-0 truncate text-sm text-muted">
+            · {deg(snow.snow_temp_c)} · {HUMIDITY_LABELS[snow.snow_humidity_band].toLowerCase()} ·{" "}
+            {SNOW_TYPE_LABELS[snow.snow_type].toLowerCase()}
+          </span>
+        </summary>
+        <div className="px-4 pb-4">
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
+            <dt className="text-muted">Snow temperature</dt>
+            <dd>{deg(snow.snow_temp_c)}</dd>
+            <dt className="text-muted">Snowball test</dt>
+            <dd>{HUMIDITY_LABELS[snow.snow_humidity_band]}</dd>
+            <dt className="text-muted">Snow type</dt>
+            <dd>{SNOW_TYPE_LABELS[snow.snow_type]}</dd>
+            {snow.track && (
+              <>
+                <dt className="text-muted">Track</dt>
+                <dd>{TRACK_LABELS[snow.track]}</dd>
+              </>
+            )}
+          </dl>
+          <p className="mt-2 text-sm text-muted">
+            {checked ? (
+              <>From Today&apos;s Skiing Conditions. </>
+            ) : (
+              <>Estimated from the forecast. </>
+            )}
+            {isToday ? (
+              <>
+                Change them on{" "}
+                <Link href="/" className="text-link underline">
+                  Today
+                </Link>
+                , once for every wax job today.
+              </>
+            ) : (
+              <>On the day, check the snow on Today.</>
+            )}
+          </p>
+        </div>
+      </details>
       {state.error && (
         <p role="alert" className="text-sm text-danger">
           {state.error}
