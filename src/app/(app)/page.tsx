@@ -22,6 +22,7 @@ import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
 import { readerTimeZone } from "@/lib/reader-zone";
 import { todayDate } from "@/lib/today-title";
+import { sortOpenSessions, stageOf, type OpenSession } from "@/lib/today/sessions";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -67,28 +68,22 @@ export default function TodayPage() {
   );
 }
 
-type Planned = {
-  id: string;
-  occurred_at: string;
-  technique: "classic" | "skate";
-  mode: "recreational" | "race";
-  venue_name: string | null;
-  event_name: string | null;
-};
+type OpenRow = Omit<OpenSession, "venue_name"> & { venue_label: string | null; venue: { name: string } | null };
 
 async function Today() {
   const supabase = await createClient();
   const now = new Date();
   const who = await loadSkierContext();
+  // Every unrated session for whoever is picked: Today lists the active ones and those to rate.
   let plannedQuery = supabase
-    .from("wax_session_list")
-    .select("id, occurred_at, technique, mode, venue_name, event_name")
+    .from("wax_sessions")
+    .select("id, occurred_at, technique, mode, event_name, waxed_at, done_at, venue_label, venue:venues (name)")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
   const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis] = await Promise.all([
     loadVenues(supabase),
     loadTodayVenue(supabase),
-    plannedQuery.order("occurred_at", { ascending: true }).limit(20),
+    plannedQuery.order("occurred_at", { ascending: false }).limit(50),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
@@ -111,10 +106,12 @@ async function Today() {
   // For ✕ on your own locations: one with sessions asks where they go.
   const sessionsAt = await countSessionsAt(supabase, usable.filter((v) => v.user_id).map((v) => v.id));
 
-  const rows = (planned.data ?? []) as Planned[];
-  const upcoming = rows.find((r) => new Date(r.occurred_at) >= new Date(now.getTime() - 3 * 3600_000));
-  // A planned session whose time has passed (by more than the session itself) is waiting for its ratings.
-  const waiting = [...rows].reverse().find((r) => new Date(r.occurred_at) < new Date(now.getTime() - 3 * 3600_000));
+  const open: OpenSession[] = ((planned.data ?? []) as unknown as OpenRow[]).map(({ venue, venue_label, ...r }) => ({
+    ...r,
+    venue_name: venue?.name ?? venue_label,
+  }));
+  const { active, toRate, moreToRate } = sortOpenSessions(open, now);
+  const what = (r: OpenSession) => r.event_name ?? r.venue_name ?? TECHNIQUE_LABELS[r.technique];
 
   return (
     <>
@@ -150,31 +147,59 @@ async function Today() {
       )}
 
 
-      {waiting && (
-        <Link href={`/session/${waiting.id}#rate`} className={`${card} flex items-center justify-between gap-3 border-accent active:bg-tile`}>
-          <span className="min-w-0">
-            <span className="block font-semibold">How did it go?</span>
-            <span className="block truncate text-sm text-muted">
-              <LocalTime iso={waiting.occurred_at} format="date" /> · {waiting.event_name ?? waiting.venue_name ?? TECHNIQUE_LABELS[waiting.technique]} — rate it in a few taps
-            </span>
-          </span>
-          <span aria-hidden className="text-muted">→</span>
-        </Link>
+      {active.length > 0 && (
+        <section aria-label="Active sessions" className={`${card} flex flex-col gap-1 py-2`}>
+          <h2 className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted">
+            {active.length === 1 ? "Active session" : `Active sessions · ${active.length}`}
+          </h2>
+          <ul className="flex flex-col divide-y divide-line">
+            {active.map((r) => (
+              <li key={r.id}>
+                <Link href={`/session/${r.id}`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">
+                      <LocalTime iso={r.occurred_at} /> · {what(r)}
+                    </span>
+                    <span className="block truncate text-sm text-muted">
+                      {TECHNIQUE_LABELS[r.technique]}
+                      {r.mode === "race" ? " race" : ""} · {stageOf(r)}
+                    </span>
+                  </span>
+                  <span aria-hidden className="text-muted">
+                    →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-      {upcoming && (
-        <Link href={`/session/${upcoming.id}`} className={`${card} flex items-center justify-between gap-3 active:bg-tile`}>
-          <span className="min-w-0">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-muted">Active Session In Progress</span>
-            <span className="block truncate font-medium">
-              <LocalTime iso={upcoming.occurred_at} /> · {upcoming.event_name ?? upcoming.venue_name ?? "Session"}
-            </span>
-            <span className="block text-sm text-muted">
-              {TECHNIQUE_LABELS[upcoming.technique]}
-              {upcoming.mode === "race" ? " race" : ""} · open the plan
-            </span>
-          </span>
-          <span aria-hidden className="text-muted">→</span>
-        </Link>
+      {toRate.length > 0 && (
+        <section aria-label="How did it go?" className={`${card} flex flex-col gap-1 border-accent py-2`}>
+          <h2 className="pt-1 font-semibold">How did it go?</h2>
+          <ul className="flex flex-col divide-y divide-line">
+            {toRate.map((r) => (
+              <li key={r.id}>
+                <Link href={`/session/${r.id}#rate`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{what(r)}</span>
+                    <span className="block truncate text-sm text-muted">
+                      <LocalTime iso={r.occurred_at} format="date" /> · rate it in a few taps
+                    </span>
+                  </span>
+                  <span aria-hidden className="text-muted">
+                    →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {moreToRate > 0 && (
+            <Link href="/history" className="inline-flex min-h-11 items-center self-start text-sm text-link underline">
+              and {moreToRate} more in History
+            </Link>
+          )}
+        </section>
       )}
 
       {/* Set once here; Plan a wax and Record a wax job follow it until the day ends. */}
