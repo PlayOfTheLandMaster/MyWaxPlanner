@@ -19,6 +19,9 @@ export const metadata: Metadata = { title: "My Sessions · My Wax Planner" };
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
+// A hairline between the page's three groups (plan, record, the lists): a
+// quiet break, in the card borders' grey, with a little room either side.
+const divider = <hr className="my-1 border-line" />;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? undefined;
 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
@@ -56,6 +59,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       >
         <Plan searchParams={searchParams} />
       </Suspense>
+      {divider}
       {/* The list and the card share one boundary: the planned-sessions list
           used to arrive a moment after the card and push it down the page.
           The plan above waits on the forecast, so it keeps its own. */}
@@ -73,6 +77,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
             →
           </span>
         </Link>
+        {/* ContinueList draws its own divider, only when it has sessions to list. */}
         <ContinueList />
       </Suspense>
     </main>

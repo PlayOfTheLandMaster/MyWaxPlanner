@@ -43,6 +43,8 @@ export async function ContinueList() {
   const { current, unrated } = splitByDay(rows, now, await readerTimeZone());
   return (
     <>
+      {/* The hairline under Record a wax job (as between the page's other groups). */}
+      <hr className="my-1 border-line" />
       {current.length > 0 && (
         <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done Skiing when it's skied." rows={current} now={now} offerDone />
       )}
