@@ -181,7 +181,7 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
       {upcoming && (
         <Link href={`/session/${upcoming.id}`} className={`${card} flex items-center justify-between gap-3 active:bg-tile`}>
           <span className="min-w-0">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-muted">Up next</span>
+            <span className="block text-xs font-semibold uppercase tracking-wide text-muted">Active Session In Progress</span>
             <span className="block truncate font-medium">
               <LocalTime iso={upcoming.occurred_at} /> · {upcoming.event_name ?? upcoming.venue_name ?? "Session"}
             </span>
