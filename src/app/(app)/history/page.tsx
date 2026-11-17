@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/nav-trail";
 import { Suspense } from "react";
 import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -59,6 +60,8 @@ const deg = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−") + " °C
 export default function HistoryPage({ searchParams }: PageProps<"/history">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
+      <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">History</h1>
       {/* Looking back only: a new session starts on the Session tab (Plan a wax, or Record a wax). */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>

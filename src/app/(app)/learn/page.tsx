@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/nav-trail";
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,6 +13,8 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default function LearnPage({ searchParams }: PageProps<"/learn">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
+      {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
+      <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Learn</h1>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Library searchParams={searchParams} />
