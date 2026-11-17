@@ -176,11 +176,13 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
 
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
-        <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-4 font-semibold">
+        {/* No justify-between: on iPad the fold's triangle is a flex item too,
+            and spreading the items pushed "Filter" away from it. */}
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
           <span>Filter{n > 0 ? ` (${n})` : ""}</span>
           {/* On the fold itself, so clearing needs no opening first. */}
           {n > 0 && (
-            <Link href="/history" className="inline-flex min-h-11 items-center px-1 text-sm font-normal text-link underline">
+            <Link href="/history" className="ml-auto inline-flex min-h-11 items-center px-1 text-sm font-normal text-link underline">
               Clear
             </Link>
           )}
