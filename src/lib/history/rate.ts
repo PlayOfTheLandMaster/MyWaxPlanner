@@ -52,8 +52,12 @@ export function readRating(form: FormData, classic: boolean): RatingResult {
   };
 }
 
-/** Where to go after saving: the full form if something needs correcting, else the session. */
-export function afterRating(id: string, r: Pick<RatingInput, "snow" | "waxed">): string {
+/**
+ * Where to go after saving: the full form if something needs correcting, else
+ * back to Today when the session was opened from there, else the session.
+ */
+export function afterRating(id: string, r: Pick<RatingInput, "snow" | "waxed">, back: "today" | "session" = "session"): string {
   const fix = [r.waxed === "changed" ? "layers" : null, r.snow === "different" ? "conditions" : null].filter(Boolean);
-  return fix.length ? `/history/${id}/edit?then=${fix.join(",")}` : `/session/${id}?saved=rated`;
+  if (fix.length) return `/history/${id}/edit?then=${fix.join(",")}`;
+  return back === "today" ? "/?saved=rated" : `/session/${id}?saved=rated`;
 }

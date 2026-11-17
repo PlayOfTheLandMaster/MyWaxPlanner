@@ -53,11 +53,14 @@ export async function SessionView({
   id,
   saved,
   from,
+  back = "session",
 }: {
   id: string;
   saved: string | undefined;
   /** Where the page was opened from, for the way back. */
   from: "session" | "history";
+  /** Where a rating returns to: Today when the session was opened from Today. */
+  back?: "today" | "session";
 }) {
   const supabase = await createClient();
   const [s, user, who] = await Promise.all([loadSession(supabase, id), currentUser(), loadSkierContext()]);
@@ -100,7 +103,7 @@ export async function SessionView({
       hasLayers={s.layers.length > 0}
       askSnow={s.forecast !== null && s.actual === null}
       initialNotes={s.notes}
-      save={rateSession.bind(null, id)}
+      save={rateSession.bind(null, id, back)}
     />
   );
 

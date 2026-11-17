@@ -87,7 +87,12 @@ export async function saveSession(
  * overwritten). "I changed something" or "the snow was different" leads on to
  * the full form to correct the layers or the conditions.
  */
-export async function rateSession(id: string, _prev: SessionFormState, formData: FormData): Promise<SessionFormState> {
+export async function rateSession(
+  id: string,
+  back: "today" | "session",
+  _prev: SessionFormState,
+  formData: FormData,
+): Promise<SessionFormState> {
   const { supabase, userId } = await signedIn();
   const { data: s, error: readError } = await supabase
     .from("wax_sessions")
@@ -133,7 +138,7 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
 
   revalidatePath("/history");
   revalidatePath("/");
-  redirect(afterRating(id, rating));
+  redirect(afterRating(id, rating, back));
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */
