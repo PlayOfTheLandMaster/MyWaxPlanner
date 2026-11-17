@@ -12,6 +12,8 @@ import { signOut } from "../../login/actions";
 import { SettingsForm } from "./settings-form";
 import { SkierForm } from "./skier-form";
 import { addSkier } from "./skier-actions";
+import { setWaxingStyle } from "./actions";
+import { STYLE_LABELS, WAXING_STYLES, readStyle } from "@/lib/profile/style";
 import { birthYears, describeBody, type Body } from "@/lib/skiers/body";
 
 export const metadata: Metadata = { title: "Account · My Wax Planner" };
@@ -33,13 +35,13 @@ export default function AccountPage({ searchParams }: PageProps<"/account">) {
 }
 
 async function Account({ searchParams }: { searchParams: PageProps<"/account">["searchParams"] }) {
-  const fromChecklist = (await searchParams).start === "1";
+  const start = (await searchParams).start;
   const supabase = await createClient();
   const [user, venues, skiers, profile, skis] = await Promise.all([
     currentUser(),
     loadVenues(supabase),
     loadSkiers(supabase),
-    supabase.from("profiles").select("home_venue_id, default_mode, first_name, last_initial, birth_year, birth_month, weight_kg").maybeSingle(),
+    supabase.from("profiles").select("home_venue_id, default_mode, waxing_style, first_name, last_initial, birth_year, birth_month, weight_kg").maybeSingle(),
     supabase.from("skis").select("skier_id"),
   ]);
   const pairs = (id: string | null) => (skis.data ?? []).filter((k) => k.skier_id === id).length;
@@ -53,7 +55,34 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
 
   return (
     <>
-      <SetupNext step="skiers" searchParams={searchParams} />
+      {/* Account holds two checklist steps; the link that opened it says which. */}
+      <SetupNext step={start === "style" ? "style" : "skiers"} searchParams={searchParams} />
+      <section className={card} aria-labelledby="style">
+        <h2 id="style" className="scroll-mt-4 font-semibold">
+          How you wax
+        </h2>
+        <p className="text-sm text-muted">Change it any time. It decides what Today&apos;s main button does.</p>
+        <div className="mt-3 flex flex-col gap-2">
+          {WAXING_STYLES.map((s) => {
+            const on = (readStyle(profile.data?.waxing_style) ?? null) === s;
+            return (
+              <form key={s} action={setWaxingStyle.bind(null, s)}>
+                <button
+                  type="submit"
+                  aria-pressed={on}
+                  className={`flex min-h-11 w-full flex-col items-start rounded-lg border px-4 py-2 text-left active:bg-tile ${on ? "border-accent bg-tile" : "border-line bg-surface"}`}
+                >
+                  <span className="font-semibold">
+                    {on ? "✓ " : ""}
+                    {STYLE_LABELS[s].title}
+                  </span>
+                  <span className="text-sm text-muted">{STYLE_LABELS[s].detail}</span>
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      </section>
       <section className={card} aria-labelledby="skiers">
         <h2 id="skiers" className="font-semibold">
           Skiers
@@ -96,7 +125,7 @@ async function Account({ searchParams }: { searchParams: PageProps<"/account">["
           ))}
         </ul>
         {/* Opened already when the getting-started checklist sent you here. */}
-        <details open={fromChecklist && skiers.length === 0}>
+        <details open={start === "skiers" && skiers.length === 0}>
           <summary className="flex min-h-11 cursor-pointer items-center font-medium">Add a skier</summary>
           <div className="pt-2">
             <SkierForm save={addSkier} submitLabel="Add skier" years={years} />

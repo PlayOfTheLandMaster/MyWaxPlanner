@@ -65,7 +65,7 @@ export type LayerDraft = {
 export type SessionInitial = {
   occurred_at: string; // ISO
   status: string;
-  technique: Technique;
+  technique: Technique | "";
   ski_id: string | null;
   mode: string;
   venue_id: string | null;
@@ -113,6 +113,7 @@ export function SessionForm({
   initial,
   submitLabel,
   cancelHref,
+  hidden,
 }: {
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
@@ -120,6 +121,8 @@ export function SessionForm({
   submitLabel: string;
   /** Where Cancel goes when the page was opened directly; otherwise it returns to the page the person came from. */
   cancelHref: string;
+  /** Extra fields sent with the form, e.g. the forecast "Record today's wax" saves. */
+  hidden?: Record<string, string>;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
@@ -181,6 +184,7 @@ export function SessionForm({
       className="flex flex-col gap-5"
     >
       <input type="hidden" name="tz_offset" value={tz} />
+      {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
 
       <section className={section} aria-label="When and where">
         {/* No Skied / Planned switch: a session counts as done once it is rated

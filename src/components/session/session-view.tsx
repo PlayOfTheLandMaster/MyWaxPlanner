@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { isExpert } from "@/lib/profile/style";
 import { currentUser } from "@/lib/auth/current-user";
 import { loadSession, type Conditions, type SessionLayer, type SessionPlan } from "@/lib/history/load";
 import { HUMIDITY_LABELS, LAYER_ROLE_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
@@ -58,7 +60,9 @@ export async function SessionView({
   from: "session" | "history";
 }) {
   const supabase = await createClient();
-  const [s, user] = await Promise.all([loadSession(supabase, id), currentUser()]);
+  const [s, user, who] = await Promise.all([loadSession(supabase, id), currentUser(), loadSkierContext()]);
+  // An expert records their own waxes: no wax-along, no step-by-step list.
+  const expert = isExpert(who.style);
   if (!s || !user) notFound();
 
   const photoUrls = s.photos.length
@@ -162,14 +166,15 @@ export async function SessionView({
         <>
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-              The plan{s.layers.length ? ` · ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
+              {expert ? "Your waxes" : "The plan"}
+              {s.layers.length ? ` · ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
               <Layers layers={s.layers} plan={s.plan} compare={compare} change={{ sessionId: s.id, box }} />
             </div>
           </details>
 
-          {steps.length > 0 && waxing && !s.waxed_at && (
+          {!expert && steps.length > 0 && waxing && !s.waxed_at && (
             <Link
               href={`/session/${s.id}/wax`}
               className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
@@ -194,15 +199,18 @@ export async function SessionView({
               </button>
             </form>
           ) : null}
-          {/* Folded by default: Start wax-along, above, is the way in; the full list is here when wanted. */}
-          <details className="rounded-xl border border-line bg-surface">
-            <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-              Wax{s.waxed_at || !waxing ? " ✓" : steps.length > 0 ? " · step by step" : ""}
-            </summary>
-            <div className="flex flex-col gap-4 px-4 pb-4">
-              {steps.length > 0 && <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />}
-            </div>
-          </details>
+          {/* Folded by default: Start wax-along, above, is the way in; the full
+              list is here when wanted. An expert has neither. */}
+          {!expert && steps.length > 0 && (
+            <details className="rounded-xl border border-line bg-surface">
+              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+                Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                <WaxChecklist sessionId={s.id} steps={steps} initialDone={s.wax_steps_done} />
+              </div>
+            </details>
+          )}
 
           {/* "Done": skied, rating later. Always offered: wax-along and Done
               waxing are optional, and a coach with a dozen pairs skips them. */}

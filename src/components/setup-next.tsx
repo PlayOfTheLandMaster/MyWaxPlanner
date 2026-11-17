@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { loadSetupSteps } from "@/lib/setup/load";
 import { nextCard, type StepKey } from "@/lib/setup/steps";
 import { SetupChecklist } from "./setup-checklist";
+import { loadSkierContext } from "@/lib/skiers/current";
+import { isExpert } from "@/lib/profile/style";
 
 type Params = Promise<Record<string, string | string[] | undefined>>;
 
@@ -13,13 +15,7 @@ type Params = Promise<Record<string, string | string[] | undefined>>;
  * it is in the list rather than being left on a page with nowhere obvious to
  * go. Nothing while the step is undone or once setup is long finished.
  */
-export function SetupNext({
-  step,
-  searchParams,
-}: {
-  step: StepKey;
-  searchParams: Params;
-}) {
+export function SetupNext({ step, searchParams }: { step: StepKey; searchParams: Params }) {
   return (
     <Suspense fallback={null}>
       <Card step={step} searchParams={searchParams} />
@@ -27,33 +23,17 @@ export function SetupNext({
   );
 }
 
-async function Card({
-  step,
-  searchParams,
-}: {
-  step: StepKey;
-  searchParams: Params;
-}) {
-  const fromChecklist = (await searchParams).start === "1";
+async function Card({ step, searchParams }: { step: StepKey; searchParams: Params }) {
+  const fromChecklist = (await searchParams).start !== undefined;
   const steps = await loadSetupSteps(await createClient());
   const card = nextCard(steps, step, fromChecklist);
   if (!card) return null;
   return (
-    <section
-      aria-label="Getting started"
-      className="flex flex-col gap-1 rounded-xl border border-accent bg-tile p-4"
-    >
+    <section aria-label="Getting started" className="flex flex-col gap-1 rounded-xl border border-accent bg-tile p-4">
       {card.kind === "next" ? (
         <>
-          <SetupChecklist
-            steps={steps}
-            next={card.next.key}
-            note={card.doneLabel}
-          />
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
-          >
+          <SetupChecklist steps={steps} next={card.next.key} note={card.doneLabel} />
+          <Link href="/" className="inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline">
             Back to Today
           </Link>
         </>
@@ -61,7 +41,11 @@ async function Card({
         <>
           <SetupChecklist
             steps={steps}
-            note="You’re set up. Recommendations now use your own skis, waxes and tools."
+            note={
+              isExpert((await loadSkierContext()).style)
+                ? "You’re set up. Back on Today, “Record today’s wax” is your main button; the app’s suggestion is one tap below it."
+                : "You’re set up. Back on Today, “Plan today’s wax” suggests waxes from your own skis, waxes and tools."
+            }
           />
           <Link
             href="/"
