@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 /**
- * "Delete" beside a planned session on the Session tab. One tap asks, a
- * second deletes: a plan made by mistake (or twice) goes without opening it,
- * and a slip of the finger beside "Wax it" cannot lose one.
+ * "Delete" beside a row in a list (a planned session, a pair of skis). One
+ * tap asks, a second deletes: a row added by mistake goes without opening
+ * it, and a slip of the finger beside its other buttons cannot lose one.
  */
-export function DeletePlanned({ action, label }: { action: () => Promise<void>; label: string }) {
+export function ConfirmDelete({ action, label }: { action: () => Promise<void>; label: string }) {
   const [asking, setAsking] = useState(false);
   if (!asking) {
     return (

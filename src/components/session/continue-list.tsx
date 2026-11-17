@@ -5,7 +5,7 @@ import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { stageOf } from "@/lib/history/stage";
 import { deleteSession } from "@/app/(app)/history/actions";
-import { DeletePlanned } from "./delete-planned";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { markDone } from "@/app/(app)/session/actions";
 import { splitByDay } from "@/lib/history/groups";
 import { readerTimeZone } from "@/lib/reader-zone";
@@ -97,7 +97,7 @@ function Group({ id, title, note, rows, now, offerDone = false }: { id: string; 
                   </button>
                 </form>
               )}
-              <DeletePlanned
+              <ConfirmDelete
                 action={deleteSession.bind(null, r.id, "/plan")}
                 label={r.event_name ?? r.venue_name ?? "this planned session"}
               />
