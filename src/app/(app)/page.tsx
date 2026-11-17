@@ -21,7 +21,7 @@ import { progress, setupSteps } from "@/lib/setup/steps";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
 import { readerTimeZone } from "@/lib/reader-zone";
-import { todayTitle } from "@/lib/today-title";
+import { todayDate } from "@/lib/today-title";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -43,8 +43,10 @@ export default function TodayPage() {
       <header className="flex items-center justify-between gap-3">
         {/* The date reads the reader's time-zone cookie, so it waits in its own boundary. */}
         <h1 className="min-w-0 text-2xl font-bold">
-          <Suspense fallback="Today">
-            <TodayTitle />
+          Today
+          <Suspense fallback={null}>
+            {/* One size smaller than "Today". */}
+            <span className="text-xl"> - <TodayDate /></span>
           </Suspense>
         </h1>
         <Link
@@ -332,8 +334,8 @@ async function Conditions({ venue }: { venue: VenueRow }) {
   );
 }
 
-async function TodayTitle() {
+async function TodayDate() {
   // The cookie first: Next refuses the clock before the page has read the request.
   const tz = await readerTimeZone();
-  return todayTitle(new Date(), tz);
+  return todayDate(new Date(), tz);
 }
