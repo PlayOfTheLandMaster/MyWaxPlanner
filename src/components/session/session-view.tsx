@@ -321,29 +321,42 @@ export async function SessionView({
         </section>
       )}
 
+      {/* Folded to one line: the forecast's snow and air temperatures; opens on
+          the full forecast and, beside it, what was recorded on the day. */}
       {(s.actual || s.forecast) && (
-        <section className="grid gap-3 rounded-xl border border-line bg-surface p-4 sm:grid-cols-2">
-          {s.forecast && (
-            <div>
-              <h2 className="font-semibold">Forecast at time of session</h2>
-              <ul className="text-sm">
-                {conditionsLines(s.forecast).map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {s.actual && (
-            <div>
-              <h2 className="font-semibold">What you recorded on the day</h2>
-              <ul className="text-sm">
-                {conditionsLines(s.actual).map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        <details className="rounded-xl border border-line bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2">
+            <span className="font-semibold">{s.forecast ? "Forecast at time of session" : "What you recorded on the day"}</span>
+            <span className="min-w-0 truncate text-sm text-muted">
+              {conditionsLines((s.forecast ?? s.actual)!)
+                .slice(0, 2)
+                .map((x) => `· ${x}`)
+                .join(" ")}
+            </span>
+          </summary>
+          <section className="grid gap-3 px-4 pb-4 sm:grid-cols-2">
+            {s.forecast && (
+              <div>
+                {s.actual && <h2 className="font-semibold">Forecast at time of session</h2>}
+                <ul className="text-sm">
+                  {conditionsLines(s.forecast).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {s.actual && (
+              <div>
+                {s.forecast && <h2 className="font-semibold">What you recorded on the day</h2>}
+                <ul className="text-sm">
+                  {conditionsLines(s.actual).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        </details>
       )}
 
       <Photos
