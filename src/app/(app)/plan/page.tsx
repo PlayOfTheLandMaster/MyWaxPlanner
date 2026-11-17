@@ -25,8 +25,8 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       {/* The Session tab: its own title, then a new plan (where, weather and
-          snow), then sessions already planned and a way to log a wax done
-          without a plan. */}
+          snow), a way to log a wax done without a plan, then the sessions
+          already planned. */}
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">My Sessions</h1>
@@ -60,8 +60,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
           used to arrive a moment after the card and push it down the page.
           The plan above waits on the forecast, so it keeps its own. */}
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <ContinueList />
-        {/* Beside the list: the full form for a wax done without a plan. */}
+        {/* Above the list: the full form for a wax done without a plan. */}
         <Link
           href="/history/new?record=1"
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
@@ -74,6 +73,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
             →
           </span>
         </Link>
+        <ContinueList />
       </Suspense>
     </main>
   );
