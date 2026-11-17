@@ -113,11 +113,12 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
   const n = activeCount(f);
   const here = toQuery(f);
 
-  type Chip = { label: string; without: Partial<Filters> };
+  type Chip = { field: string; label: string; without: Partial<Filters> };
   const chips = (
     [
-    f.technique && { label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
+    f.technique && { field: "Technique", label: TECHNIQUE_LABELS[f.technique as "classic"], without: { technique: undefined } },
     f.skier && {
+      field: "Skier",
       label:
         f.skier === "me"
           ? `${who.me}'s skis`
@@ -126,23 +127,24 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             : `${(skiers.data ?? []).find((k) => k.id === f.skier)?.name ?? "Skier"}'s skis`,
       without: { skier: undefined },
     },
-    f.ski && { label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
-    f.venue && { label: venueName.get(f.venue) ?? "Venue", without: { venue: undefined } },
-    f.mode && { label: MODE_LABELS[f.mode as "race"], without: { mode: undefined } },
-    f.status && { label: STATUS_LABELS[f.status as "planned"], without: { status: undefined } },
+    f.ski && { field: "Skis", label: skiName.get(f.ski) ?? "Skis", without: { ski: undefined } },
+    f.venue && { field: "Venue", label: venueName.get(f.venue) ?? "Venue", without: { venue: undefined } },
+    f.mode && { field: "Kind", label: MODE_LABELS[f.mode as "race"], without: { mode: undefined } },
+    f.status && { field: "Status", label: STATUS_LABELS[f.status as "planned"], without: { status: undefined } },
     (f.tmin !== undefined || f.tmax !== undefined) && {
-      label: `Snow ${f.tmin !== undefined ? deg(f.tmin) : "…"} to ${f.tmax !== undefined ? deg(f.tmax) : "…"}`,
+      field: "Snow temperature",
+      label: `${f.tmin !== undefined ? deg(f.tmin) : "…"} to ${f.tmax !== undefined ? deg(f.tmax) : "…"}`,
       without: { tmin: undefined, tmax: undefined },
     },
-    f.snow && { label: SNOW_TYPE_LABELS[f.snow as "wet"], without: { snow: undefined } },
-    f.snowhum && { label: `Snow ${HUMIDITY_LABELS[f.snowhum as "dry"].toLowerCase()}`, without: { snowhum: undefined } },
-    f.airhum && { label: `Air ${HUMIDITY_LABELS[f.airhum as "dry"].toLowerCase()}`, without: { airhum: undefined } },
-    f.brand && { label: f.brand, without: { brand: undefined } },
-    f.product && { label: "One wax", without: { product: undefined } },
-    f.glide && { label: `Glide ≥ ${f.glide}`, without: { glide: undefined } },
-    f.grip && { label: `Grip ≥ ${f.grip}`, without: { grip: undefined } },
-    f.kick && { label: `Kick: ${KICK_FEEL_LABELS[f.kick as "good"].toLowerCase()}`, without: { kick: undefined } },
-    f.q && { label: `“${f.q}”`, without: { q: undefined } },
+    f.snow && { field: "Snow type", label: SNOW_TYPE_LABELS[f.snow as "wet"], without: { snow: undefined } },
+    f.snowhum && { field: "Snow humidity", label: HUMIDITY_LABELS[f.snowhum as "dry"], without: { snowhum: undefined } },
+    f.airhum && { field: "Air humidity", label: HUMIDITY_LABELS[f.airhum as "dry"], without: { airhum: undefined } },
+    f.brand && { field: "Brand", label: f.brand, without: { brand: undefined } },
+    f.product && { field: "Wax", label: "One wax", without: { product: undefined } },
+    f.glide && { field: "Glide", label: `${f.glide} or better`, without: { glide: undefined } },
+    f.grip && { field: "Grip", label: `${f.grip} or better`, without: { grip: undefined } },
+    f.kick && { field: "Kick", label: KICK_FEEL_LABELS[f.kick as "good"], without: { kick: undefined } },
+    f.q && { field: "Search", label: `“${f.q}”`, without: { q: undefined } },
     ] as (Chip | false | "" | 0 | undefined)[]
   ).filter((c): c is Chip => Boolean(c));
 
@@ -260,7 +262,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
           Saved filters
           <span className="truncate font-normal text-muted">
-            {active ? `· ${active.name}` : savedList.length > 0 ? `(${savedList.length})` : ""}
+            {active ? `· ${active.name}` : ""}
           </span>
         </summary>
         <div className="flex flex-col gap-3 p-4 pt-0">
@@ -301,47 +303,65 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </div>
       </details>
 
-      {/* A saved filter in use is named on its fold; its parts need no bubbles. */}
-      {chips.length > 0 && !active && (
-        <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
-          {chips.map((c) => (
-            <li key={c.label}>
-              <Link
-                href={`/history${toQuery(f, c.without)}`}
-                aria-label={`Remove filter: ${c.label}`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-accent bg-tile px-3 text-sm"
-              >
-                {c.label} <span aria-hidden>✕</span>
-              </Link>
-            </li>
-          ))}
-          {chips.length > 1 && (
-            <li>
-              <Link href="/history" className="inline-flex min-h-11 items-center px-2 text-sm text-link underline">
-                Clear all filters
-              </Link>
-            </li>
-          )}
-        </ul>
+      {/* What the list is filtered by: a plain, compact summary. Changing or
+          clearing it happens on the Filter fold above. */}
+      {chips.length > 0 && (
+        <section aria-label="Active filters" className="rounded-xl border border-line bg-surface px-4 py-3">
+          <h2 className="mb-1 text-sm font-semibold">{active ? `Saved filter: ${active.name}` : "Filtered by"}</h2>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-0.5 text-sm">
+            {chips.map((c) => (
+              <div key={c.field} className="contents">
+                <dt className="text-muted">{c.field}</dt>
+                <dd className="truncate">{c.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
 
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <p>
-          {rows.length} {rows.length === 1 ? "session" : "sessions"} · {periodLabel(f.period).toLowerCase()}
-        </p>
-        <nav aria-label="Sort" className="flex flex-wrap justify-end gap-x-3">
-          {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
-            <Link
-              key={s}
-              href={`/history${toQuery(f, { sort: s })}`}
-              aria-current={f.sort === s ? "true" : undefined}
-              className={`inline-flex min-h-11 items-center ${f.sort === s ? "font-semibold" : "text-link underline"}`}
-            >
-              {SORT_LABELS[s]}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      {/* The list itself is one tap away, so the filters and their summary
+          stay at the top of a short page. */}
+      <details className="group">
+        <summary className="list-none flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
+          <span className="group-open:hidden">
+            Show sessions ({rows.length})
+          </span>
+          <span className="hidden group-open:inline">Hide sessions</span>
+        </summary>
+        <div className="mt-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <p>
+            {rows.length} {rows.length === 1 ? "session" : "sessions"} · {periodLabel(f.period).toLowerCase()}
+          </p>
+          <nav aria-label="Sort" className="flex flex-wrap justify-end gap-x-3">
+            {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
+              <Link
+                key={s}
+                href={`/history${toQuery(f, { sort: s })}`}
+                aria-current={f.sort === s ? "true" : undefined}
+                className={`inline-flex min-h-11 items-center ${f.sort === s ? "font-semibold" : "text-link underline"}`}
+              >
+                {SORT_LABELS[s]}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="rounded-xl border border-line bg-surface p-4 text-muted">
+            {n > 0 || f.period !== "all"
+              ? "No sessions match. Try fewer filters or a longer period."
+              : "No sessions yet. Log each time you wax and ski; after a few, the filters turn this into your own wax chart."}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {rows.map((r) => (
+              <SessionRow key={r.id} row={r} />
+            ))}
+          </ul>
+        )}
+        </div>
+      </details>
 
       <div className="flex flex-wrap gap-2">
         <Link href="/history/compare" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
@@ -352,21 +372,6 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         </Link>
         {rows.length > 0 && <ExportLink href={`/history/export${toQuery(f, { skier })}`} />}
       </div>
-
-      {rows.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface p-4 text-muted">
-          {n > 0 || f.period !== "all"
-            ? "No sessions match. Try fewer filters or a longer period."
-            : "No sessions yet. Log each time you wax and ski; after a few, the filters turn this into your own wax chart."}
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {rows.map((r) => (
-            <SessionRow key={r.id} row={r} />
-          ))}
-        </ul>
-      )}
-
     </div>
   );
 }
