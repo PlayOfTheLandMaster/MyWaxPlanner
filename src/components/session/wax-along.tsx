@@ -55,7 +55,7 @@ export function WaxAlong({
             type="submit"
             className="min-h-14 w-full rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            Done waxing
+            I&apos;m Done Waxing
           </button>
         </form>
         <button type="button" onClick={() => setAt(steps.length - 1)} className="min-h-11 text-link underline">

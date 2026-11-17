@@ -221,7 +221,7 @@ export async function SessionView({
           ) : waxing ? (
             <form action={finishWaxing.bind(null, s.id)}>
               <button type="submit" className="min-h-11 w-full rounded-lg border border-line bg-surface px-4 font-semibold active:bg-tile">
-                Done waxing
+                I&apos;m Done Waxing
               </button>
             </form>
           ) : null}

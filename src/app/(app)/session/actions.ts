@@ -32,7 +32,7 @@ export async function setWaxStep(sessionId: string, step: number, done: boolean)
   return null;
 }
 
-/** "Done waxing": the session is ready to ski. */
+/** "I'm Done Waxing": the session is ready to ski. */
 export async function finishWaxing(sessionId: string) {
   const supabase = await signedIn();
   await supabase.from("wax_sessions").update({ waxed_at: new Date().toISOString() }).eq("id", sessionId);
@@ -58,7 +58,7 @@ export async function unmarkDone(sessionId: string) {
   refresh();
 }
 
-/** Undoes "Done waxing", for a tap made too early. */
+/** Undoes "I'm Done Waxing", for a tap made too early. */
 export async function unfinishWaxing(sessionId: string) {
   const supabase = await signedIn();
   await supabase.from("wax_sessions").update({ waxed_at: null }).eq("id", sessionId);

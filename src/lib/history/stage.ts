@@ -14,7 +14,7 @@ export function stageOf(
   // Marked "Done" (skied, not rated yet): rating is all that is left.
   if (s.done_at) return "rate";
   const start = Date.parse(s.occurred_at);
-  // Waxed already ("Done waxing"): next is skiing, even before the start time.
+  // Waxed already ("I'm Done Waxing"): next is skiing, even before the start time.
   if (Number.isNaN(start) || now.getTime() < start) return s.waxed_at ? "ski" : "wax";
   if (now.getTime() < start + SKI_HOURS * 3600_000) return "ski";
   return "rate";
