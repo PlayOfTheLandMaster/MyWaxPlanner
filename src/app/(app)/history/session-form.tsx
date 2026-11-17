@@ -206,7 +206,7 @@ export function SessionForm({
           Venue
           <select name="venue_id" value={venue} onChange={(e) => setVenue(e.target.value)} className={field}>
             <option value="">Not set</option>
-            {options.venues.map((v) => (
+            {options.venues.filter((v) => !v.hidden || v.id === initial?.venue_id).map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name}
               </option>

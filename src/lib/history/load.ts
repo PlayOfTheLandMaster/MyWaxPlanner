@@ -2,12 +2,14 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkiCategory, Technique } from "@/lib/skis/input";
 import type { PlannedLayer } from "./plan-compare";
+import { loadHiddenVenueIds } from "@/lib/venues/load";
 
 // The history's reads. All run as the signed-in user, so Row Level Security
 // limits them to that skier's own sessions, skis, venues and wax box.
 
 export type SkiOption = { id: string; name: string; technique: Technique; category: SkiCategory | null; skier_id: string | null };
-export type VenueOption = { id: string; name: string };
+/** `hidden`: a shared venue this account hid; still listed on a session that already names it. */
+export type VenueOption = { id: string; name: string; hidden?: boolean };
 export type WaxOption = {
   id: string; // user_products.id
   label: string; // "Swix Blue Extra"
@@ -19,12 +21,13 @@ export type WaxOption = {
 export type FormOptions = { skis: SkiOption[]; venues: VenueOption[]; waxes: WaxOption[] };
 
 export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOptions> {
-  const [skis, venues, box] = await Promise.all([
+  const [skis, venues, box, hidden] = await Promise.all([
     supabase.from("skis").select("id, name, technique, category, skier_id, skier:skiers (name)").order("name"),
     supabase.from("venues").select("id, name").order("name"),
     supabase
       .from("user_products")
       .select("id, product:products!inner (name, category_group, layer_roles, iron_temp_c, brand:brands!inner (name))"),
+    loadHiddenVenueIds(supabase),
   ]);
   const failed = skis.error ?? venues.error ?? box.error;
   if (failed) throw new Error(`Could not read your skis, venues and waxes: ${failed.message}`);
@@ -48,7 +51,7 @@ export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOpt
     const owner = (k.skier as unknown as { name: string } | null)?.name;
     return { id: k.id, technique: k.technique, category: k.category, skier_id: (k.skier_id as string | null) ?? null, name: owner ? `${owner}: ${k.name}` : k.name } as SkiOption;
   });
-  return { skis: skiOptions, venues: (venues.data ?? []) as VenueOption[], waxes };
+  return { skis: skiOptions, venues: ((venues.data ?? []) as VenueOption[]).map((v) => ({ ...v, hidden: hidden.has(v.id) })), waxes };
 }
 
 export type SessionLayer = {
@@ -139,7 +142,7 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
       `id, occurred_at, status, technique, mode, ski_id, venue_id, event_name, event_distance_km,
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
-       recommendation_id, wax_steps_done, waxed_at, done_at, skier_id,
+       recommendation_id, wax_steps_done, waxed_at, done_at, skier_id, venue_label,
        ski:skis (name), skier:skiers (name), venue:venues (name),
        layers:wax_session_layers (id, zone, position, layer_role, product_id, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,
@@ -207,7 +210,10 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
     actual_conditions_id: string | null;
     forecast_conditions_id: string | null;
     recommendation_id: string | null;
+    venue_label: string | null;
   };
+  // A deleted venue's name, kept on the session ("Keep the name only").
+  if (!session.venue && session.venue_label) session.venue = { name: session.venue_label };
   session.layers.sort((a, b) => (a.zone === b.zone ? a.position - b.position : a.zone === "glide" ? -1 : 1));
   return {
     ...session,

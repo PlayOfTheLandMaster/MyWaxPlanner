@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { loadHomeVenueId, loadVenues } from "@/lib/venues/load";
-import { deleteVenue, setHomeVenue } from "./actions";
+import { hideVenue, removeVenue, setHomeVenue, unhideVenue } from "./actions";
 
 export const metadata: Metadata = { title: "Venues · My Wax Planner" };
 
@@ -30,7 +30,9 @@ export default function VenuesPage({ searchParams }: PageProps<"/venues">) {
 
 async function List() {
   const supabase = await createClient();
-  const [venues, home] = await Promise.all([loadVenues(supabase), loadHomeVenueId(supabase)]);
+  const [all, home] = await Promise.all([loadVenues(supabase, { includeHidden: true }), loadHomeVenueId(supabase)]);
+  const venues = all.filter((v) => !v.hidden);
+  const hidden = all.filter((v) => v.hidden);
   const sections = [
     { title: "Your venues", rows: venues.filter((v) => v.user_id) },
     { title: "Shared venues", rows: venues.filter((v) => !v.user_id) },
@@ -73,10 +75,18 @@ async function List() {
                         </button>
                       </form>
                     )}
+                    {/* Sessions here keep the name; Today's ✕ also offers to move them. */}
                     {v.user_id && (
-                      <form action={deleteVenue.bind(null, v.id)}>
+                      <form action={removeVenue.bind(null, v.id, "keep")}>
                         <button type="submit" className="min-h-11 rounded-lg px-3 text-sm text-danger">
                           Delete
+                        </button>
+                      </form>
+                    )}
+                    {!v.user_id && (
+                      <form action={hideVenue.bind(null, v.id)}>
+                        <button type="submit" className="min-h-11 rounded-lg px-3 text-sm text-danger">
+                          Hide
                         </button>
                       </form>
                     )}
@@ -86,6 +96,27 @@ async function List() {
             </ul>
           </section>
         ),
+      )}
+      {hidden.length > 0 && (
+        <section>
+          <h2 className="mb-1 font-semibold">Hidden locations</h2>
+          <p className="mb-2 text-sm text-muted">Shared locations you removed from your lists. They are still there for everyone else.</p>
+          <ul className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface">
+            {hidden.map((v) => (
+              <li key={v.id} className="flex items-center gap-2 px-3">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{v.name}</span>
+                  {v.region && <span className="block truncate text-xs text-muted">{v.region}</span>}
+                </span>
+                <form action={unhideVenue.bind(null, v.id)}>
+                  <button type="submit" className="min-h-11 px-2 text-sm text-link underline">
+                    Show again
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

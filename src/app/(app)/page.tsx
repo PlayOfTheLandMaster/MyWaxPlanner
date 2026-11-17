@@ -2,7 +2,7 @@ import { Suspense, cache } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
+import { countSessionsAt, forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { LocationPicker } from "@/components/location-picker";
 import { forecastFor } from "@/lib/weather/window";
@@ -96,6 +96,8 @@ async function Today() {
   // Today's location: picked on this page for every wax job today, else home.
   const usable = venues.filter(forecastable);
   const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
+  // For ✕ on your own locations: one with sessions asks where they go.
+  const sessionsAt = await countSessionsAt(supabase, usable.filter((v) => v.user_id).map((v) => v.id));
 
   const rows = (planned.data ?? []) as Planned[];
   const upcoming = rows.find((r) => new Date(r.occurred_at) >= new Date(now.getTime() - 3 * 3600_000));
@@ -215,7 +217,7 @@ async function Today() {
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
             <LocationPicker
-              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null }))}
+              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null, sessions: sessionsAt.get(v.id) ?? 0 }))}
               current={venue?.id ?? null}
               home={home}
             />
