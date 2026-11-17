@@ -220,7 +220,11 @@ export async function SessionView({
             </form>
           ) : waxing ? (
             <form action={finishWaxing.bind(null, s.id)}>
-              <button type="submit" className="min-h-11 w-full rounded-lg border border-line bg-surface px-4 font-semibold active:bg-tile">
+              {/* The same size as Start wax-along above: the two steps of waxing. */}
+              <button
+                type="submit"
+                className="flex min-h-14 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-lg font-bold active:bg-tile"
+              >
                 I&apos;m Done Waxing
               </button>
             </form>
