@@ -196,6 +196,25 @@ input.min-h-11:not([type="checkbox"]):not([type="radio"]) {
   height: 2.5rem;
 }
 
+/* Date and time boxes: WebKit gives them a built-in minimum width, so on
+   iPad a datetime-local box ran past the right edge of its card. Without the
+   native look they take the card's width like the other fields, and the
+   value sits on the left like typed text. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 /* A <summary> styled as a plain row (list-none) shows no disclosure triangle.
    Chrome on iPad still drew one from the class alone, beside the skier banner. */
 summary.list-none {

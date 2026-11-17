@@ -23,7 +23,7 @@ export function SaveFilterForm({
           name="name"
           required
           maxLength={80}
-          placeholder="Name, e.g. Canmore cold race days"
+          placeholder="Name, e.g. Canmore cold races"
           aria-label="Name for this filter"
           className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
         />

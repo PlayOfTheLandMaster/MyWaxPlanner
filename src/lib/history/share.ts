@@ -42,7 +42,7 @@ export type ShareInput = {
 };
 
 export type ShareSummary = {
-  /** "Race day · 10 km" or "Classic"; the line above the venue. */
+  /** "Race · 10 km" or "Classic"; the line above the venue. */
   kicker: string;
   /** The event, or else the venue, or "Ski session". */
   title: string;
