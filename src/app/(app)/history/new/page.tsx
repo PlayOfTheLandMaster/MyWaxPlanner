@@ -173,22 +173,21 @@ async function Record({
       <div>
         <BackLink fallback="/">{source ? "✕ Cancel" : undefined}</BackLink>
         <h1 className="text-2xl font-bold">{skierName ? `Record a wax job for ${skierName}` : "Record a wax job"}</h1>
+        <p className="text-sm text-muted">
+          {source
+            ? "Copied from an earlier session. Change anything before saving."
+            : "Pick your waxes as you apply them. Rate the job after skiing. The app doesn't suggest waxes here."}
+        </p>
       </div>
-      {/* Straight under the title: who this wax job is for. */}
+      {/* Under the title and its note: who this wax job is for. */}
       <SkierBanner />
-      <p className="-mt-2 text-sm text-muted">
-        {source
-          ? "Copied from an earlier session. Change anything before saving."
-          : "Pick your waxes as you put them on. Rate it after skiing."}
-      </p>
-      {/* Says who chooses the waxes here: the waxer, never the app. An expert
-          sees their Account setting named; a guided waxer is pointed at the
+      {/* The note under the title says the app suggests nothing here; this
+          names the setting for an expert, and points a guided waxer at the
           way in that does suggest. A quiet pill, like the skier line. */}
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">
           {expert ? "Expert mode" : "You choose the waxes"}
         </span>
-        <span className="text-muted">{expert ? "You choose the waxes; the app doesn't suggest any." : "The app doesn't suggest any here."}</span>
         {expert ? (
           <Link href="/account" className="inline-flex min-h-11 items-center text-link underline">
             Change in Account
