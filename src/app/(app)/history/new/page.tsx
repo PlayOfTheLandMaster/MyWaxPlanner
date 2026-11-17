@@ -176,7 +176,7 @@ async function Record({
         <p className="text-sm text-muted">
           {source
             ? "Copied from an earlier session. Change anything before saving."
-            : "Pick your waxes as you apply them. Rate the job after skiing. The app doesn't suggest waxes here."}
+            : "Enter the waxes you applied. Rate the job after skiing. The app doesn't suggest waxes here."}
         </p>
       </div>
       {/* Under the title and its note: who this wax job is for. */}
