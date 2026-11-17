@@ -22,6 +22,9 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       {/* The Session tab: its own title, then sessions already planned, a way
           to log a wax done without a plan, and a new plan. */}
       <h1 className="text-2xl font-bold">Session</h1>
+      <Suspense fallback={null}>
+        <Copied searchParams={searchParams} />
+      </Suspense>
       {/* The list and the card share one boundary: the planned-sessions list
           used to arrive a moment after the card and push it down the page.
           The plan below waits on the forecast, so it keeps its own. */}
@@ -127,5 +130,16 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan">["search
         </>
       )}
     </>
+  );
+}
+
+/** After "Copy to other skis": how many sessions were made, listed just below. */
+async function Copied({ searchParams }: { searchParams: PageProps<"/plan">["searchParams"] }) {
+  const n = Number((await searchParams).copied);
+  if (!Number.isInteger(n) || n < 1) return null;
+  return (
+    <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
+      Copied to {n} {n === 1 ? "pair" : "pairs"}. Each is under Current sessions: mark it done and rate it on its own.
+    </p>
   );
 }

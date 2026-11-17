@@ -15,11 +15,11 @@ const MAX = 30;
 export const pathOf = (url: string) => url.split(/[?#]/)[0] || "/";
 
 /**
- * Pages "back" never returns to: forms (new, edit, add), and wax-along,
+ * Pages "back" never returns to: forms (new, edit, add, copy), and wax-along,
  * which is a mode of its session page with its own Close.
  */
 export function isFormPage(url: string): boolean {
-  return /\/(new|edit|add|wax)$/.test(pathOf(url));
+  return /\/(new|edit|add|wax|copy)$/.test(pathOf(url));
 }
 
 /** A session's own page, under either address. */
@@ -63,6 +63,7 @@ export function backLabel(url: string): string {
   if (p === "/history/compare") return "Compare";
   if (p === "/history/insights") return "Insights";
   if (/^\/(history|session)\/[^/]+\/share$/.test(p)) return "Share";
+  if (/^\/session\/[^/]+\/copy$/.test(p)) return "Copy";
   if (/^\/(history|session)\/[^/]+$/.test(p)) return "Session";
   if (p.startsWith("/history")) return "History";
   if (/^\/plan\/[^/]+$/.test(p)) return "Plan";
