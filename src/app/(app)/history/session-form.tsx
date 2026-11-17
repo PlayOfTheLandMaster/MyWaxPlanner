@@ -341,6 +341,13 @@ export function SessionForm({
         </div>
         <label className={label}>
           Finish notes
+          {/* The tapped steps, in the order tapped (the order they are saved
+              in, and shown on the session page). Tap a step again to drop it. */}
+          {tags.length > 0 && (
+            <p aria-live="polite" className="rounded-lg bg-tile px-3 py-2 text-sm font-normal">
+              {tags.join(" → ")}
+            </p>
+          )}
           <textarea name="finish_notes" rows={2} defaultValue={s(initial?.finish_notes)} placeholder="Order, passes, rill tool and insert…" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
         </label>
       </section>
