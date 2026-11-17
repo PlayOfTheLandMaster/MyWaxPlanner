@@ -4,20 +4,19 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { SessionForm, type SessionInitial } from "../session-form";
-import { deleteSession, saveSession } from "../actions";
-import { ConfirmDelete } from "@/components/confirm-delete";
+import { saveSession } from "../actions";
 import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { formOwner, skisOf } from "@/lib/skis/owner";
-import Link from "next/link";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
 import { forecastFor } from "@/lib/weather/window";
 import { encodeDraft } from "@/lib/plan/draft";
-import { draftFromWindow, similarSessions, type PastSession } from "@/lib/history/record";
+import { draftFromWindow } from "@/lib/history/record";
 import { ForecastCard } from "@/components/forecast-card";
+import { fold, foldHead } from "@/components/fold";
+import { SKY_ICONS, SKY_LABELS } from "@/lib/history/vocab";
 import { loadSnowCheck } from "@/lib/snow/load";
-import { LocalTime } from "@/components/local-time";
 import type { FormOptions } from "@/lib/history/load";
 
 export const metadata: Metadata = { title: "Record a wax job · My Wax Planner" };
@@ -102,7 +101,6 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         initial={initial}
         source={source}
         venue={recordVenue}
-        owner={owner}
         me={who.me}
         skierName={who.current?.name ?? null}
       />
@@ -129,46 +127,30 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
 
 /**
  * The expert's way in: the itemised form, set to now and the venue Today
- * showed, with the forecast saved alongside. "Start from" copies the skis,
- * layers and finish of an earlier session, the expert's real shortcut.
+ * showed, with the forecast saved alongside. Each one is new: there is no
+ * "Use an earlier session" list here. A past session's own "Use this wax
+ * today" still opens this form copied from it (?from=).
  */
 async function Record({
   options,
   initial,
   source,
   venue,
-  owner,
   skierName,
 }: {
   options: FormOptions;
   initial: SessionInitial | undefined;
   source: { id: string } | null;
   venue: (VenueRow & { latitude: number; longitude: number }) | null;
-  owner: string | null;
   me: string;
   skierName: string | null;
 }) {
   const supabase = await createClient();
-  const [forecast, pastRows, snowCheck] = await Promise.all([
+  const [forecast, snowCheck] = await Promise.all([
     venue ? forecastFor(venue, { hours: 2 }) : Promise.resolve(null),
-    (owner
-      ? supabase
-          .from("wax_session_list")
-          .select("id, occurred_at, venue_name, snow_temp_c, snow_humidity_band, glide_rating")
-          .eq("skier_id", owner)
-      : supabase
-          .from("wax_session_list")
-          .select("id, occurred_at, venue_name, snow_temp_c, snow_humidity_band, glide_rating")
-          .is("skier_id", null)
-    )
-      .order("occurred_at", { ascending: false })
-      .limit(60),
     loadSnowCheck(supabase),
   ]);
   const w = forecast?.window ?? null;
-  const past = ((pastRows.data ?? []) as PastSession[]).filter((p) => p.id !== source?.id);
-  const similar = similarSessions(past, w ? { snow_temp_c: w.snow_temp_c, snow_humidity_band: w.snow_humidity_band } : null);
-  const recent = past.filter((p) => !similar.some((x) => x.id === p.id)).slice(0, 4);
 
   // A copy keeps its skis, layers and finish, but is for now and here.
   const start: SessionInitial | undefined = initial
@@ -180,29 +162,6 @@ async function Record({
     : venue
       ? blankAt(venue.id)
       : undefined;
-  const base = `/history/new?record=1${venue ? `&venue=${venue.id}` : ""}`;
-  const row = (p: PastSession) => (
-    <li key={p.id} className="flex items-center gap-1">
-      <Link href={`${base}&from=${p.id}`} className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 py-1 active:bg-tile">
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium">
-            <LocalTime iso={p.occurred_at} format="date" />
-            {p.venue_name ? ` · ${p.venue_name}` : ""}
-          </span>
-          <span className="block truncate text-xs text-muted">
-            {[p.snow_temp_c !== null ? `snow ${Number(p.snow_temp_c)} °C` : null, p.glide_rating ? `glide ${p.glide_rating}/5` : null]
-              .filter(Boolean)
-              .join(" · ") || "no conditions recorded"}
-          </span>
-        </span>
-        <span aria-hidden className="text-sm text-link">
-          Use →
-        </span>
-      </Link>
-      {/* Deletes the past session itself, from History too: one tap asks, a second deletes. */}
-      <ConfirmDelete action={deleteSession.bind(null, p.id, "stay")} label="this session" />
-    </li>
-  );
 
   return (
     <>
@@ -217,34 +176,24 @@ async function Record({
       </div>
       <SkierBanner />
 
-      {(similar.length > 0 || recent.length > 0) && (
-        <details open={!source} className="rounded-xl border border-line bg-surface">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Use an earlier session</summary>
-          <div className="flex flex-col gap-3 px-4 pb-3">
-            {similar.length > 0 && (
-              <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Similar snow</h2>
-                <ul className="divide-y divide-line">{similar.map(row)}</ul>
-              </div>
-            )}
-            {recent.length > 0 && (
-              <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Most recent</h2>
-                <ul className="divide-y divide-line">{recent.map(row)}</ul>
-              </div>
-            )}
-          </div>
-        </details>
-      )}
 
       {w ? (
-        <section aria-labelledby="fc" className="flex flex-col gap-2">
-          <h2 id="fc" className="font-semibold">
-            Forecast at time of session
-          </h2>
-          <ForecastCard w={w} compact />
-          <p className="text-xs text-muted">Saved with the session. Record what the snow was really like when you rate it.</p>
-        </section>
+        // Folded to one line: the sky and air temperature; opens on the forecast saved with the session.
+        <details className={fold}>
+          <summary className={foldHead}>
+            <span aria-hidden className="text-2xl leading-none">
+              {SKY_ICONS[w.sky]}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-semibold">Forecast at time of session</span>
+              <span className="block truncate text-sm text-muted">
+                {`${w.air_temp_c > 0 ? "+" : ""}${w.air_temp_c}`.replace("-", "−")} °C · {SKY_LABELS[w.sky]} · {w.venue.name}
+              </span>
+            </span>
+          </summary>
+          <ForecastCard w={w} compact bare />
+          <p className="px-4 pb-4 text-xs text-muted">Saved with the session. Record what the snow was really like when you rate it.</p>
+        </details>
       ) : forecast?.error ? (
         <p className="text-sm text-muted">No forecast to save: {forecast.error}</p>
       ) : null}

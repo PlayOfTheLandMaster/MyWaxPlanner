@@ -19,6 +19,9 @@ export const metadata: Metadata = { title: "My Sessions · My Wax Planner" };
 
 const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
 const label = "flex flex-col gap-1 text-sm font-medium";
+// A hairline between the page's three groups (plan, record, the lists): a
+// quiet break, in the card borders' grey, with a little room either side.
+const divider = <hr className="my-1 border-t-2 border-muted/35" />;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? undefined;
 
 export default function PlanPage({ searchParams }: PageProps<"/plan">) {
@@ -36,7 +39,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       <div>
         <h2 className="text-lg font-semibold">Plan a wax session</h2>
         <p className="text-sm text-muted">
-          The app suggests waxes from your box. Step 1 of 2: where and when you&apos;ll ski, and what the snow will be like.
+          Enter where and when you&apos;ll ski, and what the snow is like. The app suggests waxes from your box.
         </p>
       </div>
       <Suspense fallback={null}>
@@ -56,6 +59,7 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
       >
         <Plan searchParams={searchParams} />
       </Suspense>
+      {divider}
       {/* The list and the card share one boundary: the planned-sessions list
           used to arrive a moment after the card and push it down the page.
           The plan above waits on the forecast, so it keeps its own. */}
@@ -67,12 +71,13 @@ export default function PlanPage({ searchParams }: PageProps<"/plan">) {
         >
           <span>
             <span className="block font-semibold">Record a wax job</span>
-            <span className="block text-sm text-muted">Already waxed, or picking your own waxes? Enter what goes on the skis.</span>
+            <span className="block text-sm text-muted">Already waxed, or picked your own waxes? Enter what went on the skis.</span>
           </span>
           <span aria-hidden className="text-muted">
             →
           </span>
         </Link>
+        {/* ContinueList draws its own divider, only when it has sessions to list. */}
         <ContinueList />
       </Suspense>
     </main>

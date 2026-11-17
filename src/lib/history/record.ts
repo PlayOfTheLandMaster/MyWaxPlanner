@@ -40,33 +40,3 @@ export function draftFromWindow(w: ForecastWindow, check: SnowCheck | null = nul
     track: check.track,
   };
 }
-
-export type PastSession = {
-  id: string;
-  occurred_at: string;
-  venue_name: string | null;
-  snow_temp_c: number | null;
-  snow_humidity_band: string | null;
-  glide_rating: number | null;
-};
-
-/**
- * "Start from…": past sessions in snow like today's (within 3 °C, same
- * humidity), best glide first. Empty with no forecast to compare against.
- */
-export function similarSessions(
-  past: PastSession[],
-  today: { snow_temp_c: number; snow_humidity_band: string } | null,
-  limit = 3,
-): PastSession[] {
-  if (!today) return [];
-  return past
-    .filter(
-      (s) =>
-        s.snow_temp_c !== null &&
-        Math.abs(Number(s.snow_temp_c) - today.snow_temp_c) <= 3 &&
-        s.snow_humidity_band === today.snow_humidity_band,
-    )
-    .sort((a, b) => (b.glide_rating ?? 0) - (a.glide_rating ?? 0) || b.occurred_at.localeCompare(a.occurred_at))
-    .slice(0, limit);
-}

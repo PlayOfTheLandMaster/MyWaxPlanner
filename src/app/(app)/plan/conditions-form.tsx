@@ -114,7 +114,7 @@ export function ConditionsForm({
         </p>
       )}
       <button type="submit" disabled={pending} className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50">
-        {pending ? "Saving…" : "Use these conditions for the session"}
+        {pending ? "Saving…" : "Apply these conditions to start the session"}
       </button>
     </form>
   );
