@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { BackLink } from "@/components/nav-trail";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,7 @@ import { SessionForm, type SessionInitial } from "../session-form";
 import { saveSession } from "../actions";
 import { SkierBanner } from "@/components/skier-banner";
 import { loadSkierContext } from "@/lib/skiers/current";
+import { isExpert } from "@/lib/profile/style";
 import { formOwner, skisOf } from "@/lib/skis/owner";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
@@ -103,6 +105,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         venue={recordVenue}
         me={who.me}
         skierName={who.current?.name ?? null}
+        expert={isExpert(who.style)}
       />
     );
 
@@ -137,6 +140,7 @@ async function Record({
   source,
   venue,
   skierName,
+  expert,
 }: {
   options: FormOptions;
   initial: SessionInitial | undefined;
@@ -144,6 +148,7 @@ async function Record({
   venue: (VenueRow & { latitude: number; longitude: number }) | null;
   me: string;
   skierName: string | null;
+  expert: boolean;
 }) {
   const supabase = await createClient();
   const [forecast, snowCheck] = await Promise.all([
@@ -174,6 +179,24 @@ async function Record({
             : "Pick your waxes as you put them on. Rate it after skiing."}
         </p>
       </div>
+      {/* Says who chooses the waxes here: the waxer, never the app. An expert
+          sees their Account setting named; a guided waxer is pointed at the
+          way in that does suggest. A quiet pill, like the skier line. */}
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">
+          {expert ? "Expert mode" : "You choose the waxes"}
+        </span>
+        <span className="text-muted">{expert ? "You choose the waxes; the app doesn't suggest any." : "The app doesn't suggest any here."}</span>
+        {expert ? (
+          <Link href="/account" className="inline-flex min-h-11 items-center text-link underline">
+            Change in Account
+          </Link>
+        ) : (
+          <Link href={venue ? `/plan?venue=${venue.id}` : "/plan"} className="inline-flex min-h-11 items-center text-link underline">
+            Want suggestions? Plan a wax session
+          </Link>
+        )}
+      </p>
       <SkierBanner />
 
 
