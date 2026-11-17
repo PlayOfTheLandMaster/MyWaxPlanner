@@ -9,7 +9,7 @@ import { SnowCheckForm } from "@/components/snow-check-form";
 import { checkFor } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
-import { SKY_LABELS } from "@/lib/history/vocab";
+import { SKY_ICONS, SKY_LABELS } from "@/lib/history/vocab";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -252,10 +252,14 @@ async function Conditions({ venue }: { venue: VenueRow }) {
     <>
       {/* Folded, the weather is one line: the air temperature and the sky. */}
       <details className="flex flex-col gap-2">
-        <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile">
-          <span className="text-lg font-bold">{temp(w.air_temp_c)}</span>
-          <span className="truncate text-muted">
-            {SKY_LABELS[w.sky]} · {venue.name}
+        <summary className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile">
+          <span aria-hidden className="text-4xl leading-none">
+            {SKY_ICONS[w.sky]}
+          </span>
+          <span className="text-2xl font-bold">{temp(w.air_temp_c)}</span>
+          <span className="min-w-0">
+            <span className="block truncate font-medium">{SKY_LABELS[w.sky]}</span>
+            <span className="block truncate text-sm text-muted">{venue.name}</span>
           </span>
         </summary>
         <div className="mt-2">

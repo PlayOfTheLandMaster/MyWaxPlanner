@@ -34,6 +34,16 @@ export const METHOD_LABELS: Record<Method, string> = {
   cork: "Corked",
   spray: "Spray",
 };
+/** A weather symbol for each sky, for the folded weather line on Today. */
+export const SKY_ICONS: Record<Sky, string> = {
+  sun: "☀️",
+  partly_cloudy: "⛅",
+  overcast: "☁️",
+  snowing: "🌨️",
+  raining: "🌧️",
+  fog: "🌫️",
+};
+
 export const SKY_LABELS: Record<Sky, string> = {
   sun: "Sun",
   partly_cloudy: "Partly cloudy",
