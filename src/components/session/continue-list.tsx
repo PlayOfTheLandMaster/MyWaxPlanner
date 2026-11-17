@@ -49,7 +49,7 @@ export async function ContinueList() {
         <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done Skiing when it's skied." rows={current} now={now} offerDone />
       )}
       {unrated.length > 0 && (
-        <Group id="unrated-h" title="Unrated sessions" note="From an earlier day and not rated yet. Rate them, or delete the ones that never happened." rows={unrated} now={now} />
+        <Group id="unrated-h" title="Unrated sessions" note="From previous days and not rated yet. The ratings are used to build a history that is used to improve recommendations for future wax jobs." rows={unrated} now={now} />
       )}
     </>
   );
