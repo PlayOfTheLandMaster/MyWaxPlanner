@@ -17,6 +17,9 @@ export default function AddWaxPage({ searchParams }: PageProps<"/wax-box/add">) 
       <div>
         <BackLink fallback="/wax-box" />
         <h1 className="text-2xl font-bold">Add a wax</h1>
+        <p className="text-sm text-muted">
+          One at a time. Start with the waxes you use most; you can add the rest whenever you like.
+        </p>
       </div>
 
       <Suspense fallback={<p className="text-muted">Loading…</p>}>

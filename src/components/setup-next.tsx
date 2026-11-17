@@ -48,7 +48,7 @@ async function Card({
           <SetupChecklist
             steps={steps}
             next={card.next.key}
-            note={`${card.doneLabel} Add more here, or carry on with the next step.`}
+            note={card.doneLabel}
           />
           <Link
             href="/"

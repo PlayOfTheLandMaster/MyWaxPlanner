@@ -91,12 +91,14 @@ export type NextCard =
   | { kind: "finished" }
   | null;
 
+// Said once a step is done. Each says the list is never closed: nobody has
+// every wax to hand on day one, and a new pair or a new skier comes along later.
 const DONE_LABELS: Record<StepKey, string> = {
-  venue: "Home venue set.",
-  skiers: "Skier added.",
-  skis: "Skis added.",
-  waxes: "Waxes added.",
-  tools: "Tools ticked.",
+  venue: "Home venue set. You can change it, or add more venues, any time from Venues.",
+  skiers: "Skier added. Add the rest now, or any time later from your Account page.",
+  skis: "Skis added. Add the rest now, or any time later from Wax box → Skis.",
+  waxes: "Waxes added. Add the rest now, or any time later from the Wax box: you don’t need them all today.",
+  tools: "Tools ticked. You can tick more any time from Wax box → Tools.",
 };
 
 /**
