@@ -17,7 +17,7 @@ export type OpenSession = {
 /** A session not marked Done this long after its start is assumed skied, and asked to be rated. */
 export const STALE_HOURS = 12;
 
-/** How many "How did it go?" rows Today shows before "and N more". */
+/** How many "Completed ski - how did it go?" rows Today shows before "and N more". */
 export const RATE_ROWS = 3;
 
 export type TodaySessions = {

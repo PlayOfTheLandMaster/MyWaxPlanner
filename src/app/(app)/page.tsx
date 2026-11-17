@@ -175,8 +175,8 @@ async function Today() {
         </section>
       )}
       {toRate.length > 0 && (
-        <section aria-label="How did it go?" className={`${card} flex flex-col gap-1 border-accent py-2`}>
-          <h2 className="pt-1 font-semibold">How did it go?</h2>
+        <section aria-label="Completed ski - how did it go?" className={`${card} flex flex-col gap-1 border-accent py-2`}>
+          <h2 className="pt-1 font-semibold">Completed ski - how did it go?</h2>
           <ul className="flex flex-col divide-y divide-line">
             {toRate.map((r) => (
               <li key={r.id}>
