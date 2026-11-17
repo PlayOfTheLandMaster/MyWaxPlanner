@@ -8,7 +8,6 @@ import { ForecastCard } from "@/components/forecast-card";
 import { LocalTime } from "@/components/local-time";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
-import { SkierBanner } from "@/components/skier-banner";
 import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
 import { SetupChecklist } from "@/components/setup-checklist";
@@ -110,11 +109,8 @@ async function Today({ searchParams }: { searchParams: PageProps<"/">["searchPar
           <span aria-hidden className="text-link">→</span>
         </Link>
       )}
-      {/* One line, as on every other screen: a coach's squad would push the
-          forecast off the screen as a row of buttons. "Change" opens the picker here. */}
-      <div id="skier" className="scroll-mt-4">
-        <SkierBanner />
-      </div>
+      {/* No skier picker on Today: the main button names the skier, and the
+          screen it opens (Plan a wax, Record a wax job) has the picker. */}
 
       {/* The checklist covers the account's first pair; this is a skier
           picked later, with none of their own yet. */}
