@@ -4,8 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
-import { groupByPlace } from "@/lib/venues/place";
-import { setTodayVenue } from "./snow-actions";
+import { LocationPicker } from "@/components/location-picker";
 import { forecastFor } from "@/lib/weather/window";
 import { ForecastCard } from "@/components/forecast-card";
 import { SnowCheckForm } from "@/components/snow-check-form";
@@ -215,45 +214,11 @@ async function Today() {
             <p className="text-sm text-muted">
               Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
             </p>
-            {/* By country, then province or state, then A–Z. */}
-            {groupByPlace(usable).map((c) => (
-              <section key={c.country} aria-label={c.country} className="flex flex-col gap-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{c.country}</h3>
-                {c.provinces.map((pr) => (
-                  <div key={pr.province ?? "-"}>
-                    {pr.province && <h4 className="text-sm font-semibold">{pr.province}</h4>}
-                    <ul className="flex flex-col divide-y divide-line">
-                      {pr.venues.map((v) => {
-                        const on = v.id === venue?.id;
-                        return (
-                          <li key={v.id}>
-                            <form action={setTodayVenue.bind(null, v.id === home ? "home" : v.id)}>
-                              <button
-                                type="submit"
-                                aria-pressed={on}
-                                className="flex min-h-11 w-full items-center gap-3 text-left active:bg-tile"
-                              >
-                                <span
-                                  aria-hidden
-                                  className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? "border-accent bg-accent text-on-accent" : "border-line"}`}
-                                >
-                                  {on ? "✓" : ""}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span className={`block truncate ${on ? "font-semibold" : ""}`}>{v.name}</span>
-                                  {v.region && <span className="block truncate text-xs text-muted">{v.region}</span>}
-                                </span>
-                                {v.id === home && <span className="shrink-0 text-xs text-muted">home</span>}
-                              </button>
-                            </form>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </section>
-            ))}
+            <LocationPicker
+              venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region }))}
+              current={venue?.id ?? null}
+              home={home}
+            />
             <Link href="/venues/new?back=today" className="inline-flex min-h-11 items-center gap-2 self-start text-sm text-link underline">
               <span aria-hidden>＋</span> Add a location
             </Link>
