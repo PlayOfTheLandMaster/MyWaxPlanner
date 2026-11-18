@@ -140,7 +140,7 @@ export function SkiForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <label className={label}>
-            Brand
+            Maker
             <select
               value={brandChoice}
               onChange={(e) => setBrandChoice(e.target.value)}
@@ -158,9 +158,9 @@ export function SkiForm({
           {brandChoice === OTHER ? (
             <input
               name="brand"
-              aria-label="Brand name"
+              aria-label="Maker's name"
               defaultValue={initialIsListed ? "" : (initial?.brand ?? "")}
-              placeholder="Type the brand"
+              placeholder="Type the maker"
               className={field}
             />
           ) : (

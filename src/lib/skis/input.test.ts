@@ -28,13 +28,13 @@ test("a full classic waxable ski", () => {
 });
 
 test("a skate ski drops a grip type and grip zone left over from the form", () => {
-  const { ski } = readSki(form({ name: "Skate", technique: "skate", category: "skin", grip_zone_cm: "60" }));
+  const { ski } = readSki(form({ name: "Skate", brand: "Fischer", technique: "skate", category: "skin", grip_zone_cm: "60" }));
   assert.equal(ski?.category, null);
   assert.equal(ski?.grip_zone_cm, null);
 });
 
 test("a skin ski drops a grip zone length", () => {
-  const { ski } = readSki(form({ name: "Skins", technique: "classic", category: "skin", grip_zone_cm: "60" }));
+  const { ski } = readSki(form({ name: "Skins", brand: "Fischer", technique: "classic", category: "skin", grip_zone_cm: "60" }));
   assert.equal(ski?.grip_zone_cm, null);
 });
 
@@ -44,7 +44,12 @@ test("a name and a technique are required", () => {
 });
 
 test("nonsense is refused rather than saved", () => {
-  assert.ok(readSki(form({ name: "X", technique: "classic", category: "rockets" })).error);
-  assert.ok(readSki(form({ name: "X", technique: "classic", category: "waxable", grip_zone_cm: "long" })).error);
-  assert.ok(readSki(form({ name: "X", technique: "classic", category: "waxable", grip_zone_cm: "200" })).error);
+  assert.ok(readSki(form({ name: "X", brand: "Fischer", technique: "classic", category: "rockets" })).error);
+  assert.ok(readSki(form({ name: "X", brand: "Fischer", technique: "classic", category: "waxable", grip_zone_cm: "long" })).error);
+  assert.ok(readSki(form({ name: "X", brand: "Fischer", technique: "classic", category: "waxable", grip_zone_cm: "200" })).error);
+});
+
+test("the maker is required on every pair", () => {
+  assert.match(readSki(form({ name: "X", technique: "skate" })).error ?? "", /maker/);
+  assert.equal(readSki(form({ name: "X", technique: "skate", brand: "Madshus" })).ski?.brand, "Madshus");
 });

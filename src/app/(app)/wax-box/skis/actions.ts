@@ -63,8 +63,6 @@ export async function quickAddSki(owner: string | null, formData: FormData): Pro
   else formData.delete("skier_id");
   const { ski, error } = readSki(formData);
   if (error !== undefined) return { error };
-  // Added on the fly, the maker is asked for (it names the pair's logo too).
-  if (!ski.brand) return { error: "Enter the maker, such as Fischer or Madshus." };
   const { data, error: saveError } = await supabase
     .from("skis")
     .insert({ ...ski, user_id: userId })

@@ -64,6 +64,9 @@ export function readSki(form: FormData): SkiResult {
     return { error: "Choose classic or skate." };
   }
 
+  // The maker is asked for on every pair (the owner's call); it names the logo too.
+  if (!text(form.get("brand"))) return { error: "Choose the maker, such as Fischer or Madshus." };
+
   // Only classic skis have a grip type; a skate ski's is always empty, which
   // the database also insists on.
   let category: SkiCategory | null = null;
