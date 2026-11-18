@@ -16,7 +16,8 @@ import {
   formatRange,
 } from "@/lib/catalogue/labels";
 import type { HumidityBand, LayerRole, ProductForm, SnowType } from "@/lib/catalogue/vocab";
-import { loadBoxRow } from "@/lib/wax-box/load";
+import { loadBoxRow, waxPhotoUrls } from "@/lib/wax-box/load";
+import { WaxPhoto } from "./wax-photo";
 import { rangeText } from "@/lib/wax-box/describe";
 import { clearSnowRange, removeFromBox, saveNotes, saveSnowRange, setAmount } from "../actions";
 import { NotesForm } from "./notes-form";
@@ -37,8 +38,10 @@ export default function WaxPage({ params }: PageProps<"/wax-box/[id]">) {
 
 async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] }) {
   const { id } = await params;
-  const [row, user] = await Promise.all([loadBoxRow(await createClient(), id), currentUser()]);
-  if (!row) notFound();
+  const supabase = await createClient();
+  const [row, user] = await Promise.all([loadBoxRow(supabase, id), currentUser()]);
+  if (!row || !user) notFound();
+  const photoUrl = row.photo_path ? ((await waxPhotoUrls(supabase, [row.photo_path])).get(row.photo_path) ?? null) : null;
 
   const p = row.product;
   const own = p.created_by === user?.id;
@@ -64,6 +67,8 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
         </h1>
         {!own && <p className="mt-1 text-sm text-muted">From the shared catalogue</p>}
       </div>
+
+      <WaxPhoto boxId={row.id} userId={user.id} url={photoUrl} name={`${p.brand.name} ${p.name}`} />
 
       <form action={setAmount.bind(null, row.id)} className="flex flex-col gap-2">
         <p className="text-sm font-medium" id="amount-label">

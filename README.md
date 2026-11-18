@@ -66,7 +66,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 - **A five-tab bar** along the bottom: Today, Session, History, Wax box, Learn.
 - **Wax box** has three sections, switched at the top: **Waxes**, **Tools** and **Skis**.
-- **Waxes:** your waxes grouped by Glide, Grip, Cleaners and Consumables, with anything low or empty gathered under **Running low** at the top. Tap a wax to change how much is left (one tap), add notes, edit it, or remove it from the box. A wax you remove stays saved, and **Add a wax → Find a wax you've added before** puts it back without retyping. Waxes from a shared catalogue, if you ever load one, can be found there too, but not edited.
+- **Waxes:** your waxes grouped by Glide, Grip, Cleaners and Consumables, with anything low or empty gathered under **Running low** at the top. Tap a wax to change how much is left (one tap), add notes, edit it, or remove it from the box. **Photo** on a wax's page takes a picture of the container (camera or library), shrunk on the device to about 1200 px and kept in the private `wax-photos` bucket (migration `20261212000000_wax_photos.sql`); it shows as a thumbnail beside the wax on the list, and goes when the wax is removed from the box. A wax you remove stays saved, and **Add a wax → Find a wax you've added before** puts it back without retyping. Waxes from a shared catalogue, if you ever load one, can be found there too, but not edited.
 - **Tools:** the checklist from the spec, grouped as scrapers, hand brushes, roto brushes, irons, cork and fibertex, and bench tools. Tick what you own and, if you like, how worn it is. Later, waxing plans will only use ticked tools.
 - **Skis:** add, edit and delete your pairs: name, classic or skate, grip type (classic only), grip zone length (waxable only), brand, model, base, grind, flex and notes. Deleting a pair keeps its waxing history.
 
@@ -191,7 +191,7 @@ npm test            # the pure-logic tests (lib/**/*.test.ts); no database neede
 npm run seed        # load the catalogue (see above)
 ```
 
-**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 56 rules: what each can do with their own data, that neither can see or change the other's, and that nobody can sign up without an invitation or manage invitations without being an admin. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
+**Privacy rules check.** [`supabase/tests/rls_check.sql`](supabase/tests/rls_check.sql) signs in as two made-up users and checks 59 rules: what each can do with their own data, that neither can see or change the other's, and that nobody can sign up without an invitation or manage invitations without being an admin. It undoes everything when it finishes. Run it only against a local database (`npx supabase start`, which needs Docker), never against your live project:
 
 ```bash
 psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
