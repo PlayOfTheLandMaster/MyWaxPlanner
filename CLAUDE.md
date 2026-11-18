@@ -133,6 +133,13 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   refuses too, because a bookmark or the back button skips Today. "Use this
   session data for today's wax job" opens the same page, so it waits as well.
 
+- **A wax can have two ranges: new snow and old snow** (`old_*` columns,
+  `rangeFor` in `lib/wax-box/old-snow.ts`). Old snow is every snow type but
+  falling and fresh_set, wet, dirty and man-made included (the owner's call).
+  Anything that compares a wax with the snow goes through `rangeFor`, never
+  `temp_min_c` directly. A skier's own snow range (`user_snow_ranges`) still
+  overrides the first range only.
+
 ## iPad and Chrome on iOS (WebKit)
 
 - WebKit ignores `height` on a native `<select>`; selects use

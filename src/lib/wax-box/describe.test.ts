@@ -25,3 +25,10 @@ test("an air-rated wax with a snow range shows the snow range", () => {
 test("no range at all is nothing", () => {
   assert.equal(rangeText(wax("snow", [null, null], [null, null])), null);
 });
+
+test("a wax with an old-snow range names both", () => {
+  const swix = { ...wax("air", [-7, -1], [-8, -2]), old_published_temp_min_c: -10, old_published_temp_max_c: -3, old_temp_min_c: -11, old_temp_max_c: -4 };
+  assert.equal(rangeText(swix), "New snow −8 to −2 °C snow · Old snow −11 to −4 °C snow");
+  const noSnow = { ...swix, old_temp_min_c: null, old_temp_max_c: null };
+  assert.equal(rangeText(noSnow), "New snow −8 to −2 °C snow · Old snow −10 to −3 °C air · no snow range yet");
+});

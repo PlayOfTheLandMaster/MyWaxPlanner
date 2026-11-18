@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseBrandsCsv, parseProductsCsv, readNumber } from "./csv";
+import { parseBrandsCsv, parseProductsCsv, readNumber, readProduct } from "./csv";
 import type { TemperatureBasis } from "./vocab";
 
 const basis = new Map<string, TemperatureBasis>([
@@ -64,6 +64,10 @@ test("products: a full row from a snow-rated brand copies its range to snow temp
     published_temp_max_c: -6,
     temp_min_c: -12,
     temp_max_c: -6,
+    old_published_temp_min_c: null,
+    old_published_temp_max_c: null,
+    old_temp_min_c: null,
+    old_temp_max_c: null,
     snow_types: ["fine_grained", "fresh_set"],
     humidity_bands: ["dry", "mid"],
     fluoro_status: "fluoro_free",
@@ -151,4 +155,22 @@ test("products: a quoted cell may contain commas", () => {
 test("products: line numbers count from the header, skipping blank lines correctly", () => {
   const { errors } = parseProductsCsv("brand,name,category\nSnowCo,A,hardwax\n\nSnowCo,B,nope\n", basis);
   assert.equal(errors[0].line, 4);
+});
+
+test("products: a second range for old snow, copied for a snow-rated brand and kept apart for an air-rated one", () => {
+  const snow = readProduct(
+    { brand: "SnowCo", name: "Kick", category: "hardwax", published_temp_min_c: "-7", published_temp_max_c: "-1", old_published_temp_min_c: "-10", old_published_temp_max_c: "-3" },
+    "snow",
+  );
+  assert.equal(snow.row?.old_temp_min_c, -10);
+  assert.equal(snow.row?.old_temp_max_c, -3);
+  const air = readProduct(
+    { brand: "Swix", name: "VP45", category: "hardwax", published_temp_min_c: "-7", published_temp_max_c: "-1", old_published_temp_min_c: "-10", old_published_temp_max_c: "-3" },
+    "air",
+  );
+  assert.equal(air.row?.old_temp_min_c, null);
+  assert.equal(air.row?.old_published_temp_min_c, -10);
+  assert.ok(air.warnings.some((w) => w.includes("old-snow range")));
+  const backwards = readProduct({ brand: "SnowCo", name: "Kick", category: "hardwax", old_published_temp_min_c: "-3", old_published_temp_max_c: "-10" }, "snow");
+  assert.ok(backwards.errors.some((e) => e.includes("runs backwards")));
 });
