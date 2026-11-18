@@ -202,7 +202,7 @@ export async function SessionView({
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
               {/* A recorded wax job has no plan: these are the waxes already on the skis. */}
-              {expert || !s.plan ? "Your waxes" : "The plan"}
+              {expert || !s.plan ? (stage === "wax" ? "Your waxes" : "Waxes") : "The plan"}
               {/* Still waxing: what to apply, and each layer can be swapped or
                   skipped. Once waxed (Ski, Rate) the waxes are on the skis:
                   past tense, and fixed. A change made after all is "I changed
