@@ -10,11 +10,11 @@ const form = (min: string, max: string) => {
 };
 
 test("reads a range, typographic minus signs included", () => {
-  assert.deepEqual(readSnowRange(form("–8", "−2")).range, { temp_min_c: -8, temp_max_c: -2 });
+  assert.deepEqual(readSnowRange(form("–8", "−2")).range, { temp_min_c: -8, temp_max_c: -2, old_temp_min_c: null, old_temp_max_c: null });
 });
 
 test("one end is enough", () => {
-  assert.deepEqual(readSnowRange(form("", "0")).range, { temp_min_c: null, temp_max_c: 0 });
+  assert.deepEqual(readSnowRange(form("", "0")).range, { temp_min_c: null, temp_max_c: 0, old_temp_min_c: null, old_temp_max_c: null });
 });
 
 test("refuses an empty, backwards, unreadable or out-of-range entry", () => {
@@ -38,4 +38,18 @@ test("the waxes passed in are not changed", () => {
   const waxes = [{ id: "a", temp_min_c: null, temp_max_c: null }];
   applySnowRanges(waxes, new Map([["a", { temp_min_c: -8, temp_max_c: -2 }]]));
   assert.equal(waxes[0].temp_min_c, null);
+});
+
+test("your own old-snow range is read, checked and applied", () => {
+  const f = new FormData();
+  f.set("snow_temp_min_c", "-8");
+  f.set("snow_temp_max_c", "-2");
+  f.set("old_snow_temp_min_c", "-10");
+  f.set("old_snow_temp_max_c", "-3");
+  const { range } = readSnowRange(f);
+  assert.deepEqual(range, { temp_min_c: -8, temp_max_c: -2, old_temp_min_c: -10, old_temp_max_c: -3 });
+  f.set("old_snow_temp_min_c", "-1");
+  assert.match(readSnowRange(f).error ?? "", /old-snow range runs backwards/);
+  const [w] = applySnowRanges([{ id: "a", temp_min_c: null as number | null, temp_max_c: null as number | null, old_temp_min_c: null as number | null }], new Map([["a", range!]]));
+  assert.equal(w.old_temp_min_c, -10);
 });

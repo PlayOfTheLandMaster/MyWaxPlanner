@@ -18,7 +18,7 @@ export function SnowRangeForm({
   clear,
 }: {
   printed: string | null;
-  yours: { temp_min_c: number | null; temp_max_c: number | null } | null;
+  yours: { temp_min_c: number | null; temp_max_c: number | null; old_temp_min_c?: number | null; old_temp_max_c?: number | null } | null;
   save: (prev: WaxFormState, data: FormData) => Promise<WaxFormState>;
   clear: () => Promise<void>;
 }) {
@@ -54,6 +54,23 @@ export function SnowRangeForm({
             <input name="snow_temp_max_c" inputMode="decimal" placeholder="−2" defaultValue={num(yours?.temp_max_c ?? null)} className={field} />
           </label>
         </div>
+        {/* A second range for old or transformed snow, as Swix prints on its kick
+            waxes; plans use it on fine-grained, transformed, icy, wet, dirty or
+            man-made snow. */}
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium">Old or transformed snow (optional)</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              <span className="font-normal text-muted">From, °C</span>
+              <input name="old_snow_temp_min_c" inputMode="decimal" placeholder="−10" defaultValue={num(yours?.old_temp_min_c ?? null)} className={field} />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              <span className="font-normal text-muted">To, °C</span>
+              <input name="old_snow_temp_max_c" inputMode="decimal" placeholder="−3" defaultValue={num(yours?.old_temp_max_c ?? null)} className={field} />
+            </label>
+          </div>
+          <p className="text-xs text-muted">The boxes above are then for new snow (falling or fresh).</p>
+        </fieldset>
         {state.error && (
           <p role="alert" className="text-sm text-danger">
             {state.error}

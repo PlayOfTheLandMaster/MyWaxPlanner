@@ -109,7 +109,11 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
       {!own && (
         <SnowRangeForm
           printed={printed}
-          yours={p.snow_range_is_yours ? { temp_min_c: p.temp_min_c, temp_max_c: p.temp_max_c } : null}
+          yours={
+            p.snow_range_is_yours
+              ? { temp_min_c: p.temp_min_c, temp_max_c: p.temp_max_c, old_temp_min_c: p.old_temp_min_c, old_temp_max_c: p.old_temp_max_c }
+              : null
+          }
           save={saveSnowRange.bind(null, p.id)}
           clear={clearSnowRange.bind(null, p.id)}
         />

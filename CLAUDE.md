@@ -136,8 +136,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   `rangeFor` in `lib/wax-box/old-snow.ts`). Old snow is every snow type but
   falling and fresh_set, wet, dirty and man-made included (the owner's call).
   Anything that compares a wax with the snow goes through `rangeFor`, never
-  `temp_min_c` directly. A skier's own snow range (`user_snow_ranges`) still
-  overrides the first range only.
+  `temp_min_c` directly. A shared catalogue wax cannot be edited, so its
+  second range lives with the skier's own snow range (`user_snow_ranges`,
+  old_* columns, the "Your snow range" card).
 
 ## iPad and Chrome on iOS (WebKit)
 

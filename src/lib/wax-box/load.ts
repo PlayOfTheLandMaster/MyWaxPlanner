@@ -51,11 +51,14 @@ const PRODUCT_COLUMNS = `id, created_by, name, category, category_group, form, p
 
 /** The skier's own snow ranges, by wax id. Row Level Security returns only theirs. */
 export async function loadSnowRanges(supabase: SupabaseClient): Promise<Map<string, SnowRange>> {
-  const { data, error } = await supabase.from("user_snow_ranges").select("product_id, temp_min_c, temp_max_c");
+  const { data, error } = await supabase.from("user_snow_ranges").select("product_id, temp_min_c, temp_max_c, old_temp_min_c, old_temp_max_c");
   if (error) throw new Error(`Could not read your snow ranges: ${error.message}`);
   const num = (n: unknown) => (n === null || n === undefined ? null : Number(n));
   return new Map(
-    (data ?? []).map((r) => [r.product_id as string, { temp_min_c: num(r.temp_min_c), temp_max_c: num(r.temp_max_c) }]),
+    (data ?? []).map((r) => [
+      r.product_id as string,
+      { temp_min_c: num(r.temp_min_c), temp_max_c: num(r.temp_max_c), old_temp_min_c: num(r.old_temp_min_c), old_temp_max_c: num(r.old_temp_max_c) },
+    ]),
   );
 }
 
