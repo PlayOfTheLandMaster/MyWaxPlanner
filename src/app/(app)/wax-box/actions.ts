@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { readProduct, type ProductRow } from "@/lib/catalogue/csv";
 import { TEMPERATURE_BASES, type TemperatureBasis } from "@/lib/catalogue/vocab";
-import { readSnowRange } from "@/lib/wax-box/snow-range";
+import { readIronTemp, readSnowRange } from "@/lib/wax-box/snow-range";
 
 export type WaxFormState = { error?: string };
 
@@ -301,9 +301,44 @@ export async function saveSnowRange(productId: string, _prev: WaxFormState, form
   return {};
 }
 
-/** Removes the skier's own snow range for a wax; the wax goes back to having none. */
+/** Removes the skier's own snow range for a wax; the wax goes back to having none. Their iron temperature stays. */
 export async function clearSnowRange(productId: string) {
   const { supabase } = await signedIn();
-  await supabase.from("user_snow_ranges").delete().eq("product_id", productId);
+  await supabase
+    .from("user_snow_ranges")
+    .update({ temp_min_c: null, temp_max_c: null, old_temp_min_c: null, old_temp_max_c: null })
+    .eq("product_id", productId);
+  await removeEmptyRange(supabase, productId);
   refresh();
+}
+
+/** A row with nothing left in it goes, so "Remove" leaves no trace. */
+async function removeEmptyRange(supabase: SupabaseClient, productId: string) {
+  await supabase
+    .from("user_snow_ranges")
+    .delete()
+    .eq("product_id", productId)
+    .is("temp_min_c", null)
+    .is("temp_max_c", null)
+    .is("old_temp_min_c", null)
+    .is("old_temp_max_c", null)
+    .is("iron_temp_c", null);
+}
+
+/**
+ * Saves the skier's own iron temperature for a shared wax the maker gives
+ * none for (user_snow_ranges.iron_temp_c). Plans and the wax-along use it.
+ * Blank clears it. The snow range in the same row is left as it was.
+ */
+export async function saveIronTemp(productId: string, _prev: WaxFormState, formData: FormData): Promise<WaxFormState> {
+  const { supabase, userId } = await signedIn();
+  const { iron, error } = readIronTemp(formData);
+  if (error !== undefined) return { error };
+  const { error: saveError } = await supabase
+    .from("user_snow_ranges")
+    .upsert({ user_id: userId, product_id: productId, iron_temp_c: iron }, { onConflict: "user_id,product_id" });
+  if (saveError) return { error: `Could not save the iron temperature: ${saveError.message}` };
+  if (iron === null) await removeEmptyRange(supabase, productId);
+  refresh();
+  return {};
 }
