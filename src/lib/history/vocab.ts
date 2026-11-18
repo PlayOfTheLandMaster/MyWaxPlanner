@@ -6,7 +6,7 @@ export const MODES = ["recreational", "race"] as const;
 export const STATUSES = ["planned", "completed"] as const;
 export const ZONES = ["glide", "grip"] as const;
 export const KICK_FEELS = ["slipping", "good", "icing"] as const;
-export const METHODS = ["iron", "rub_on", "liquid", "powder", "cork", "spray"] as const;
+export const METHODS = ["iron", "rub_on", "liquid", "powder", "cork", "spray", "brush"] as const;
 export const SKIES = ["sun", "partly_cloudy", "overcast", "snowing", "raining", "fog"] as const;
 export const TRACKS = ["freshly_groomed", "skied_in", "glazed", "soft"] as const;
 /** What had fallen on the track (migration 20261211000000_debris.sql). */
@@ -36,6 +36,8 @@ export const METHOD_LABELS: Record<Method, string> = {
   powder: "Powder",
   cork: "Corked",
   spray: "Spray",
+  // Worked in with a brush (roto or hand), e.g. a powder or paste (migration 20261223000000).
+  brush: "Brushed in",
 };
 /** A weather symbol for each sky, for the folded weather line on Today. */
 export const SKY_ICONS: Record<Sky, string> = {

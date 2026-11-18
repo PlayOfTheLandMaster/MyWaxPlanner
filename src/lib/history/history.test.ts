@@ -110,7 +110,12 @@ test("history vocabularies match the database", () => {
     const block = sql.slice(start + marker.length, sql.indexOf(")", start + marker.length));
     return [...block.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
   };
-  assert.deepEqual(words("method text check (method in ("), [...METHODS]);
+  // Methods were widened by a later migration (Brushed in); that one is the list now.
+  const brush = readFileSync(join(process.cwd(), "supabase/migrations/20261223000000_brush_method.sql"), "utf8");
+  const m = brush.indexOf("check (method in (");
+  assert.ok(m >= 0);
+  const methods = brush.slice(m, brush.indexOf(")", m + "check (method in (".length));
+  assert.deepEqual([...methods.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]), [...METHODS]);
   assert.deepEqual(words("sky text check (sky in ("), [...SKIES]);
   assert.deepEqual(words("track text check (track in ("), [...TRACKS]);
   assert.deepEqual(words("create type public.kick_feel as enum ("), [...KICK_FEELS]);
