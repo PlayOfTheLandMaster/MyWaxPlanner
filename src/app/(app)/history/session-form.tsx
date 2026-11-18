@@ -385,7 +385,7 @@ export function SessionForm({
 
       <details className={section} open={hasActual || undefined}>
         <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Conditions on the day</summary>
-        <p className="text-sm text-muted">What the snow was really like, so the history can match it to future days.</p>
+        <p className="text-sm text-muted">Describe the actual snow conditions so they can be matched to similar days in your History.</p>
         <div className="grid grid-cols-2 gap-3">
           <label className={label}>
             Snow temp, °C
