@@ -115,7 +115,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   only from Today (Start a wax session; What would the app suggest? for an
   expert). The **Sessions** tab (`/plan`, titled My Sessions) lists sessions
   under way and starts nothing: it once offered an expert a guided session,
-  which the owner found a disconnect. Venues has no Forecast button.
+  which the owner found a disconnect. Venues has no Forecast button. Today
+  lists no sessions either (the owner's call): they are all on Sessions, and
+  Record a wax job's Save goes there.
 - **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from
   behaviour. Null means not chosen and behaves as guided.
 - **Optional checklist steps never keep the checklist open.** `progress().todo`

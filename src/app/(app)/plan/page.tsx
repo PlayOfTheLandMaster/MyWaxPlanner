@@ -37,9 +37,17 @@ export default function SessionsPage({ searchParams }: PageProps<"/plan">) {
   );
 }
 
-/** After "Copy to other skis": how many sessions were made, listed just below. */
+/** After "Copy to other skis", or Record a wax job's Save: what was made, listed just below. */
 async function Copied({ searchParams }: { searchParams: PageProps<"/plan">["searchParams"] }) {
-  const n = Number((await searchParams).copied);
+  const q = await searchParams;
+  if (q.saved === "recorded") {
+    return (
+      <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
+        <strong>Wax job saved.</strong> It&apos;s under Current sessions: tap it and mark it Done Skiing after skiing, then rate it.
+      </p>
+    );
+  }
+  const n = Number(q.copied);
   if (!Number.isInteger(n) || n < 1) return null;
   return (
     <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
