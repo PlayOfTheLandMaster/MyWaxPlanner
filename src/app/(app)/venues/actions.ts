@@ -65,7 +65,7 @@ export async function addVenue(_prev: VenueFormState, formData: FormData): Promi
     revalidatePath("/");
     redirect("/");
   }
-  redirect(back.startsWith("/plan") ? `/plan?venue=${data.id}` : "/venues");
+  redirect(back.startsWith("/plan") ? `/plan/start?venue=${data.id}` : "/venues");
 }
 
 function revalidateVenues() {

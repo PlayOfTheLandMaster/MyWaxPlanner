@@ -84,3 +84,8 @@ test("Learn's back links name the tab, the note or the video", () => {
   assert.equal(backLabel("/learn/0f14e86e-b754-44b7-94f8-e4d865ca4acf"), "Video");
   assert.equal(backLabel("/learn/how-to"), "How to use");
 });
+
+test("the planner and the Sessions tab are named apart", () => {
+  assert.equal(backLabel("/plan"), "My Sessions");
+  assert.equal(backLabel("/plan/start?venue=x"), "Plan");
+});

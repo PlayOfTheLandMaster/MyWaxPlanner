@@ -31,7 +31,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
   const province = provinceName(one(p.province));
   // Where Add a venue was opened from: Plan a wax session, Today's Set location, or Venues.
   const from = one(p.back);
-  const back = from === "plan" ? "/plan" : from === "today" ? "/" : "/venues";
+  const back = from === "plan" ? "/plan/start" : from === "today" ? "/" : "/venues";
   let results: Awaited<ReturnType<typeof searchPlaces>> = [];
   let error: string | null = null;
   if (q) {
@@ -49,14 +49,14 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
     longitude: one(p.lon),
     elevation_m: one(p.elev),
   };
-  const base = back === "/plan" ? "&back=plan" : back === "/" ? "&back=today" : "";
+  const base = back === "/plan/start" ? "&back=plan" : back === "/" ? "&back=today" : "";
   // The admin's venues go on the shared list (migration 20261215000000), so say so.
   const shared = await isAdmin(await createClient());
 
   return (
     <>
       <div>
-        <BackLink fallback={back} fallbackLabel={back === "/plan" ? "Plan" : back === "/" ? "Today" : "Venues"} />
+        <BackLink fallback={back} fallbackLabel={back === "/plan/start" ? "Plan" : back === "/" ? "Today" : "Venues"} />
         <h1 className="text-2xl font-bold">Add a venue</h1>
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
         <p className="text-sm text-muted">
@@ -67,7 +67,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
       </div>
 
       <form method="get" className="flex flex-col gap-2">
-        {back === "/plan" && <input type="hidden" name="back" value="plan" />}
+        {back === "/plan/start" && <input type="hidden" name="back" value="plan" />}
         {back === "/" && <input type="hidden" name="back" value="today" />}
         <AreaFields country={country ?? ""} province={province ?? ""} />
         <div className="flex gap-2">

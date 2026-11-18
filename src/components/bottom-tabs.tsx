@@ -31,9 +31,10 @@ const TABS: Tab[] = [
   },
   {
     href: "/plan",
-    // "Session": planning a wax and, after skiing, rating it are one session.
-    // Not "Wax", which would sit beside "Wax box" and invite mix-ups.
-    label: "Session",
+    // "Sessions": the sessions under way, opened to wax, ski and rate. Every
+    // wax session starts on Today, not here (the owner's call). Not "Wax",
+    // which would sit beside "Wax box" and invite mix-ups.
+    label: "Sessions",
     match: (p) => p.startsWith("/plan") || p.startsWith("/session"),
     icon: (
       <svg viewBox="0 0 24 24" className="size-6" {...stroke}>

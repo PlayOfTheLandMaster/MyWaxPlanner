@@ -75,11 +75,6 @@ async function List() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {v.latitude !== null && (
-                      <Link href={`/plan?venue=${v.id}`} className="inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm">
-                        Forecast
-                      </Link>
-                    )}
                     {v.id !== home && (
                       <form action={setHomeVenue.bind(null, v.id)}>
                         <button type="submit" className="min-h-11 rounded-lg border border-line px-3 text-sm">
