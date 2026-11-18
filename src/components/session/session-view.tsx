@@ -381,16 +381,18 @@ export async function SessionView({
         photos={s.photos.map((p) => ({ id: p.id, caption: p.caption, url: urlFor.get(p.storage_path) ?? null }))}
       />
 
+      {/* The two ways on from a past session, filled in the accent so they
+          stand out from the cards above (the owner's choice). */}
       <div className="grid grid-cols-2 gap-2">
         <Link
           href={`/history/${id}/edit`}
-          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
         >
-          Edit everything
+          Edit this record
         </Link>
         <Link
           href={`/history/new?record=1&from=${id}`}
-          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
         >
           Use this session data for today&apos;s wax job
         </Link>
