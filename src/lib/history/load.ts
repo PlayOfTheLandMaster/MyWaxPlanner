@@ -81,6 +81,7 @@ export type Conditions = {
   new_snow_cm: number | null;
   sky: string | null;
   wind_kmh: number | null;
+  debris: string | null;
   track: string | null;
 };
 
@@ -133,7 +134,7 @@ export type SessionPlan = {
 };
 
 const CONDITION_COLUMNS = `air_temp_c, snow_temp_c, snow_temp_estimated, air_rh_pct, air_humidity_band,
-  snow_humidity_band, snow_type, new_snow_cm, sky, wind_kmh, track`;
+  snow_humidity_band, snow_type, new_snow_cm, sky, wind_kmh, debris, track`;
 
 export async function loadSession(supabase: SupabaseClient, id: string): Promise<Session | null> {
   const { data, error } = await supabase

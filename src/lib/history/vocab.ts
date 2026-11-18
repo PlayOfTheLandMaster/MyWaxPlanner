@@ -9,6 +9,8 @@ export const KICK_FEELS = ["slipping", "good", "icing"] as const;
 export const METHODS = ["iron", "rub_on", "liquid", "powder", "cork", "spray"] as const;
 export const SKIES = ["sun", "partly_cloudy", "overcast", "snowing", "raining", "fog"] as const;
 export const TRACKS = ["freshly_groomed", "skied_in", "glazed", "soft"] as const;
+/** What had fallen on the track (migration 20261211000000_debris.sql). */
+export const DEBRIS = ["none", "needles", "leaves", "dirt"] as const;
 
 export type Mode = (typeof MODES)[number];
 export type Status = (typeof STATUSES)[number];
@@ -17,6 +19,7 @@ export type KickFeel = (typeof KICK_FEELS)[number];
 export type Method = (typeof METHODS)[number];
 export type Sky = (typeof SKIES)[number];
 export type Track = (typeof TRACKS)[number];
+export type Debris = (typeof DEBRIS)[number];
 
 export const MODE_LABELS: Record<Mode, string> = { recreational: "Recreational", race: "Race" };
 export const STATUS_LABELS: Record<Status, string> = { planned: "In Progress", completed: "Done" };
@@ -58,6 +61,7 @@ export const TRACK_LABELS: Record<Track, string> = {
   glazed: "Glazed",
   soft: "Soft",
 };
+export const DEBRIS_LABELS: Record<Debris, string> = { none: "None", needles: "Needles", leaves: "Leaves", dirt: "Dirt" };
 
 /** Layer roles that belong to each zone, in the order a prep runs. */
 export const ZONE_ROLES: Record<Zone, string[]> = {

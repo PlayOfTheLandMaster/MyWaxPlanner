@@ -14,6 +14,7 @@ import {
   RATING_WORDS,
   SKY_LABELS,
   TRACK_LABELS,
+  DEBRIS_LABELS,
   TRACKS,
   ZONE_LABELS,
 } from "@/lib/history/vocab";
@@ -48,6 +49,7 @@ function conditionsLines(c: Conditions): string[] {
     c.new_snow_cm !== null ? `${c.new_snow_cm} cm new snow` : null,
     c.sky ? SKY_LABELS[c.sky as keyof typeof SKY_LABELS] : null,
     c.wind_kmh !== null ? `Wind ${c.wind_kmh} km/h` : null,
+    c.debris ? (c.debris === "none" ? "No debris" : `Debris: ${DEBRIS_LABELS[c.debris as keyof typeof DEBRIS_LABELS].toLowerCase()}`) : null,
     c.track ? `Track ${TRACK_LABELS[c.track as keyof typeof TRACK_LABELS].toLowerCase()}` : null,
   ].filter((x): x is string => x !== null);
 }
@@ -381,16 +383,18 @@ export async function SessionView({
         photos={s.photos.map((p) => ({ id: p.id, caption: p.caption, url: urlFor.get(p.storage_path) ?? null }))}
       />
 
+      {/* The two ways on from a past session, filled in the accent so they
+          stand out from the cards above (the owner's choice). */}
       <div className="grid grid-cols-2 gap-2">
         <Link
           href={`/history/${id}/edit`}
-          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
         >
-          Edit everything
+          Edit this record
         </Link>
         <Link
           href={`/history/new?record=1&from=${id}`}
-          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
         >
           Use this session data for today&apos;s wax job
         </Link>

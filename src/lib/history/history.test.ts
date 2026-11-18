@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { localToIso, readSession, statusFor } from "./input";
 import { parseFilters, periodRange, seasonLabel, seasonOf, seasonRange, seasonStart, toQuery } from "./filters";
-import { KICK_FEELS, METHODS, SKIES, TRACKS } from "./vocab";
+import { DEBRIS, KICK_FEELS, METHODS, SKIES, TRACKS } from "./vocab";
 
 const form = (fields: Record<string, string>) => {
   const f = new FormData();
@@ -114,6 +114,11 @@ test("history vocabularies match the database", () => {
   assert.deepEqual(words("sky text check (sky in ("), [...SKIES]);
   assert.deepEqual(words("track text check (track in ("), [...TRACKS]);
   assert.deepEqual(words("create type public.kick_feel as enum ("), [...KICK_FEELS]);
+  const debris = readFileSync(join(process.cwd(), "supabase/migrations/20261211000000_debris.sql"), "utf8");
+  const at = debris.indexOf("check (debris in (");
+  assert.ok(at >= 0);
+  const list = debris.slice(at, debris.indexOf(")", at + "check (debris in (".length));
+  assert.deepEqual([...list.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]), [...DEBRIS]);
 });
 
 test("whose skis: me, everyone, a skier, or unset (the skier picked on Today)", () => {

@@ -181,6 +181,10 @@ details[open] > summary::before,
 select.min-h-11 {
   -webkit-appearance: none;
   appearance: none;
+  /* min-height too: min-h-11's 44 px otherwise wins over height, and a
+     pull-down stood 4 px taller than the text box beside it (Debris and
+     Wind on the full form). */
+  min-height: 2.5rem;
   height: 2.5rem;
   padding-right: 2.25rem;
   background-image: var(--select-arrow);

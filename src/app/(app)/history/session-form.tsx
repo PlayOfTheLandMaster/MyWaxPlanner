@@ -19,6 +19,8 @@ import {
   SKIES,
   SKY_LABELS,
   TRACKS,
+  DEBRIS,
+  DEBRIS_LABELS,
   TRACK_LABELS,
   ZONE_LABELS,
   ZONE_ROLES,
@@ -450,6 +452,18 @@ export function SessionForm({
           <label className={label}>
             Wind, km/h
             <input name="wind_kmh" inputMode="decimal" defaultValue={s(a.wind_kmh)} className={field} />
+          </label>
+          {/* Beside wind: needles, leaves or dirt on the track slow a ski and wear the wax. */}
+          <label className={label}>
+            Debris
+            <select name="debris" defaultValue={s(a.debris)} className={field}>
+              <option value="">Not set</option>
+              {DEBRIS.map((d) => (
+                <option key={d} value={d}>
+                  {DEBRIS_LABELS[d]}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </details>
