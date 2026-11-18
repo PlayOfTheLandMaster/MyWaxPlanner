@@ -37,7 +37,9 @@ it against a **local** database only, never the live project.
 
 There is no Prettier config. The code is wrapped at about 140 columns; running
 Prettier's default (80) over an existing file rewraps all of it and buries the
-real change, so format only new files, with `--print-width 140`.
+real change, so format only new files, with `--print-width 140`. Even at 140
+it rewraps the lines in an existing file that already run long, so never run
+it on an existing file.
 
 ## Next.js 16 here
 
@@ -79,9 +81,18 @@ MCP tools (`apply_migration`), and then two things are easy to forget:
 - `apply_migration` records the migration under today's timestamp, not the file
   name's. Update `supabase_migrations.schema_migrations` to the file's version,
   or the order no longer matches `supabase/migrations/`.
-- A statement the server wants confirmed (a `drop`, a `delete`) makes the MCP
-  call time out. Give the owner the SQL to run in **Supabase → SQL Editor**
-  instead, check the result, then record the version by hand.
+- A statement the server wants confirmed (a `drop`, a `delete`, and also
+  `alter table … add column` with a `create or replace function`, as the
+  debris migration found) makes the MCP call time out. Give the owner the SQL
+  to run in **Supabase → SQL Editor** instead (send the migration file), check
+  the result, then record the version by hand.
+- **Preview and live share one database.** Code that reads a new column fails
+  on the preview the moment it is pushed if the migration is not live yet, and
+  on the live app if that pull request is merged first. Apply the migration
+  before pushing such code, or tell the owner not to merge until it is.
+- The live `save_wax_session()` was applied without its comments, so its text
+  never matches the migration file. Compare the logic (columns, statements),
+  not a hash, before replacing it.
 
 Run the security advisor (`get_advisors`) after any change to the schema.
 
@@ -101,6 +112,16 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   (`skisOf`), and the database fills `skier_id` from the pair.
 - **Deleting a session removes only its observed conditions.** Forecast
   conditions and recommendations can be shared by copies.
+- **Rating happens on one page, and Save is the last thing on it.** "I changed
+  something" (a pull-down per layer) and "Different" (the snow questions) open
+  inside the How did it go? card and are saved with the rating. The owner found
+  a Save that led on to the full form confusing; do not route a rating through
+  `/history/[id]/edit` again.
+- **Once waxed, the waxes are fixed** on the session page (no Change, past
+  tense). Corrections after skiing go through I changed something.
+- **Record a wax job's forecast is worked out on the server at Save**, for the
+  date, time and venue saved, never taken from the page: the person may change
+  any of them after the page opened. A recorded wax job counts as waxed.
 
 ## iPad and Chrome on iOS (WebKit)
 
@@ -113,6 +134,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - A `required` field the browser cannot show (the Classic/Skate radios are
   `sr-only`) blocks submit with no message at all: Save on Record a wax job
   "did nothing". Forms use `noValidate` and show the server's message instead.
+- `min-height` beats `height`, so `min-h-11` (44 px) on a select overruled the
+  40 px pin and every pull-down stood 4 px taller than the text box beside it.
+  The select rule in `globals.css` sets both. Measure a size in a browser
+  rather than reading the classes.
 
 ## Tailwind
 
