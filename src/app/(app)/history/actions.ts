@@ -1,6 +1,11 @@
 "use server";
 
-import { decodeDraft } from "@/lib/plan/draft";
+import type { ForecastWindow } from "@/lib/weather/forecast";
+import { forecastFor } from "@/lib/weather/window";
+import { forecastable, loadVenues } from "@/lib/venues/load";
+import { draftFromWindow } from "@/lib/history/record";
+import { loadSnowCheck } from "@/lib/snow/load";
+import { readSnowForm } from "@/lib/snow/check";
 import { redirect } from "next/navigation";
 import { refresh, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -27,19 +32,26 @@ export async function saveSession(
   const { payload, error } = readSession(formData);
   if (error !== undefined) return { error };
 
-  // "Record today's wax" sends the venue's forecast: saved with a new session
-  // as its forecast, so History and "Similar to today" have conditions. Only
-  // when the session is still at that venue; the draft is checked again here.
+  // Record a wax job (record=1) saves the forecast for the date, time and
+  // venue the form was saved with, worked out again here rather than taken
+  // from the page: the person may have changed any of them since it opened.
+  // Outside the forecast's range nothing is saved.
+  const recorded = !id && formData.get("record") === "1";
   let session: typeof payload.session & { forecast_conditions_id?: string } = payload.session;
-  const draft = id ? null : decodeDraft(String(formData.get("forecast") ?? ""));
-  if (draft && draft.venue_id === payload.session.venue_id) {
-    const { data: auth } = await supabase.auth.getUser();
-    const { data: row } = await supabase
-      .from("conditions")
-      .insert({ ...draft, observed_at: payload.session.occurred_at, user_id: auth.user?.id, source: "forecast" })
-      .select("id")
-      .single();
-    if (row) session = { ...session, forecast_conditions_id: row.id as string };
+  if (recorded && payload.session.venue_id) {
+    const [{ window: w }, snowCheck] = await Promise.all([
+      forecastAt(supabase, String(payload.session.venue_id), String(payload.session.occurred_at)),
+      loadSnowCheck(supabase),
+    ]);
+    if (w) {
+      const { data: auth } = await supabase.auth.getUser();
+      const { data: row } = await supabase
+        .from("conditions")
+        .insert({ ...draftFromWindow(w, snowCheck), observed_at: payload.session.occurred_at, user_id: auth.user?.id, source: "forecast" })
+        .select("id")
+        .single();
+      if (row) session = { ...session, forecast_conditions_id: row.id as string };
+    }
   }
 
   const { data, error: saveError } = await supabase.rpc("save_wax_session", {
@@ -55,6 +67,15 @@ export async function saveSession(
   // A new session with no skis is for the skier picked on Today.
   if (!id) await claimForCurrentSkier(supabase, data as string);
   revalidatePath("/history");
+  // A recorded wax job is already on the skis: it counts as waxed, so Today
+  // shows it ready to ski and the session page offers I'm Done Skiing. It is
+  // listed on Today, which is where the person goes next. One rated as it is
+  // saved is finished, and goes to History like any other.
+  if (recorded && payload.session.status === "planned") {
+    await supabase.from("wax_sessions").update({ waxed_at: new Date().toISOString() }).eq("id", data as string);
+    revalidatePath("/");
+    redirect("/?saved=recorded");
+  }
   // A session still to be rated belongs to the Session tab; a finished one to History.
   const where = payload.session.status === "planned" ? "session" : "history";
   redirect(`/${where}/${data as string}${id ? "" : "?saved=1"}`);
@@ -67,7 +88,12 @@ export async function saveSession(
  * overwritten). "I changed something" or "the snow was different" leads on to
  * the full form to correct the layers or the conditions.
  */
-export async function rateSession(id: string, _prev: SessionFormState, formData: FormData): Promise<SessionFormState> {
+export async function rateSession(
+  id: string,
+  back: "today" | "session",
+  _prev: SessionFormState,
+  formData: FormData,
+): Promise<SessionFormState> {
   const { supabase, userId } = await signedIn();
   const { data: s, error: readError } = await supabase
     .from("wax_sessions")
@@ -81,6 +107,37 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
   if (error !== undefined) return { error };
 
   let actualId = s.actual_conditions_id as string | null;
+  // Different: the snow as the skier found it, from the card's own questions,
+  // with the forecast's air, sky and wind kept beside it.
+  if (rating.snow === "different" && !actualId) {
+    const read = readSnowForm(formData, { day: "", venue_id: "" }, new Date());
+    if ("error" in read) return { error: read.error };
+    const { data: f } = s.forecast_conditions_id
+      ? await supabase
+          .from("conditions")
+          .select("venue_id, air_temp_c, air_rh_pct, new_snow_cm, sky, wind_kmh")
+          .eq("id", s.forecast_conditions_id)
+          .maybeSingle()
+      : { data: null };
+    const { data: row, error: rowError } = await supabase
+      .from("conditions")
+      .insert({
+        ...(f ?? {}),
+        venue_id: f?.venue_id ?? s.venue_id,
+        snow_temp_c: read.check.snow_temp_c,
+        snow_temp_estimated: false,
+        snow_humidity_band: read.check.snow_humidity_band,
+        snow_type: read.check.snow_type,
+        track: read.check.track,
+        user_id: userId,
+        observed_at: s.occurred_at,
+        source: "observed",
+      })
+      .select("id")
+      .single();
+    if (rowError) return { error: `Could not save the conditions: ${rowError.message}` };
+    actualId = row.id as string;
+  }
   if (rating.snow === "forecast" && s.forecast_conditions_id && !actualId) {
     const { data: f } = await supabase
       .from("conditions")
@@ -113,7 +170,7 @@ export async function rateSession(id: string, _prev: SessionFormState, formData:
 
   revalidatePath("/history");
   revalidatePath("/");
-  redirect(afterRating(id, rating));
+  redirect(afterRating(id, rating, back));
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */
@@ -175,4 +232,24 @@ export async function deleteFilter(id: string) {
   const { supabase } = await signedIn();
   await supabase.from("saved_filters").delete().eq("id", id);
   revalidatePath("/history");
+}
+
+type Forecast = { window: ForecastWindow; error?: undefined } | { window?: undefined; error: string };
+
+/** The two-hour forecast at a venue from an exact moment, or why there is none. */
+async function forecastAt(supabase: Awaited<ReturnType<typeof createClient>>, venueId: string, at: string): Promise<Forecast> {
+  const venue = (await loadVenues(supabase, { includeHidden: true })).filter(forecastable).find((v) => v.id === venueId);
+  if (!venue) return { error: "That venue has no position, so there is no forecast for it." };
+  const r = await forecastFor(venue, { at, hours: 2 });
+  return r.window ? { window: r.window } : { error: r.error ?? "No forecast for that date." };
+}
+
+/**
+ * Record a wax job's "Forecast at time of session" card, asked again each
+ * time the date, time or venue changes. `at` is the moment, as ISO.
+ */
+export async function recordForecast(venueId: string, at: string): Promise<Forecast> {
+  const { supabase } = await signedIn();
+  if (!/^[0-9a-f-]{36}$/i.test(venueId) || Number.isNaN(Date.parse(at))) return { error: "Choose a venue and a time." };
+  return forecastAt(supabase, venueId, at);
 }

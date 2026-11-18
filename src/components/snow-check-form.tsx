@@ -17,6 +17,8 @@ const SNOWBALL = {
   wet: "Packs into a wet ball — wet (30–100 %)",
 } as const;
 
+export type SnowInitial = { snow_temp_c: number; snow_humidity_band: HumidityBand; snow_type: SnowType; track: Track | null };
+
 /** Today's Skiing Conditions: the snow check every wax job today will use. */
 export function SnowCheckForm({
   venueId,
@@ -25,7 +27,7 @@ export function SnowCheckForm({
 }: {
   venueId: string;
   day: string;
-  initial: { snow_temp_c: number; snow_humidity_band: HumidityBand; snow_type: SnowType; track: Track | null };
+  initial: SnowInitial;
 }) {
   const [state, action, pending] = useActionState<SnowCheckState, FormData>(saveSnowCheck, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -37,6 +39,36 @@ export function SnowCheckForm({
     <form ref={formRef} action={action} className="flex flex-col gap-4">
       <input type="hidden" name="venue_id" value={venueId} />
       <input type="hidden" name="day" value={day} />
+      <SnowFields initial={initial} />
+      {state.error && (
+        <p role="alert" className="text-sm text-danger">
+          {state.error}
+        </p>
+      )}
+      {state.saved && (
+        <p role="status" className="text-sm">
+          Saved. Every wax job today uses these conditions.
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={pending}
+        className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
+      >
+        {pending ? "Saving…" : "Use for today's wax jobs"}
+      </button>
+    </form>
+  );
+}
+
+/**
+ * The snow as the skier found it: temperature, the snowball test, type and
+ * track. Today's Skiing Conditions and "How did it go?" (when the snow was
+ * different from the forecast) ask the same questions in the same words.
+ */
+export function SnowFields({ initial }: { initial: SnowInitial }) {
+  return (
+    <>
       <label className={label}>
         Snow temperature, °C
         <input name="snow_temp_c" inputMode="decimal" defaultValue={initial.snow_temp_c} className={field} />
@@ -72,23 +104,6 @@ export function SnowCheckForm({
           ))}
         </select>
       </label>
-      {state.error && (
-        <p role="alert" className="text-sm text-danger">
-          {state.error}
-        </p>
-      )}
-      {state.saved && (
-        <p role="status" className="text-sm">
-          Saved. Every wax job today uses these conditions.
-        </p>
-      )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
-      >
-        {pending ? "Saving…" : "Use for today's wax jobs"}
-      </button>
-    </form>
+    </>
   );
 }

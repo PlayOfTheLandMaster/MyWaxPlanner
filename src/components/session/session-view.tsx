@@ -14,6 +14,7 @@ import {
   RATING_WORDS,
   SKY_LABELS,
   TRACK_LABELS,
+  TRACKS,
   ZONE_LABELS,
 } from "@/lib/history/vocab";
 import { STAGES, stageOf, type Stage } from "@/lib/history/stage";
@@ -21,6 +22,8 @@ import { LocalTime } from "@/components/local-time";
 import { BackLink } from "@/components/nav-trail";
 import { Photos } from "@/app/(app)/history/[id]/photos";
 import { RateForm } from "./rate-form";
+import type { SnowInitial } from "@/components/snow-check-form";
+import { HUMIDITY_BANDS, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { deleteSession, rateSession } from "@/app/(app)/history/actions";
 import { WaxChecklist } from "./wax-checklist";
 import { comparePlan, type LayerComparison } from "@/lib/history/plan-compare";
@@ -53,11 +56,14 @@ export async function SessionView({
   id,
   saved,
   from,
+  back = "session",
 }: {
   id: string;
   saved: string | undefined;
   /** Where the page was opened from, for the way back. */
   from: "session" | "history";
+  /** Where a rating returns to: Today when the session was opened from Today. */
+  back?: "today" | "session";
 }) {
   const supabase = await createClient();
   const [s, user, who] = await Promise.all([loadSession(supabase, id), currentUser(), loadSkierContext()]);
@@ -100,7 +106,8 @@ export async function SessionView({
       hasLayers={s.layers.length > 0}
       askSnow={s.forecast !== null && s.actual === null}
       initialNotes={s.notes}
-      save={rateSession.bind(null, id)}
+      snowInitial={snowStart(s.forecast)}
+      save={rateSession.bind(null, id, back)}
     />
   );
 
@@ -192,11 +199,20 @@ export async function SessionView({
         <>
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
-              {expert ? "Your waxes" : "The plan"}
-              {s.layers.length ? ` - apply ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}` : ""}
+              {/* A recorded wax job has no plan: these are the waxes already on the skis. */}
+              {expert || !s.plan ? "Your waxes" : "The plan"}
+              {/* Still waxing: what to apply, and each layer can be swapped or
+                  skipped. Once waxed (Ski, Rate) the waxes are on the skis:
+                  past tense, and fixed. A change made after all is "I changed
+                  something" when rating, which opens the full form. */}
+              {s.layers.length
+                ? stage === "wax"
+                  ? ` - ${s.plan ? "apply " : ""}${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"}`
+                  : ` - ${s.layers.length} ${s.layers.length === 1 ? "layer" : "layers"} applied`
+                : ""}
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              <Layers layers={s.layers} plan={s.plan} compare={compare} change={{ sessionId: s.id, box }} />
+              <Layers layers={s.layers} plan={s.plan} compare={compare} change={stage === "wax" ? { sessionId: s.id, box } : null} />
             </div>
           </details>
 
@@ -514,4 +530,18 @@ function Layers({
       })}
     </>
   );
+}
+
+/** The snow questions' starting answers: the forecast's own guesses, else middling ones. */
+function snowStart(f: Conditions | null): SnowInitial {
+  return {
+    snow_temp_c: Math.min(0, f?.snow_temp_c ?? -5),
+    snow_humidity_band: oneOf(HUMIDITY_BANDS, f?.snow_humidity_band) ?? "mid",
+    snow_type: oneOf(SNOW_TYPES, f?.snow_type) ?? "fine_grained",
+    track: oneOf(TRACKS, f?.track),
+  };
+}
+
+function oneOf<T extends string>(list: readonly T[], v: string | null | undefined): T | null {
+  return list.includes(v as T) ? (v as T) : null;
 }

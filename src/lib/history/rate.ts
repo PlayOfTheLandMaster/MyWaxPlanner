@@ -8,7 +8,7 @@ export type RatingInput = {
   grip_rating: number | null;
   kick_feel: KickFeel | null;
   notes: string | null;
-  /** "forecast": the snow was as forecast, so the forecast becomes the actual conditions. */
+  /** "forecast": the forecast becomes the actual conditions. "different": the card's snow questions do. */
   snow: "forecast" | "different" | null;
   /** "changed": the skier will correct the layers on the full form next. */
   waxed: "planned" | "changed" | null;
@@ -52,8 +52,12 @@ export function readRating(form: FormData, classic: boolean): RatingResult {
   };
 }
 
-/** Where to go after saving: the full form if something needs correcting, else the session. */
-export function afterRating(id: string, r: Pick<RatingInput, "snow" | "waxed">): string {
-  const fix = [r.waxed === "changed" ? "layers" : null, r.snow === "different" ? "conditions" : null].filter(Boolean);
-  return fix.length ? `/history/${id}/edit?then=${fix.join(",")}` : `/session/${id}?saved=rated`;
+/**
+ * Where to go after saving: the full form if the waxes need correcting, else
+ * back to Today when the session was opened from there, else the session.
+ * Snow that was different is answered on the rating card itself.
+ */
+export function afterRating(id: string, r: Pick<RatingInput, "snow" | "waxed">, back: "today" | "session" = "session"): string {
+  if (r.waxed === "changed") return `/history/${id}/edit?then=layers`;
+  return back === "today" ? "/?saved=rated" : `/session/${id}?saved=rated`;
 }

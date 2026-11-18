@@ -36,7 +36,7 @@ const card = "rounded-xl border border-line bg-surface p-4";
 // stylesheet's order, not the class list's, and bg-surface comes later.
 const tinted = "rounded-xl border border-line p-4";
 
-export default function TodayPage() {
+export default function TodayPage({ searchParams }: PageProps<"/">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       {/* Coming back to Today, every card starts folded. */}
@@ -61,6 +61,9 @@ export default function TodayPage() {
           </svg>
         </Link>
       </header>
+      <Suspense fallback={null}>
+        <Saved searchParams={searchParams} />
+      </Suspense>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Today />
       </Suspense>
@@ -155,7 +158,7 @@ async function Today() {
           <ul className="flex flex-col divide-y divide-line">
             {active.map((r) => (
               <li key={r.id}>
-                <Link href={`/session/${r.id}`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
+                <Link href={`/session/${r.id}?from=today`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
                   <span className="min-w-0">
                     <span className="block truncate font-medium">
                       <LocalTime iso={r.occurred_at} /> · {what(r)}
@@ -183,7 +186,7 @@ async function Today() {
           <ul className="flex flex-col divide-y divide-line">
             {toRate.map((r) => (
               <li key={r.id}>
-                <Link href={`/session/${r.id}#rate`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
+                <Link href={`/session/${r.id}?from=today#rate`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{what(r)}</span>
                     <span className="block truncate text-sm text-muted">
@@ -347,6 +350,25 @@ async function Conditions({ venue }: { venue: VenueRow }) {
         </div>
       </details>
     </>
+  );
+}
+
+/** After Record a wax job's Save, or a rating made from Today: where the session is now. */
+async function Saved({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
+  const saved = (await searchParams).saved;
+  if (saved !== "recorded" && saved !== "rated") return null;
+  return (
+    <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
+      {saved === "rated" ? (
+        <>
+          <strong>Rating saved.</strong> The session is in History.
+        </>
+      ) : (
+        <>
+          <strong>Wax job saved.</strong> It&apos;s under Active sessions; mark it Done Skiing after skiing, then rate it.
+        </>
+      )}
+    </p>
   );
 }
 

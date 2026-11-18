@@ -25,5 +25,6 @@ async function View({
 }) {
   const [{ id }, p] = await Promise.all([params, searchParams]);
   const saved = Array.isArray(p.saved) ? p.saved[0] : p.saved;
-  return <SessionView id={id} saved={saved} from="session" />;
+  // Opened from Today (?from=today): a rating returns there.
+  return <SessionView id={id} saved={saved} from="session" back={p.from === "today" ? "today" : "session"} />;
 }

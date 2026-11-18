@@ -114,6 +114,7 @@ export function SessionForm({
   submitLabel,
   cancelHref,
   hidden,
+  onWhereWhen,
 }: {
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
@@ -123,6 +124,8 @@ export function SessionForm({
   cancelHref: string;
   /** Extra fields sent with the form, e.g. the forecast "Record today's wax" saves. */
   hidden?: Record<string, string>;
+  /** Told the venue and the moment (ISO, or null while the time is incomplete) whenever either changes. */
+  onWhereWhen?: (venueId: string, at: string | null) => void;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
@@ -164,6 +167,10 @@ export function SessionForm({
 
   return (
     <form
+      // The server checks every field and says what is missing beside Save.
+      // The browser's own check is off: Classic/Skate are visually hidden
+      // radios, so on iPad a missing technique blocked Save with no message.
+      noValidate
       // Submitted by hand so a refused save keeps what was typed.
       onSubmit={(e) => {
         e.preventDefault();
@@ -198,13 +205,19 @@ export function SessionForm({
             name="occurred_at"
             required
             value={when}
-            onChange={(e) => setWhen(e.target.value)}
+            onChange={(e) => {
+              setWhen(e.target.value);
+              onWhereWhen?.(venue, momentOf(e.target.value));
+            }}
             className={field}
           />
         </label>
         <label className={label}>
           Venue
-          <select name="venue_id" value={venue} onChange={(e) => setVenue(e.target.value)} className={field}>
+          <select name="venue_id" value={venue} onChange={(e) => {
+              setVenue(e.target.value);
+              onWhereWhen?.(e.target.value, momentOf(when));
+            }} className={field}>
             <option value="">Not set</option>
             {options.venues.filter((v) => !v.hidden || v.id === initial?.venue_id).map((v) => (
               <option key={v.id} value={v.id}>
@@ -324,21 +337,44 @@ export function SessionForm({
       <section className={section} aria-label="Finish">
         <h2 className="font-semibold">Finish</h2>
         <div className="flex flex-wrap gap-2">
+          {/* Each tap adds the step to the end of the sequence, so a step can
+              come more than once (brass, nylon, brass…). Undo and Clear below
+              take steps back out. */}
           {FINISH_TAGS.map((t) => {
-            const on = tags.includes(t);
+            const times = tags.filter((x) => x === t).length;
             return (
               <button
                 key={t}
                 type="button"
-                aria-pressed={on}
-                onClick={() => setTags((ts) => (on ? ts.filter((x) => x !== t) : [...ts, t]))}
-                className={`min-h-11 rounded-full border px-3 text-sm ${on ? "border-accent bg-tile font-semibold" : "border-line"}`}
+                aria-label={times ? `${t}, used ${times} ${times === 1 ? "time" : "times"}; add again` : `Add ${t}`}
+                onClick={() => setTags((ts) => [...ts, t])}
+                className={`min-h-11 rounded-full border px-3 text-sm ${times ? "border-accent bg-tile font-semibold" : "border-line"}`}
               >
                 {t}
+                {times > 1 ? ` ×${times}` : ""}
               </button>
             );
           })}
         </div>
+        {/* The tapped steps, in the order tapped (the order they are saved
+            in, and shown on the session page), with Undo last and Clear.
+            Above the notes but outside their label: a button inside it would
+            become the label's control, and tapping "Finish notes" would Undo. */}
+        {tags.length > 0 && (
+          <div className="-mb-2 flex flex-wrap items-center gap-x-3 rounded-lg bg-tile px-3 py-1 text-sm">
+            <span aria-live="polite" className="min-w-0 flex-1 py-1">
+              {tags.join(" → ")}
+            </span>
+            <span className="flex shrink-0 gap-3">
+              <button type="button" onClick={() => setTags((ts) => ts.slice(0, -1))} className="min-h-11 text-link underline">
+                Undo last
+              </button>
+              <button type="button" onClick={() => setTags([])} className="min-h-11 text-link underline">
+                Clear
+              </button>
+            </span>
+          </div>
+        )}
         <label className={label}>
           Finish notes
           <textarea name="finish_notes" rows={2} defaultValue={s(initial?.finish_notes)} placeholder="Order, passes, rill tool and insert…" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
@@ -634,4 +670,10 @@ function LayerRow({
       />
     </li>
   );
+}
+
+/** A datetime-local value (the browser's own clock) as a moment, or null while it is incomplete. */
+function momentOf(local: string): string | null {
+  const t = new Date(local);
+  return local && !Number.isNaN(t.getTime()) ? t.toISOString() : null;
 }

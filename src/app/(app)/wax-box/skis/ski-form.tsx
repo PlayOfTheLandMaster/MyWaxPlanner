@@ -45,6 +45,9 @@ export function SkiForm({
 
   return (
     <form
+      // The server says what is missing; the browser's check stays off because
+      // a missing Classic/Skate (hidden radios) blocked Save silently on iPad.
+      noValidate
       // Submitted by hand so a refused save keeps what was typed (React
       // empties a form after an action={…} submission).
       onSubmit={(e) => {

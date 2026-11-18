@@ -2,7 +2,8 @@ import "server-only";
 import { ForecastError, fetchHours, summarise, venueNow, type ForecastWindow } from "./forecast";
 import type { VenueRow } from "@/lib/venues/load";
 
-export type WindowRequest = { date?: string; time?: string; hours?: number };
+/** `at` (an exact moment, ISO) wins over `date` and `time` (venue-local). */
+export type WindowRequest = { date?: string; time?: string; hours?: number; at?: string };
 export type WindowResult =
   | { window: ForecastWindow; date: string; time: string; hours: number; error?: undefined }
   | { window?: undefined; date?: string; time?: string; hours: number; error: string };
@@ -17,10 +18,15 @@ export async function forecastFor(venue: VenueRow, req: WindowRequest): Promise<
     return { hours, error: `${venue.name} has no position yet, so there is no forecast for it.` };
   }
   try {
-    const { hours: all, data } = await fetchHours({ ...venue, latitude: venue.latitude, longitude: venue.longitude });
+    const at = req.at ? Date.parse(req.at) : NaN;
+    // A moment days back (a wax job recorded afterwards) needs more of the past.
+    const daysBack = Number.isNaN(at) ? 2 : (Date.now() - at) / 86_400_000 + 2;
+    const { hours: all, data } = await fetchHours({ ...venue, latitude: venue.latitude, longitude: venue.longitude }, daysBack);
     const now = venueNow(data.utc_offset_seconds);
-    const date = req.date && /^\d{4}-\d{2}-\d{2}$/.test(req.date) ? req.date : now.date;
-    const time = req.time && /^\d{2}:\d{2}$/.test(req.time) ? req.time : now.hour;
+    // The moment in the venue's own clock, which is how the forecast's hours are labelled.
+    const local = Number.isNaN(at) ? null : new Date(at + data.utc_offset_seconds * 1000).toISOString();
+    const date = local ? local.slice(0, 10) : req.date && /^\d{4}-\d{2}-\d{2}$/.test(req.date) ? req.date : now.date;
+    const time = local ? local.slice(11, 16) : req.time && /^\d{2}:\d{2}$/.test(req.time) ? req.time : now.hour;
     const window = summarise(
       all,
       { id: venue.id, name: venue.name, latitude: venue.latitude, longitude: venue.longitude, elevation_m: venue.elevation_m },

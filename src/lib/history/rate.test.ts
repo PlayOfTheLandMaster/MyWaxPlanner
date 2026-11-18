@@ -51,6 +51,9 @@ test("unknown answers to the two questions count as unanswered", () => {
 test("after saving: the session, or the full form when something needs correcting", () => {
   assert.equal(afterRating("s1", { snow: "forecast", waxed: "planned" }), "/session/s1?saved=rated");
   assert.equal(afterRating("s1", { snow: null, waxed: null }), "/session/s1?saved=rated");
+  // Opened from Today: back to Today, unless something still needs correcting.
+  assert.equal(afterRating("s1", { snow: "forecast", waxed: "planned" }, "today"), "/?saved=rated");
+  assert.equal(afterRating("s1", { snow: "different", waxed: "planned" }, "today"), "/?saved=rated");
   assert.equal(afterRating("s1", { snow: "forecast", waxed: "changed" }), "/history/s1/edit?then=layers");
-  assert.equal(afterRating("s1", { snow: "different", waxed: "changed" }), "/history/s1/edit?then=layers,conditions");
+  assert.equal(afterRating("s1", { snow: "different", waxed: "changed" }), "/history/s1/edit?then=layers");
 });
