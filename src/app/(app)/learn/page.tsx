@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { VIDEO_COLUMNS, isAdmin } from "@/lib/learn/load";
 import { LEVEL_LABELS, TOPICS, TOPIC_LABELS, thumbnailUrl, type Topic, type Video } from "@/lib/learn/videos";
+import { NOTE_COLUMNS, SECTION_LABELS, groupNotes, preview, searchNotes, type Note } from "@/lib/learn/notes";
 
 export const metadata: Metadata = { title: "Learn · My Wax Planner" };
 
@@ -23,16 +24,112 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       >
         <span>
           <span className="block font-semibold">How to use My Wax Planner</span>
-          <span className="block text-sm text-muted">Getting started, Today, waxing, rating, the wax box and history.</span>
+          <span className="block text-sm text-muted">Getting started, Today, waxing, rating, the wax box, venues, notes and history.</span>
         </span>
         <span aria-hidden className="text-muted">
           →
         </span>
       </Link>
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Library searchParams={searchParams} />
-      </Suspense>
+      {/* The skier's own waxing notes, then the shared video library. */}
+      <section aria-labelledby="notes" className="flex flex-col gap-3">
+        <h2 id="notes" className="text-lg font-semibold">
+          My waxing notes
+        </h2>
+        <Suspense fallback={<p className="text-muted">Loading…</p>}>
+          <Notes searchParams={searchParams} />
+        </Suspense>
+      </section>
+      <section aria-labelledby="videos" className="flex flex-col gap-3 border-t border-line pt-5">
+        <h2 id="videos" className="text-lg font-semibold">
+          Videos
+        </h2>
+        <Suspense fallback={<p className="text-muted">Loading…</p>}>
+          <Library searchParams={searchParams} />
+        </Suspense>
+      </section>
     </main>
+  );
+}
+
+async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["searchParams"] }) {
+  const p = await searchParams;
+  const nq = one(p.nq)?.trim().slice(0, 60);
+  const { data, error } = await (await createClient()).from("learn_notes").select(NOTE_COLUMNS);
+  if (error) return <p role="alert" className="text-sm text-danger">Could not read your notes: {error.message}</p>;
+  const all = (data ?? []) as Note[];
+  const groups = groupNotes(searchNotes(all, nq));
+  // Keeps the video filters when searching the notes, and the other way round.
+  const keep = (["topic", "technique", "q"] as const).map((k) => [k, one(p[k])] as const).filter(([, v]) => v);
+
+  return (
+    <>
+      {one(p.deleted) && (
+        <p role="status" className="rounded-lg border border-line bg-surface p-3 text-sm">
+          Note deleted.
+        </p>
+      )}
+      <Link
+        href="/learn/notes/new"
+        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+      >
+        Write a note
+      </Link>
+      {all.length === 0 ? (
+        <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+          Keep your own waxing instructions, notes on products and how-tos here, as short articles. Only you see them.
+        </p>
+      ) : (
+        <>
+          {all.length > 4 && (
+            <form method="get" className="flex gap-2">
+              {keep.map(([k, v]) => (
+                <input key={k} type="hidden" name={k} value={v} />
+              ))}
+              <input
+                name="nq"
+                type="search"
+                defaultValue={nq}
+                placeholder="Search your notes"
+                aria-label="Search your notes"
+                className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
+              />
+              <button type="submit" className="min-h-11 shrink-0 rounded-lg border border-line bg-surface px-4 text-sm font-semibold">
+                Search
+              </button>
+            </form>
+          )}
+          {groups.length === 0 ? (
+            <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">No notes match &ldquo;{nq}&rdquo;.</p>
+          ) : (
+            groups.map((g) => (
+              <section key={g.section} className="flex flex-col gap-2">
+                <h3 className="font-semibold">
+                  {SECTION_LABELS[g.section]} <span className="font-normal text-muted">({g.notes.length})</span>
+                </h3>
+                <ul className="flex flex-col gap-1">
+                  {g.notes.map((n) => (
+                    <li key={n.id}>
+                      <Link
+                        href={`/learn/notes/${n.id}`}
+                        className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 active:bg-tile"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{n.title}</span>
+                          {n.body && <span className="block truncate text-sm text-muted">{preview(n.body)}</span>}
+                        </span>
+                        <span aria-hidden className="text-muted">
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </>
+      )}
+    </>
   );
 }
 
