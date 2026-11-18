@@ -24,13 +24,10 @@ export function SnowCheckForm({
   venueId,
   day,
   initial,
-  editing = false,
 }: {
   venueId: string;
   day: string;
   initial: SnowInitial;
-  /** Conditions were already saved today: the button saves a change. */
-  editing?: boolean;
 }) {
   const [state, action, pending] = useActionState<SnowCheckState, FormData>(saveSnowCheck, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -58,7 +55,7 @@ export function SnowCheckForm({
         disabled={pending}
         className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
       >
-        {pending ? "Saving…" : editing ? "Save changes" : "Use for today's wax jobs"}
+        {pending ? "Saving…" : "Use for today's wax jobs"}
       </button>
     </form>
   );
