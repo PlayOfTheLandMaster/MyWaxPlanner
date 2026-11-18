@@ -226,6 +226,21 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.
 
+## The weekly Android check
+
+`scripts/android-check.mjs` signs the test account in on an emulated Pixel 7
+at the live site and opens every main screen (sideways scroll, tap targets
+under 44 px, headings, server and script errors). A scheduled task runs it
+every Monday at 7 pm Pacific and pushes a summary to the owner.
+
+- The test account, `android-test@mywaxplanner.test`, is empty and kept on
+  purpose (the owner agreed). Its password is **scrambled between runs**: a
+  run sets a fresh random bcrypt hash with an `update auth.users`, signs in,
+  then scrambles it again. No password is stored anywhere. Deleting needs a
+  Supabase confirmation nobody is there to give, which is why the account is
+  reused rather than made and deleted each week.
+- The check reads only. Add a screen to `SCREENS` when one is added to the app.
+
 ## iPad and Chrome on iOS (WebKit)
 
 - WebKit ignores `height` on a native `<select>`; selects use
