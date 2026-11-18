@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { ForecastError, searchPlaces } from "@/lib/weather/forecast";
 import { VenueForm } from "../venue-form";
 import { AreaFields } from "./area-fields";
+import { SearchButton } from "./search-button";
 import { countryCode, provinceName } from "@/lib/venues/search-area";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/learn/load";
@@ -74,13 +75,11 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
             name="q"
             type="search"
             defaultValue={q}
-            placeholder="Search a place, e.g. Lake Louise"
+            placeholder="A ski area, or the nearest town"
             aria-label="Search for a place"
             className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
           />
-          <button type="submit" className="min-h-11 shrink-0 rounded-lg border border-line px-4 text-sm font-semibold">
-            Search
-          </button>
+          <SearchButton />
         </div>
       </form>
 
@@ -110,7 +109,9 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{r.name}</span>
                     <span className="block truncate text-sm text-muted">
-                      {[r.kind, r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null].filter(Boolean).join(" · ")}
+                      {[r.kind, r.near ? `near ${r.near}` : null, r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </span>
                   <span className="shrink-0 text-sm text-link">Use</span>
