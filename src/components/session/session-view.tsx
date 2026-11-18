@@ -356,7 +356,7 @@ export async function SessionView({
       {(s.finish_tags.length > 0 || (s.finish_notes && !(planned && steps.length > 0))) && (
         // Folded once rated, like the waxes above; open while the session is under way.
         <details open={planned} className="rounded-xl border border-line bg-surface">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Finish</summary>
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Glide Finish</summary>
           <div className="flex flex-col gap-2 px-4 pb-4">
             {s.finish_tags.length > 0 && <p className="text-sm">{s.finish_tags.join(" → ")}</p>}
             {s.finish_notes && !(planned && steps.length > 0) && <p className="whitespace-pre-line text-sm text-muted">{s.finish_notes}</p>}
