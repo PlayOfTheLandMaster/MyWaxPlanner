@@ -236,6 +236,27 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.
 
+## Testing a change in a browser
+
+- **The Vercel preview is behind Vercel's own sign-in**, so a browser run from
+  the coding session cannot open it (it redirects to vercel.com). Test on the
+  live site, www.mywaxplanner.com (on this environment's allowed hosts),
+  before merge only what is already live; otherwise the owner tests the
+  preview on the iPad.
+- **The test account can sign in for a test**: set a one-time bcrypt hash as
+  the weekly check does, and scramble it again afterwards, every time. Its
+  profile now has a home venue (Canmore Nordic Centre) and a snow check, so
+  Record a wax job opens for it; it still holds no sessions, skis or waxes.
+- **Chromium here is not Apple's engine.** Chrome on iPad is WebKit, and
+  pull-downs, the keyboard and fixed bars behave differently there; what
+  works in an emulated iPad can still fail on the owner's. For a React
+  question, a two-component page bundled with the project's own React (its
+  `esbuild`) and opened from a file in Chromium settles it in a minute.
+- **A chart or layout change: render it before pushing.** `renderToStaticMarkup`
+  of the component with sample data, the built CSS from `.next/static`, and a
+  screenshot in light and dark mode (the rating blues run the other way in
+  dark mode, so "darker is better" is only true in light).
+
 ## The weekly Android check
 
 `scripts/android-check.mjs` signs the test account in on an emulated Pixel 7
@@ -282,6 +303,13 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
   did this, and the Add a pair of skis and Add a wax boxes would not take
   typing (proved with a two-component page; the draft now saves from plain
   `addEventListener` listeners and a ref, with no re-render).
+
+## Tables
+
+- **A comparison table needs `table-fixed`.** Left to the browser, column
+  widths follow their content, and on iPad Compare sessions gave the first
+  session most of the row. Fixed layout plus a minimum width per column
+  (`compare-table.tsx`) keeps columns equal and scrolls sideways on a phone.
 
 ## Tailwind
 
