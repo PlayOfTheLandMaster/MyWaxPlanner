@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkFor, readSnowCheck, readSnowForm } from "./check";
+import { checkFor, readSnowCheck, readSnowForm, recordBlocker } from "./check";
 
 const form = (f: Record<string, string>) => {
   const d = new FormData();
@@ -36,4 +36,13 @@ test("a check only counts for its own venue and day", () => {
 test("a damaged record reads as no check", () => {
   assert.equal(readSnowCheck({ day: "yesterday" }), null);
   assert.equal(readSnowCheck(null), null);
+});
+
+test("Record a wax job waits for a location and today's conditions", () => {
+  const check = readSnowCheck({ day: "2026-11-18", venue_id: "v1", snow_temp_c: -4, snow_humidity_band: "dry", snow_type: "fine_grained" });
+  assert.equal(recordBlocker(null, check, "2026-11-18"), "location");
+  assert.equal(recordBlocker("v1", null, "2026-11-18"), "conditions");
+  assert.equal(recordBlocker("v2", check, "2026-11-18"), "conditions"); // another venue's check
+  assert.equal(recordBlocker("v1", check, "2026-11-19"), "conditions"); // yesterday's check
+  assert.equal(recordBlocker("v1", check, "2026-11-18"), null);
 });
