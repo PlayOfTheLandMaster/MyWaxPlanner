@@ -133,6 +133,8 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   inside the How did it go? card and are saved with the rating. The owner found
   a Save that led on to the full form confusing; do not route a rating through
   `/history/[id]/edit` again.
+  A finished rating always goes to Today (`afterRating`): the session is
+  done, and reviewing it again is History's job.
 - **Once waxed, the waxes are fixed** on the session page (no Change, past
   tense). Corrections after skiing go through I changed something.
 - **Record a wax job's forecast is worked out on the server at Save**, for the

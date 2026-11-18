@@ -90,7 +90,6 @@ export async function saveSession(
  */
 export async function rateSession(
   id: string,
-  back: "today" | "session",
   _prev: SessionFormState,
   formData: FormData,
 ): Promise<SessionFormState> {
@@ -195,7 +194,7 @@ export async function rateSession(
 
   revalidatePath("/history");
   revalidatePath("/");
-  redirect(afterRating(id, back));
+  redirect(afterRating());
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */

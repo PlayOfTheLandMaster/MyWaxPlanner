@@ -59,7 +59,7 @@ export const GUIDE: GuideSection[] = [
       "Under How did it go?, rate the glide (and grip and kick for classic).",
       "If you changed a wax, tap I changed something and pick what went on instead.",
       "If the snow wasn't as forecast, tap Different and answer the snow questions.",
-      "Add notes and tap Save, the last thing on the page.",
+      "Add notes and tap Save, the last thing on the page. You're back on Today; the rated session is in History.",
     ],
   },
   {

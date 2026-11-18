@@ -53,10 +53,11 @@ export function readRating(form: FormData, classic: boolean): RatingResult {
 }
 
 /**
- * Where to go after saving: back to Today when the session was opened from
- * there, else the session. Changed waxes and different snow are both answered
- * on the rating card itself, so nothing leads on to the full form.
+ * Where to go after saving: Today, always. A rated session is done; looking
+ * at it again is History's job (the owner's call). Changed waxes and
+ * different snow are both answered on the rating card itself, so nothing
+ * leads on to the full form.
  */
-export function afterRating(id: string, back: "today" | "session" = "session"): string {
-  return back === "today" ? "/?saved=rated" : `/session/${id}?saved=rated`;
+export function afterRating(): string {
+  return "/?saved=rated";
 }
