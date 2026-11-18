@@ -155,6 +155,31 @@ export async function rateSession(
     }
   }
 
+  // I changed something: each layer's pull-down says kept, swapped for a wax
+  // from the box, or skipped. product_id follows the box row, as
+  // save_wax_session() does, so History still names the wax later.
+  if (rating.waxed === "changed") {
+    for (const [key, raw] of formData.entries()) {
+      if (!key.startsWith("layer_")) continue;
+      const layerId = key.slice(6);
+      const choice = String(raw);
+      if (!/^[0-9a-f-]{36}$/i.test(layerId) || choice === "") continue;
+      if (choice === "skip") {
+        const { error: e } = await supabase.from("wax_session_layers").delete().eq("id", layerId).eq("session_id", id);
+        if (e) return { error: `Could not change the waxes: ${e.message}` };
+      } else if (/^[0-9a-f-]{36}$/i.test(choice)) {
+        const { data: boxRow } = await supabase.from("user_products").select("product_id").eq("id", choice).maybeSingle();
+        if (!boxRow) return { error: "That wax is no longer in your box." };
+        const { error: e } = await supabase
+          .from("wax_session_layers")
+          .update({ user_product_id: choice, product_id: boxRow.product_id, custom_product: null })
+          .eq("id", layerId)
+          .eq("session_id", id);
+        if (e) return { error: `Could not change the waxes: ${e.message}` };
+      }
+    }
+  }
+
   const { error: saveError } = await supabase
     .from("wax_sessions")
     .update({
@@ -170,7 +195,7 @@ export async function rateSession(
 
   revalidatePath("/history");
   revalidatePath("/");
-  redirect(afterRating(id, rating, back));
+  redirect(afterRating(id, back));
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */

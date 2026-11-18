@@ -9,7 +9,7 @@
 import { HUMIDITY_LABELS, LAYER_ROLE_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import type { HumidityBand, LayerRole, SnowType } from "@/lib/catalogue/vocab";
 import { TECHNIQUE_LABELS } from "@/lib/skis/input";
-import { KICK_FEEL_LABELS, MODE_LABELS, RATING_WORDS } from "./vocab";
+import { DEBRIS_LABELS, KICK_FEEL_LABELS, MODE_LABELS, RATING_WORDS, type Debris } from "./vocab";
 import type { Session } from "./load";
 
 export type ShareInput = {
@@ -31,6 +31,8 @@ export type ShareInput = {
     air_temp_c: number | null;
     snow_type: string | null;
     snow_humidity_band: string | null;
+    /** Optional so a forecast (which never has it) still fits. */
+    debris?: string | null;
   } | null;
   layers: {
     zone: "glide" | "grip";
@@ -50,7 +52,7 @@ export type ShareSummary = {
   place: string | null;
   date: string;
   result: string | null;
-  /** "Snow −5 °C", "Air −3 °C", the snow type, "Snow humidity: dry". */
+  /** "Snow −5 °C", "Air −3 °C", the snow type, "Snow humidity: dry", "Debris: needles". */
   conditions: string[];
   glide: { role: string; wax: string }[];
   grip: { role: string; wax: string }[];
@@ -109,6 +111,12 @@ export function shareSummary(s: ShareInput, opts: { notes: boolean; timeZone: st
         c.snow_type ? (SNOW_TYPE_LABELS[c.snow_type as SnowType] ?? null) : null,
         c.snow_humidity_band
           ? `Snow humidity: ${(HUMIDITY_LABELS[c.snow_humidity_band as HumidityBand] ?? c.snow_humidity_band).toLowerCase()}`
+          : null,
+        // Recorded on the day; "None" is worth saying too.
+        c.debris
+          ? c.debris === "none"
+            ? "No debris"
+            : `Debris: ${(DEBRIS_LABELS[c.debris as Debris] ?? c.debris).toLowerCase()}`
           : null,
       ].filter((x): x is string => Boolean(x))
     : [];

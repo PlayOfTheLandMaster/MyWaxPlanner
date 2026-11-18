@@ -109,9 +109,26 @@ export async function SessionView({
       askSnow={s.forecast !== null && s.actual === null}
       initialNotes={s.notes}
       snowInitial={snowStart(s.forecast)}
+      layers={s.layers.map((l) => ({
+        id: l.id,
+        zone: l.zone,
+        name: l.product ? [l.product.brand?.name, l.product.name].filter(Boolean).join(" ") : (l.custom_product ?? "Unnamed wax"),
+      }))}
+      box={box}
       save={rateSession.bind(null, id, back)}
     />
   );
+
+  const doneLine = s.done_at ? (
+    <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
+      <span>
+        Marked done <LocalTime iso={s.done_at} />. Rate it when you&apos;re ready.
+      </span>
+      <button type="submit" className="min-h-11 px-2 text-link underline">
+        Undo
+      </button>
+    </form>
+  ) : null;
 
   return (
     <>
@@ -157,6 +174,9 @@ export async function SessionView({
         {planned && <StageStrip stage={stage} />}
       </div>
 
+      {/* Rating: the session's status sits with its title, not in the middle of the page. */}
+      {stage === "rate" && s.done_at && doneLine}
+
       {/* A coach waxing a squad the same way: one session, copied to each pair. */}
       {s.layers.length > 0 && (
         <Link
@@ -187,22 +207,12 @@ export async function SessionView({
         </Link>
       )}
 
-      {/* After skiing, rating is the one thing left to do, so it leads. */}
-      {stage === "rate" && (
-        <section id="rate" aria-labelledby="rate-h" className="flex scroll-mt-4 flex-col gap-3">
-          <h2 id="rate-h" className="text-xl font-bold">
-            How did it go?
-          </h2>
-          {rateForm}
-        </section>
-      )}
-
       {planned ? (
         <>
           <details open={stage === "wax"} className="rounded-xl border border-line bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
               {/* A recorded wax job has no plan: these are the waxes already on the skis. */}
-              {expert || !s.plan ? "Your waxes" : "The plan"}
+              {expert || !s.plan ? (stage === "wax" ? "Your waxes" : "Waxes") : "The plan"}
               {/* Still waxing: what to apply, and each layer can be swapped or
                   skipped. Once waxed (Ski, Rate) the waxes are on the skis:
                   past tense, and fixed. A change made after all is "I changed
@@ -239,7 +249,7 @@ export async function SessionView({
             </Link>
           )}
           {/* Outside the fold: it is what moves the session on to Ski (and offers Done). */}
-          {s.waxed_at ? (
+          {stage === "rate" ? null : s.waxed_at ? (
             <form action={unfinishWaxing.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
               <span>
                 Waxed <LocalTime iso={s.waxed_at} />
@@ -266,22 +276,15 @@ export async function SessionView({
               waxing". A coach with a dozen pairs uses Done Skiing on the
               Session tab's list instead. */}
           {s.done_at ? (
-              <form action={unmarkDone.bind(null, s.id)} className="flex items-center justify-between gap-3 text-sm">
-                <span>
-                  Marked done <LocalTime iso={s.done_at} />. Rate it when you&apos;re ready.
-                </span>
-                <button type="submit" className="min-h-11 px-2 text-link underline">
-                  Undo
-                </button>
-              </form>
-            ) : stage === "ski" ? (
-              <form action={markDone.bind(null, s.id, "session")} className={card}>
-                <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
-                <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
-                  I&apos;m Done Skiing
-                </button>
-              </form>
-            ) : null}
+            stage === "rate" ? null : doneLine
+          ) : stage === "ski" ? (
+            <form action={markDone.bind(null, s.id, "session")} className={card}>
+              <p className="text-sm text-muted">Finished? Mark it done and rate it later; it waits under Unrated sessions.</p>
+              <button type="submit" className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70">
+                I&apos;m Done Skiing
+              </button>
+            </form>
+          ) : null}
 
           {stage !== "rate" && (
             <details id="rate" className="scroll-mt-4 rounded-xl border border-line bg-surface">
@@ -295,7 +298,9 @@ export async function SessionView({
       ) : (
         <>
           <section className={card} aria-labelledby="how">
-            <h2 id="how" className="font-semibold">How it went</h2>
+            <h2 id="how" className="font-semibold">
+              How it went
+            </h2>
             <dl className="grid grid-cols-3 gap-2 text-center">
               {(
                 [
@@ -383,22 +388,35 @@ export async function SessionView({
         photos={s.photos.map((p) => ({ id: p.id, caption: p.caption, url: urlFor.get(p.storage_path) ?? null }))}
       />
 
+      {/* Rating reads top to bottom: what you did (waxes, finish, forecast and
+          photos, above), then how it went, then one Save, the last thing on the page. */}
+      {stage === "rate" && (
+        <section id="rate" aria-labelledby="rate-h" className="flex scroll-mt-4 flex-col gap-3">
+          <h2 id="rate-h" className="text-xl font-bold">
+            How did it go?
+          </h2>
+          {rateForm}
+        </section>
+      )}
+
       {/* The two ways on from a past session, filled in the accent so they
           stand out from the cards above (the owner's choice). */}
-      <div className="grid grid-cols-2 gap-2">
-        <Link
-          href={`/history/${id}/edit`}
-          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
-        >
-          Edit this record
-        </Link>
-        <Link
-          href={`/history/new?record=1&from=${id}`}
-          className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
-        >
-          Use this session data for today&apos;s wax job
-        </Link>
-      </div>
+      {stage !== "rate" && (
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href={`/history/${id}/edit`}
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
+          >
+            Edit this record
+          </Link>
+          <Link
+            href={`/history/new?record=1&from=${id}`}
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
+          >
+            Use this session data for today&apos;s wax job
+          </Link>
+        </div>
+      )}
 
       <details className="rounded-lg border border-line">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">Delete this session</summary>

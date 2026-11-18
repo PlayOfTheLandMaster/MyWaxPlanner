@@ -8,11 +8,18 @@ import { SnowFields, type SnowInitial } from "@/components/snow-check-form";
 const choice =
   "flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold";
 const section = "flex flex-col gap-4 rounded-xl border border-line bg-surface p-4";
+const field = "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
+
+/** One layer as the card names it, and the box waxes it could be swapped for. */
+export type RateLayer = { id: string; zone: "glide" | "grip"; name: string };
+export type RateBoxWax = { id: string; group: string; name: string };
 
 /**
- * "How did it go?": the few taps that finish a session. Everything else
- * (durability, race result, photos, a full correction of layers or
- * conditions) stays on the full form, which this card leads to when needed.
+ * "How did it go?": the few taps that finish a session, all on this one card.
+ * "I changed something" opens each layer's pull-down here and "Different"
+ * opens the snow questions here, so one Save at the end saves everything.
+ * Bigger corrections (adding a layer, durability, race result) are Edit this
+ * record, from History, once it is rated.
  */
 export function RateForm({
   classic,
@@ -20,10 +27,16 @@ export function RateForm({
   askSnow,
   initialNotes,
   snowInitial,
+  layers = [],
+  box = [],
   save,
 }: {
   classic: boolean;
   hasLayers: boolean;
+  /** The session's layers, for "I changed something". */
+  layers?: RateLayer[];
+  /** The box's waxes, offered by zone. */
+  box?: RateBoxWax[];
   /** Only when there is a forecast to confirm and no actual conditions yet. */
   askSnow: boolean;
   initialNotes: string | null;
@@ -33,6 +46,7 @@ export function RateForm({
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   const [snow, setSnow] = useState("");
+  const [waxed, setWaxed] = useState("planned");
 
   return (
     <form
@@ -70,15 +84,43 @@ export function RateForm({
               <legend className="mb-1 text-sm font-medium">The wax</legend>
               <div className="grid grid-cols-2 gap-2">
                 <label className={choice}>
-                  <input type="radio" name="waxed" value="planned" defaultChecked className="sr-only" />
+                  <input type="radio" name="waxed" value="planned" defaultChecked onChange={() => setWaxed("planned")} className="sr-only" />
                   Waxed as planned
                 </label>
                 <label className={choice}>
-                  <input type="radio" name="waxed" value="changed" className="sr-only" />
+                  <input type="radio" name="waxed" value="changed" onChange={() => setWaxed("changed")} className="sr-only" />
                   I changed something
                 </label>
               </div>
             </fieldset>
+          )}
+          {/* I changed something: each layer's wax, right here. Hidden, not
+              removed, so switching back and forth keeps the choices; the
+              server reads them only for "changed". */}
+          {hasLayers && (
+            <div hidden={waxed !== "changed"} className="flex flex-col gap-3 border-t border-line pt-4">
+              <p className="text-sm font-medium">What went on instead?</p>
+              {layers.map((l) => (
+                <label key={l.id} className="flex flex-col gap-1 text-sm">
+                  <span>
+                    <span className="text-muted">{l.zone === "glide" ? "Glide" : "Grip"} · </span>
+                    {l.name}
+                  </span>
+                  <select name={`layer_${l.id}`} defaultValue="" className={field}>
+                    <option value="">Kept as it was</option>
+                    {box
+                      .filter((b) => b.group === l.zone)
+                      .map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    <option value="skip">Skipped this layer</option>
+                  </select>
+                </label>
+              ))}
+              <p className="text-xs text-muted">To add a layer, use Edit this record in History after saving.</p>
+            </div>
           )}
           {askSnow && (
             <fieldset className="flex flex-col gap-1">
@@ -107,9 +149,6 @@ export function RateForm({
               <p className="text-sm font-medium">What was the snow like?</p>
               <SnowFields initial={snowInitial} />
             </div>
-          )}
-          {hasLayers && (
-            <p className="text-xs text-muted">&ldquo;I changed something&rdquo; opens the full form next, so you can correct the waxes.</p>
           )}
         </section>
       )}
