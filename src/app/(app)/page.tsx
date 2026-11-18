@@ -10,7 +10,7 @@ import { WeatherFold } from "@/components/weather-fold";
 import { FoldOnLeave } from "@/components/fold-on-leave";
 import { forecastFor } from "@/lib/weather/window";
 import { SnowCheckForm } from "@/components/snow-check-form";
-import { checkFor } from "@/lib/snow/check";
+import { checkFor, recordBlocker, RECORD_BLOCKED } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { LocalTime } from "@/components/local-time";
@@ -83,7 +83,7 @@ async function Today() {
     .select("id, occurred_at, technique, mode, event_name, waxed_at, done_at, venue_label, venue:venues (name)")
     .eq("status", "planned");
   plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis] = await Promise.all([
+  const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis, snowCheck] = await Promise.all([
     loadVenues(supabase),
     loadTodayVenue(supabase),
     plannedQuery.order("occurred_at", { ascending: false }).limit(50),
@@ -95,6 +95,7 @@ async function Today() {
     (who.current
       ? supabase.from("skis").select("id", { count: "exact", head: true }).eq("skier_id", who.current.id)
       : supabase.from("skis").select("id", { count: "exact", head: true }).is("skier_id", null)),
+    loadSnowCheck(supabase),
   ]);
 
   const home = today.home;
@@ -106,6 +107,8 @@ async function Today() {
   // Today's location: picked on this page for every wax job today, else home.
   const usable = venues.filter(forecastable);
   const venue = usable.find((v) => v.id === today.id) ?? usable.find((v) => v.id === home) ?? null;
+  // Record a wax job waits until the location and Today's Skiing Conditions are set (the owner's rule).
+  const blocked = recordBlocker(venue?.id ?? null, snowCheck, today.day);
   // For ✕ on your own locations: one with sessions asks where they go.
   const sessionsAt = await countSessionsAt(supabase, usable.filter((v) => v.user_id).map((v) => v.id));
 
@@ -283,12 +286,25 @@ async function Today() {
         // An expert picks their own waxes: the main button records them, and
         // the app's suggestion stays one tap away underneath.
         <>
+          {blocked ? (
+            // Shown, but not yet a link: the line under it says what comes first.
+            <div className="flex flex-col items-center gap-1">
+              <span
+                aria-disabled
+                className="flex min-h-14 w-full items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent opacity-50"
+              >
+                {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
+              </span>
+              <span className="text-sm text-muted">{RECORD_BLOCKED[blocked]}</span>
+            </div>
+          ) : (
           <Link
-            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
-            className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
-          >
-            {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
-          </Link>
+              href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+              className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
+            >
+              {who.current ? `Record a wax job for ${who.current.name}` : "Record a wax job"}
+            </Link>
+          )}
           <Link
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
             className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
@@ -304,12 +320,16 @@ async function Today() {
           >
             {who.current ? `Start a wax session for ${who.current.name}` : "Start a wax session"}
           </Link>
+          {blocked ? (
+            <p className="-mt-2 text-center text-sm text-muted">Already waxed? To record it, {RECORD_BLOCKED[blocked].charAt(0).toLowerCase() + RECORD_BLOCKED[blocked].slice(1).replace(" on Today first.", " above first.")}</p>
+          ) : (
           <Link
-            href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
-            className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
-          >
-            Already waxed? Record a wax job
-          </Link>
+              href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}
+              className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
+            >
+              Already waxed? Record a wax job
+            </Link>
+          )}
         </>
       )}
     </>

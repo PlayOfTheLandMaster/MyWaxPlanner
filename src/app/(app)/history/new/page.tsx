@@ -13,6 +13,8 @@ import { isExpert } from "@/lib/profile/style";
 import { formOwner, skisOf } from "@/lib/skis/owner";
 import { forecastable, loadVenues, type VenueRow } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
+import { loadSnowCheck } from "@/lib/snow/load";
+import { recordBlocker, RECORD_BLOCKED } from "@/lib/snow/check";
 import { forecastFor } from "@/lib/weather/window";
 import type { FormOptions } from "@/lib/history/load";
 
@@ -35,13 +37,15 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // the venue Today showed, with its forecast saved alongside.
   const record = sp.record === "1";
   const supabase = await createClient();
-  const [allOptions, source, who, venues, home] = await Promise.all([
+  const [allOptions, source, who, venues, today, snowCheck] = await Promise.all([
     loadFormOptions(supabase),
     typeof from === "string" ? loadSession(supabase, from) : Promise.resolve(null),
     loadSkierContext(),
     record ? loadVenues(supabase) : Promise.resolve([]),
-    record ? loadTodayVenue(supabase).then((t) => t.id) : Promise.resolve(null),
+    record ? loadTodayVenue(supabase) : Promise.resolve(null),
+    record ? loadSnowCheck(supabase) : Promise.resolve(null),
   ]);
+  const home = today?.id ?? null;
   // Only the skis of the person this session is for: the skier picked on
   // Today, or for "Repeat this prep" whoever the copied session was for.
   const owner = formOwner(allOptions.skis, source, who.current?.id ?? null);
@@ -90,6 +94,30 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         }),
       }
     : undefined;
+
+  // Record a wax job starts only once Today has a location and Today's
+  // Skiing Conditions for it (the owner's rule); Today holds its buttons back
+  // too, and this covers a bookmark or a back button.
+  const blocked = record ? recordBlocker(recordVenue?.id ?? null, snowCheck, today?.day ?? "") : null;
+  if (blocked)
+    return (
+      <>
+        <div>
+          <BackLink fallback="/" />
+          <h1 className="text-2xl font-bold">Record a wax job</h1>
+        </div>
+        <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+          <p>{RECORD_BLOCKED[blocked]}</p>
+          <p className="text-sm text-muted">Every wax job today uses Today&apos;s location and its skiing conditions, so they come first.</p>
+          <Link
+            href="/"
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
+          >
+            Go to Today
+          </Link>
+        </section>
+      </>
+    );
 
   if (record)
     return (
@@ -172,23 +200,17 @@ async function Record({
       </div>
       {/* Under the title and its note: who this wax job is for. */}
       <SkierBanner />
-      {/* The note under the title says the app suggests nothing here; this
-          names the setting for an expert, and points a guided waxer at the
-          way in that does suggest. A quiet pill, like the skier line. */}
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        {expert && (
+      {/* An expert sees the setting, and where to change it. A guided waxer
+          sees nothing here: this form is for waxing already done, so pointing
+          at suggestions (once "Or Start a wax session…") came too late. */}
+      {expert && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">Expert mode</span>
-        )}
-        {expert ? (
           <Link href="/account" className="inline-flex min-h-11 items-center text-link underline">
             Change in Account
           </Link>
-        ) : (
-          <Link href={venue ? `/plan?venue=${venue.id}` : "/plan"} className="inline-flex min-h-11 items-center text-base text-link underline">
-            Or Start a wax session if you want suggestions
-          </Link>
-        )}
-      </p>
+        </p>
+      )}
 
       <RecordForm
         options={options}

@@ -75,3 +75,19 @@ export function readSnowForm(
     },
   };
 }
+
+/**
+ * What stops a wax job being recorded: Record a wax job starts only once
+ * Today has a location and Today's Skiing Conditions for it, on this day (the
+ * owner's rule). Null when it may start.
+ */
+export function recordBlocker(venueId: string | null, check: SnowCheck | null, day: string): "location" | "conditions" | null {
+  if (!venueId) return "location";
+  return checkFor(check, venueId, day) ? null : "conditions";
+}
+
+/** What Today and Record a wax job say when it is blocked. */
+export const RECORD_BLOCKED: Record<"location" | "conditions", string> = {
+  location: "Set today's location on Today first.",
+  conditions: "Enter Today's Skiing Conditions on Today first.",
+};
