@@ -30,6 +30,9 @@ export default function AccountPage({ searchParams }: PageProps<"/account">) {
       <div>
         <BackLink fallback="/" />
         <h1 className="text-2xl font-bold">Account</h1>
+        <Link href="/learn/how-to" className="inline-flex min-h-11 items-center text-sm text-link underline">
+          How to use My Wax Planner
+        </Link>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Account searchParams={searchParams} />
