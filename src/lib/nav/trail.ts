@@ -69,6 +69,7 @@ export function backLabel(url: string): string {
   if (/^\/plan\/[^/]+$/.test(p)) return "Plan";
   // The Session tab's start page lives at /plan, titled My Sessions.
   if (p.startsWith("/plan")) return "My Sessions";
+  if (p === "/learn/how-to") return "How to use";
   if (/^\/learn\/[^/]+$/.test(p)) return "Video";
   if (p.startsWith("/learn")) return "Learn";
   if (p.startsWith("/venues")) return "Venues";

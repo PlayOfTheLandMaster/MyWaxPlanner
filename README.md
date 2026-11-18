@@ -81,6 +81,8 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 - **An optional catalogue loader**, `npm run seed`, for loading a shared list of brands and products from CSV. You don't need it: the wax box works without it.
 - A placeholder **Today** screen that shows who is signed in and links to the wax box.
 
+**How to use** (`/learn/how-to`): a brief guide in the app, reached from the top of Learn and from Account, one fold per part (getting started, Today, starting and recording a wax job, rating, the wax box, history). Its text is in `src/lib/learn/how-to.ts`, also the source of the shareable copy, so update it with the screens.
+
 ## Set up
 
 You need a free [Supabase](https://supabase.com) project and Node.js 22 or later.

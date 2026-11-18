@@ -16,6 +16,19 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Learn</h1>
+      {/* The app's own short guide, above the video library. */}
+      <Link
+        href="/learn/how-to"
+        className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+      >
+        <span>
+          <span className="block font-semibold">How to use My Wax Planner</span>
+          <span className="block text-sm text-muted">Getting started, Today, waxing, rating, the wax box and history.</span>
+        </span>
+        <span aria-hidden className="text-muted">
+          →
+        </span>
+      </Link>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Library searchParams={searchParams} />
       </Suspense>
