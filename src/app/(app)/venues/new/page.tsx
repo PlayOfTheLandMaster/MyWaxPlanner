@@ -6,6 +6,8 @@ import { ForecastError, searchPlaces } from "@/lib/weather/forecast";
 import { VenueForm } from "../venue-form";
 import { AreaFields } from "./area-fields";
 import { countryCode, provinceName } from "@/lib/venues/search-area";
+import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/learn/load";
 
 export const metadata: Metadata = { title: "Add a venue · My Wax Planner" };
 
@@ -47,6 +49,8 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
     elevation_m: one(p.elev),
   };
   const base = back === "/plan" ? "&back=plan" : back === "/" ? "&back=today" : "";
+  // The admin's venues go on the shared list (migration 20261215000000), so say so.
+  const shared = await isAdmin(await createClient());
 
   return (
     <>
@@ -54,6 +58,11 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
         <BackLink fallback={back} fallbackLabel={back === "/plan" ? "Plan" : back === "/" ? "Today" : "Venues"} />
         <h1 className="text-2xl font-bold">Add a venue</h1>
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
+        <p className="text-sm text-muted">
+          {shared
+            ? "As the admin, venues you add go on the shared list for every user."
+            : "Venues you add are yours alone; other users don't see them."}
+        </p>
       </div>
 
       <form method="get" className="flex flex-col gap-2">

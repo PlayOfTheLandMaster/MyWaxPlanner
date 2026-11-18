@@ -294,12 +294,24 @@ insert into public.signup_invites (email, invited_by)
   values ('friend@example.test', '00000000-0000-0000-0000-00000000000a');
 select pg_temp.expect((select count(*) from public.signup_invites) = 3,
   'an admin can add and read invitations');
+insert into public.venues (user_id, name)
+  values ('00000000-0000-0000-0000-00000000000a', 'Admin Nordic Centre');
+select pg_temp.expect((select user_id from public.venues where name = 'Admin Nordic Centre') is null,
+  'a venue an admin adds goes on the shared list');
 reset role;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect((select count(*) from public.signup_invites) = 0,
   'someone who is not an admin cannot read invitations');
 select pg_temp.expect_error($$insert into public.signup_invites (email) values ('mine@example.test')$$,
   'someone who is not an admin cannot invite');
+select pg_temp.expect((select count(*) from public.venues where name = 'Admin Nordic Centre') = 1,
+  'everyone sees a venue the admin added');
+insert into public.venues (user_id, name)
+  values ('00000000-0000-0000-0000-00000000000b', 'B''s Secret Loop');
+select pg_temp.expect((select user_id from public.venues where name = 'B''s Secret Loop') = '00000000-0000-0000-0000-00000000000b',
+  'a venue anyone else adds stays their own');
+select pg_temp.expect_error($$insert into public.venues (user_id, name) values (null, 'Sneaky shared')$$,
+  'someone who is not an admin cannot add a shared venue');
 delete from public.signup_invites;
 reset role;
 select pg_temp.expect((select count(*) from public.signup_invites) = 3,
