@@ -49,6 +49,6 @@ test("unknown answers to the two questions count as unanswered", () => {
 });
 
 test("after saving: back to the session, or to Today when opened from there", () => {
-  assert.equal(afterRating("s1"), "/session/s1?saved=rated");
-  assert.equal(afterRating("s1", "today"), "/?saved=rated");
+  // Wherever the session was opened from, a finished rating goes to Today.
+  assert.equal(afterRating(), "/?saved=rated");
 });

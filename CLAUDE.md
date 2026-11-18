@@ -115,7 +115,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   only from Today (Start a wax session; What would the app suggest? for an
   expert). The **Sessions** tab (`/plan`, titled My Sessions) lists sessions
   under way and starts nothing: it once offered an expert a guided session,
-  which the owner found a disconnect. Venues has no Forecast button.
+  which the owner found a disconnect. Venues has no Forecast button. Today
+  lists no sessions either (the owner's call): they are all on Sessions, and
+  Record a wax job's Save goes there.
 - **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from
   behaviour. Null means not chosen and behaves as guided.
 - **Optional checklist steps never keep the checklist open.** `progress().todo`
@@ -131,11 +133,15 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   inside the How did it go? card and are saved with the rating. The owner found
   a Save that led on to the full form confusing; do not route a rating through
   `/history/[id]/edit` again.
+  A finished rating always goes to Today (`afterRating`): the session is
+  done, and reviewing it again is History's job.
 - **Once waxed, the waxes are fixed** on the session page (no Change, past
   tense). Corrections after skiing go through I changed something.
 - **Record a wax job's forecast is worked out on the server at Save**, for the
   date, time and venue saved, never taken from the page: the person may change
   any of them after the page opened. A recorded wax job counts as waxed.
+  Its form has no How it went section: rating is the rating step, on the
+  session's page after skiing. Edit this record (same form) keeps it.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself

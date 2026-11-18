@@ -23,7 +23,7 @@ export const GUIDE: GuideSection[] = [
     steps: [
       "Check the Location card. Change it if you're skiing somewhere else today; tomorrow starts at home again.",
       "Open Today's Skiing Conditions, check the snow (temperature, snowball test, type, track) and save. Recording a wax job needs this first.",
-      "Active sessions are listed in blue, completed skis waiting for a rating in green. Tap one to open it.",
+      "Sessions under way, and skied ones waiting for a rating, are on the Sessions tab. Tap one to open it.",
     ],
   },
   {
@@ -59,7 +59,7 @@ export const GUIDE: GuideSection[] = [
       "Under How did it go?, rate the glide (and grip and kick for classic).",
       "If you changed a wax, tap I changed something and pick what went on instead.",
       "If the snow wasn't as forecast, tap Different and answer the snow questions.",
-      "Add notes and tap Save, the last thing on the page.",
+      "Add notes and tap Save, the last thing on the page. You're back on Today; the rated session is in History.",
     ],
   },
   {

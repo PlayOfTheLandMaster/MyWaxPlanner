@@ -67,14 +67,14 @@ export async function saveSession(
   // A new session with no skis is for the skier picked on Today.
   if (!id) await claimForCurrentSkier(supabase, data as string);
   revalidatePath("/history");
-  // A recorded wax job is already on the skis: it counts as waxed, so Today
-  // shows it ready to ski and the session page offers I'm Done Skiing. It is
-  // listed on Today, which is where the person goes next. One rated as it is
-  // saved is finished, and goes to History like any other.
+  // A recorded wax job is already on the skis: it counts as waxed, so the
+  // session page offers I'm Done Skiing. It is listed on the Sessions tab,
+  // where the person goes next, and rated later on its own page: the Record
+  // form asks no rating (the owner's call).
   if (recorded && payload.session.status === "planned") {
     await supabase.from("wax_sessions").update({ waxed_at: new Date().toISOString() }).eq("id", data as string);
-    revalidatePath("/");
-    redirect("/?saved=recorded");
+    revalidatePath("/plan");
+    redirect("/plan?saved=recorded");
   }
   // A session still to be rated belongs to the Session tab; a finished one to History.
   const where = payload.session.status === "planned" ? "session" : "history";
@@ -90,7 +90,6 @@ export async function saveSession(
  */
 export async function rateSession(
   id: string,
-  back: "today" | "session",
   _prev: SessionFormState,
   formData: FormData,
 ): Promise<SessionFormState> {
@@ -195,7 +194,7 @@ export async function rateSession(
 
   revalidatePath("/history");
   revalidatePath("/");
-  redirect(afterRating(id, back));
+  redirect(afterRating());
 }
 
 /** Layers and photo records go with it (on delete cascade); the photo files are removed too. */

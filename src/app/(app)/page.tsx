@@ -13,8 +13,6 @@ import { SnowCheckForm } from "@/components/snow-check-form";
 import { checkFor, recordBlocker, RECORD_BLOCKED } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
-import { LocalTime } from "@/components/local-time";
-import { TECHNIQUE_LABELS } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
@@ -22,7 +20,6 @@ import { SetupChecklist } from "@/components/setup-checklist";
 import { isExpert } from "@/lib/profile/style";
 import { readerTimeZone } from "@/lib/reader-zone";
 import { todayDate } from "@/lib/today-title";
-import { sortOpenSessions, stageLabel, type OpenSession } from "@/lib/today/sessions";
 
 export const metadata: Metadata = { title: "Today · My Wax Planner" };
 
@@ -31,10 +28,6 @@ export const metadata: Metadata = { title: "Today · My Wax Planner" };
 // New accounts see a short getting-started checklist first.
 
 const card = "rounded-xl border border-line bg-surface p-4";
-// A card with its own background (the session cards' status tints). Not `card`
-// plus a colour: two background classes on one element are decided by the
-// stylesheet's order, not the class list's, and bg-surface comes later.
-const tinted = "rounded-xl border border-line p-4";
 
 export default function TodayPage({ searchParams }: PageProps<"/">) {
   return (
@@ -71,22 +64,13 @@ export default function TodayPage({ searchParams }: PageProps<"/">) {
   );
 }
 
-type OpenRow = Omit<OpenSession, "venue_name"> & { venue_label: string | null; venue: { name: string } | null };
 
 async function Today() {
   const supabase = await createClient();
-  const now = new Date();
   const who = await loadSkierContext();
-  // Every unrated session for whoever is picked: Today lists the active ones and those to rate.
-  let plannedQuery = supabase
-    .from("wax_sessions")
-    .select("id, occurred_at, technique, mode, event_name, waxed_at, done_at, venue_label, venue:venues (name)")
-    .eq("status", "planned");
-  plannedQuery = who.current ? plannedQuery.eq("skier_id", who.current.id) : plannedQuery.is("skier_id", null);
-  const [venues, today, planned, skiCount, box, toolCount, skierCount, theirSkis, snowCheck] = await Promise.all([
+  const [venues, today, skiCount, box, toolCount, skierCount, theirSkis, snowCheck] = await Promise.all([
     loadVenues(supabase),
     loadTodayVenue(supabase),
-    plannedQuery.order("occurred_at", { ascending: false }).limit(50),
     supabase.from("skis").select("id", { count: "exact", head: true }),
     supabase.from("user_products").select("amount_left"),
     supabase.from("user_tools").select("id", { count: "exact", head: true }),
@@ -112,12 +96,6 @@ async function Today() {
   // For ✕ on your own locations: one with sessions asks where they go.
   const sessionsAt = await countSessionsAt(supabase, usable.filter((v) => v.user_id).map((v) => v.id));
 
-  const open: OpenSession[] = ((planned.data ?? []) as unknown as OpenRow[]).map(({ venue, venue_label, ...r }) => ({
-    ...r,
-    venue_name: venue?.name ?? venue_label,
-  }));
-  const { active, toRate, moreToRate } = sortOpenSessions(open, now);
-  const what = (r: OpenSession) => r.event_name ?? r.venue_name ?? TECHNIQUE_LABELS[r.technique];
 
   return (
     <>
@@ -173,64 +151,7 @@ async function Today() {
       )}
 
 
-      {active.length > 0 && (
-        <section aria-label="Active sessions" className={`${tinted} flex flex-col gap-1 border-l-8 border-l-active-edge bg-active py-2`}>
-          <h2 className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted">
-            {active.length === 1 ? "Active session" : `Active sessions · ${active.length}`}
-          </h2>
-          <ul className="flex flex-col divide-y divide-line">
-            {active.map((r) => (
-              <li key={r.id}>
-                <Link href={`/session/${r.id}?from=today`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">
-                      <LocalTime iso={r.occurred_at} /> · {what(r)}
-                    </span>
-                    <span className="block truncate text-sm text-muted">
-                      {TECHNIQUE_LABELS[r.technique]}
-                      {r.mode === "race" ? " race" : ""} · {stageLabel(r, now)}
-                    </span>
-                  </span>
-                  <span aria-hidden className="text-muted">
-                    →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {toRate.length > 0 && (
-        <section
-          aria-label="Completed ski - how did it go?"
-          className={`${tinted} flex flex-col gap-1 border-l-8 border-l-done-edge bg-done py-2`}
-        >
-          <h2 className="pt-1 font-semibold">Completed ski - how did it go?</h2>
-          <ul className="flex flex-col divide-y divide-line">
-            {toRate.map((r) => (
-              <li key={r.id}>
-                <Link href={`/session/${r.id}?from=today#rate`} className="flex min-h-14 items-center justify-between gap-3 active:bg-tile">
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{what(r)}</span>
-                    <span className="block truncate text-sm text-muted">
-                      <LocalTime iso={r.occurred_at} format="date" /> · rate it in a few taps
-                    </span>
-                  </span>
-                  <span aria-hidden className="text-muted">
-                    →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {moreToRate > 0 && (
-            <Link href="/history" className="inline-flex min-h-11 items-center self-start text-sm text-link underline">
-              and {moreToRate} more in History
-            </Link>
-          )}
-        </section>
-      )}
-
+      {/* Sessions under way are on the Sessions tab, not here (the owner's call). */}
       {/* Set once here; Plan a wax session and Record a wax job follow it until the day ends. */}
       {usable.length > 0 && (
         <details className={fold}>
@@ -393,21 +314,12 @@ async function Conditions({ venue }: { venue: VenueRow }) {
   );
 }
 
-/** After Record a wax job's Save, or a rating made from Today: where the session is now. */
+/** After a rating made from Today: where the session is now. */
 async function Saved({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
-  const saved = (await searchParams).saved;
-  if (saved !== "recorded" && saved !== "rated") return null;
+  if ((await searchParams).saved !== "rated") return null;
   return (
     <p role="status" className="rounded-lg border border-accent bg-tile p-3 text-sm">
-      {saved === "rated" ? (
-        <>
-          <strong>Rating saved.</strong> The session is in History.
-        </>
-      ) : (
-        <>
-          <strong>Wax job saved.</strong> It&apos;s under Active sessions; mark it Done Skiing after skiing, then rate it.
-        </>
-      )}
+      <strong>Rating saved.</strong> The session is in History.
     </p>
   );
 }

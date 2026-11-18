@@ -58,14 +58,11 @@ export async function SessionView({
   id,
   saved,
   from,
-  back = "session",
 }: {
   id: string;
   saved: string | undefined;
   /** Where the page was opened from, for the way back. */
   from: "session" | "history";
-  /** Where a rating returns to: Today when the session was opened from Today. */
-  back?: "today" | "session";
 }) {
   const supabase = await createClient();
   const [s, user, who] = await Promise.all([loadSession(supabase, id), currentUser(), loadSkierContext()]);
@@ -115,7 +112,7 @@ export async function SessionView({
         name: l.product ? [l.product.brand?.name, l.product.name].filter(Boolean).join(" ") : (l.custom_product ?? "Unnamed wax"),
       }))}
       box={box}
-      save={rateSession.bind(null, id, back)}
+      save={rateSession.bind(null, id)}
     />
   );
 

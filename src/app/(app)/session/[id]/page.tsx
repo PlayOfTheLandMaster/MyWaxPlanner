@@ -25,6 +25,6 @@ async function View({
 }) {
   const [{ id }, p] = await Promise.all([params, searchParams]);
   const saved = Array.isArray(p.saved) ? p.saved[0] : p.saved;
-  // Opened from Today (?from=today): a rating returns there.
-  return <SessionView id={id} saved={saved} from="session" back={p.from === "today" ? "today" : "session"} />;
+  // A finished rating always goes to Today (lib/history/rate.ts).
+  return <SessionView id={id} saved={saved} from="session" />;
 }
