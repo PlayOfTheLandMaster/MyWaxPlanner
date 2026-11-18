@@ -209,6 +209,8 @@ export type Place = {
   longitude: number;
   elevation_m: number | null;
   source: "osm" | "geonames";
+  /** Found by looking around this town, which the place's own name may not mention. Shown, not saved. */
+  near?: string;
 };
 
 // Words a skier often types joined up ("Silverstar", "Sovereignlake"), split
@@ -255,7 +257,10 @@ const KIND_WORDS: Record<string, string> = {
   track: "Track",
 };
 
+const WATER_SKI = /\bwater[- ]?ski/i;
+
 function kindOf(type: string, name: string): string | null {
+  if (WATER_SKI.test(name)) return KIND_WORDS[type] ?? null;
   if (/nordic|cross[- ]country|ski club|xc /i.test(name)) return "Nordic centre";
   return KIND_WORDS[type] ?? null;
 }
@@ -270,13 +275,47 @@ const kmBetween = (a: { latitude: number; longitude: number }, b: { latitude: nu
 /** Narrowing a place search: an ISO country code, and a province or state name. */
 export type SearchArea = { country?: string | null; province?: string | null };
 
-async function searchOsm(text: string, area: SearchArea = {}): Promise<Place[]> {
+// Nominatim's usage policy allows one request a second. Sent five at once
+// from a shared server, the extra ones were turned away, and a refused search
+// reads as "nothing found": "Rossland" found the town but not the ski club
+// beside it. So requests from this server wait their turn, one a second.
+let osmTurn = Promise.resolve();
+function osmSlot(): Promise<void> {
+  const mine = osmTurn;
+  osmTurn = mine.then(() => new Promise((r) => setTimeout(r, 1100)));
+  return mine;
+}
+
+/** A square of about 40 km each way around a point, as Nominatim's viewbox (west,north,east,south). */
+// 40, because a town's Nordic centre is often up the hill: Sovereign Lake is
+// about 35 km from Vernon.
+export function viewboxAround(p: { latitude: number; longitude: number }, km = 40): string {
+  const dLat = km / 111;
+  const dLon = km / (111 * Math.max(0.2, Math.cos((p.latitude * Math.PI) / 180)));
+  const r = (n: number) => Math.round(n * 1e4) / 1e4;
+  return [r(p.longitude - dLon), r(p.latitude + dLat), r(p.longitude + dLon), r(p.latitude - dLat)].join(",");
+}
+
+// What a search with "ski" in it also finds and nobody waxes at: the ski
+// shop, the lodge, the car park. A shop at a town's centre was also merged
+// with the town (within 200 m) and took its place in the list.
+const NOT_VENUES = new Set(["shop", "highway", "emergency", "building", "office", "craft"]);
+const NOT_VENUE_TYPES = new Set(["parking", "parking_space", "shelter", "first_aid_kit", "hotel", "motel", "guest_house", "hostel", "apartment"]);
+
+async function searchOsm(text: string, area: SearchArea = {}, near?: { latitude: number; longitude: number }): Promise<Place[]> {
+  await osmSlot();
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", text);
   url.searchParams.set("format", "jsonv2");
   // A province is checked afterwards, so ask for more to keep enough after it.
-  url.searchParams.set("limit", area.province ? "20" : "8");
+  // Around a town, the most Nominatim gives: "ski" there is mostly shops, and
+  // they would fill a short list before the ski club.
+  url.searchParams.set("limit", near ? "40" : area.province ? "20" : "8");
   if (area.country) url.searchParams.set("countrycodes", area.country);
+  if (near) {
+    url.searchParams.set("viewbox", viewboxAround(near));
+    url.searchParams.set("bounded", "1");
+  }
   url.searchParams.set("addressdetails", "1");
   url.searchParams.set("accept-language", "en");
   // Nominatim's usage policy asks every app to identify itself.
@@ -291,9 +330,11 @@ async function searchOsm(text: string, area: SearchArea = {}): Promise<Place[]> 
     lat: string;
     lon: string;
     type: string;
+    category?: string;
     address?: Record<string, string>;
   }[];
-  return data.map((r) => {
+  const kept = data.filter((r) => !NOT_VENUES.has(r.category ?? "") && !NOT_VENUE_TYPES.has(r.type));
+  return kept.map((r) => {
     const a = r.address ?? {};
     const name = r.name || r.display_name.split(",")[0];
     return {
@@ -374,20 +415,23 @@ export function mergePlaces(lists: Place[][]): Place[] {
 // Centre", because OpenStreetMap matches every word of the name; so each
 // search also asks with these added. Kept to three: Nominatim asks apps to
 // send few requests, and every word is another one.
-const ASSUMED_WORDS = ["Nordic", "Ski", "Trails"];
+// "Resort" finds the downhill resort a hill is known by ("Red Mountain" →
+// "Red Mountain Resort"), which the nearby search then looks around.
+const ASSUMED_WORDS = ["Nordic", "Ski", "Resort"];
 
 /** The search text with each assumed word the skier did not already type, e.g. "Hinton Nordic". */
 export function assumedVariants(text: string): string[] {
   const t = text.trim().replace(/\s+/g, " ");
   if (!t) return [];
   const has = new Set(t.toLowerCase().split(" "));
-  // "Ski" is also covered by "skiing", "trails" by "trail".
+  // "Ski" is also covered by "skiing", "resort" by "resorts".
   const covered = (w: string) => has.has(w.toLowerCase()) || [...has].some((h) => h.startsWith(w.toLowerCase().replace(/s$/, "")));
   return ASSUMED_WORDS.filter((w) => !covered(w)).map((w) => `${t} ${w}`);
 }
 
 /** A place the assumed words may add: one that is about skiing, not a "Hinton Park" picked up by "Trails". */
 export function isSkiPlace(p: Pick<Place, "name" | "kind">): boolean {
+  if (WATER_SKI.test(p.name)) return false;
   return (
     p.kind === "Nordic centre" ||
     p.kind === "Ski area" ||
@@ -396,22 +440,75 @@ export function isSkiPlace(p: Pick<Place, "name" | "kind">): boolean {
   );
 }
 
+const TOWN_KINDS = new Set(["Town", "City", "Village", "Hamlet", "Locality"]);
+
+/**
+ * The place to look around when the search named a town or a hill rather than
+ * a trail network: the first town found, else the first place that is not
+ * itself a ski place. Null when the search found a ski place, or nothing.
+ */
+export function anchorOf(places: Place[]): Place | null {
+  // A downhill resort first: "Red Mountain" is eight peaks in BC alone, but
+  // only one Red Mountain Resort, and Nordic trails are often beside one.
+  // Then a town, in the order found: OpenStreetMap's answer comes first and
+  // is its best match ("Rossland" in BC, not a hamlet in Norway), and it
+  // leaves a town's kind empty (an administrative boundary). Then a Nordic
+  // centre, whose neighbours are worth listing too; then whatever was found.
+  return (
+    places.find((p) => p.kind === "Ski area" || p.kind === "Ski resort") ??
+    places.find((p) => p.kind === null || TOWN_KINDS.has(p.kind)) ??
+    places.find((p) => p.kind === "Nordic centre") ??
+    places[0] ??
+    null
+  );
+}
+
+// What a skier's place is called, asked for around a town: "ski" finds a
+// ski club or resort, "nordic" a Nordic centre (Sovereign Lake, near
+// Vernon), "cross country" a recreation site (Paulson, near Rossland). Each
+// word is another request a second apart, so the list is short. They are
+// English words: OpenStreetMap matches names, so a "Loipe" is not found.
+const NEARBY_WORDS = ["ski", "nordic", "cross country"];
+const SKI_KINDS = new Set(["Nordic centre", "Ski area", "Ski resort"]);
+
 export async function searchPlaces(text: string, area: SearchArea = {}): Promise<Place[]> {
   const variants = searchVariants(text);
   // OpenStreetMap also gets the province in the words, which finds a small
   // place a bare name would rank below the twenty it returns.
   const osmTexts = area.province ? [...variants, `${variants[0]}, ${area.province}`] : variants;
+  const province = area.province;
+  const keep = (settled: PromiseSettledResult<Place[]>[]) =>
+    settled
+      .filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled")
+      .map((r) => (province ? r.value.filter((p) => inProvince(p.detail, province)) : r.value));
+
+  // By name, and by name with the words a skier leaves out ("Hinton" →
+  // "Hinton Nordic"); a name like "Black Jack" is also a town in Missouri.
   const assumed = assumedVariants(variants[variants.length - 1]);
   const settled = await Promise.allSettled([
     ...osmTexts.map((v) => searchOsm(v, area)),
     ...variants.map((v) => searchGeonames(v, area)),
     ...assumed.map((v) => searchOsm(v, area).then((ps) => ps.filter(isSkiPlace))),
   ]);
-  const province = area.province;
-  const lists = settled
-    .filter((r): r is PromiseFulfilledResult<Place[]> => r.status === "fulfilled")
-    .map((r) => (province ? r.value.filter((p) => inProvince(p.detail, province)) : r.value));
-  if (settled.every((r) => r.status === "rejected")) {
+  const lists = keep(settled);
+
+  // Then around what was found: a resort, a town or a hill rather than a
+  // trail network's own name. This finds a club whose name does not mention
+  // the town ("Rossland" → Black Jack Cross Country Ski Club), anywhere in
+  // the world OpenStreetMap has mapped it. Only a place that is a ski place
+  // by its kind: "ski" also finds the lodge, the ski patrol's lift and the shop.
+  const anchor = anchorOf(lists.flat());
+  const extra = await Promise.allSettled(
+    anchor
+      ? NEARBY_WORDS.map((w) =>
+          searchOsm(w, area, anchor).then((ps) =>
+            ps.filter((p) => p.kind && SKI_KINDS.has(p.kind) && p.name !== anchor.name).map((p) => ({ ...p, near: anchor.name })),
+          ),
+        )
+      : [],
+  );
+  lists.push(...keep(extra));
+  if ([...settled, ...extra].every((r) => r.status === "rejected")) {
     throw new ForecastError("The place search did not answer. Try again in a minute.");
   }
   const places = mergePlaces(lists);

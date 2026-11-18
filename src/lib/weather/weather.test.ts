@@ -77,7 +77,7 @@ test("venue time comes from the venue's offset, not the phone's", () => {
   assert.deepEqual(venueNow(-7 * 3600, new Date("2026-11-15T17:20:00Z")), { date: "2026-11-15", hour: "11:00" });
 });
 
-import { assumedVariants, isSkiPlace, mergePlaces, searchVariants, type Place } from "./forecast";
+import { anchorOf, assumedVariants, isSkiPlace, mergePlaces, searchVariants, viewboxAround, type Place } from "./forecast";
 
 test("joined-up names are also searched with a space", () => {
   assert.deepEqual(searchVariants("Silverstar"), ["Silverstar", "Silver Star"]);
@@ -105,9 +105,9 @@ test("the same spot from both gazetteers is listed once, ski places first", () =
 });
 
 test("each search also asks with the skiing words the skier left out", () => {
-  assert.deepEqual(assumedVariants("Hinton"), ["Hinton Nordic", "Hinton Ski", "Hinton Trails"]);
-  assert.deepEqual(assumedVariants("Hinton nordic"), ["Hinton nordic Ski", "Hinton nordic Trails"]);
-  assert.deepEqual(assumedVariants("Canmore skiing trail"), ["Canmore skiing trail Nordic"]);
+  assert.deepEqual(assumedVariants("Hinton"), ["Hinton Nordic", "Hinton Ski", "Hinton Resort"]);
+  assert.deepEqual(assumedVariants("Hinton nordic"), ["Hinton nordic Ski", "Hinton nordic Resort"]);
+  assert.deepEqual(assumedVariants("Canmore skiing trail"), ["Canmore skiing trail Nordic", "Canmore skiing trail Resort"]);
   assert.deepEqual(assumedVariants("  "), []);
 });
 
@@ -117,4 +117,26 @@ test("the extra searches keep only skiing places", () => {
   assert.equal(isSkiPlace({ name: "Marmot Basin", kind: "Ski area" }), true);
   assert.equal(isSkiPlace({ name: "Hinton", kind: "Town" }), false);
   assert.equal(isSkiPlace({ name: "Hinton Skate Park", kind: "Park" }), false);
+});
+
+test("a nearby search looks around a resort, else the first town found", () => {
+  const at = (name: string, kind: string | null, lat = 49): Place => ({ name, kind, detail: "", latitude: lat, longitude: -117, elevation_m: null, source: "osm" });
+  // OpenStreetMap's town (no kind) comes before GeoNames' hamlet of the same name in Norway.
+  assert.equal(anchorOf([at("Rossland", null), at("Rossland", "Hamlet", 59)])?.latitude, 49);
+  assert.equal(anchorOf([at("Red Mountain", "Peak")])?.name, "Red Mountain");
+  // A downhill resort beats the peaks of the same name.
+  assert.equal(anchorOf([at("Red Mountain", "Peak"), at("Red Mountain Resort", "Ski area")])?.name, "Red Mountain Resort");
+  assert.equal(anchorOf([at("Black Jack Cross Country Ski Club", "Nordic centre"), at("Rossland", null)])?.name, "Rossland");
+  assert.equal(anchorOf([]), null);
+});
+
+test("a water-ski club is not a ski place", () => {
+  assert.equal(isSkiPlace({ name: "Fraser Valley Water Ski Club", kind: null }), false);
+  assert.equal(isSkiPlace({ name: "Black Jack Cross Country Ski Club", kind: "Nordic centre" }), true);
+});
+
+test("the box around a town is about 40 km each way, west,north,east,south", () => {
+  const [w, n, e, s] = viewboxAround({ latitude: 49, longitude: -117 }).split(",").map(Number);
+  assert.ok(Math.abs(n - s - 0.72) < 0.01);
+  assert.ok(w < -117 && e > -117 && e - w > n - s); // longitude degrees are shorter at 49°N
 });

@@ -1,10 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dayIn } from "@/lib/venues/today";
 import { readerTimeZone } from "@/lib/reader-zone";
+import { isAdmin } from "@/lib/learn/load";
 
 export type VenueFormState = { error?: string };
 
@@ -74,8 +75,12 @@ function revalidateVenues() {
 /** Sessions and conditions at this venue keep their data; they just stop naming it. */
 export async function deleteVenue(id: string) {
   const { supabase } = await signedIn();
-  await supabase.from("venues").delete().eq("id", id);
+  // A delete that Row Level Security refuses is not an error, only zero rows,
+  // so count what went: the admin's Delete once "did nothing" with no word why.
+  const { data: gone, error } = await supabase.from("venues").delete().eq("id", id).select("id");
+  if (error || !gone?.length) redirect("/venues?notdeleted=1");
   revalidateVenues();
+  refresh();
 }
 
 /** If home or today's location is `from`, point it at `to` (null: clear it). */
@@ -97,7 +102,9 @@ async function repoint(supabase: Awaited<ReturnType<typeof createClient>>, userI
 export async function removeVenue(id: string, target: string) {
   const { supabase, userId } = await signedIn();
   const { data: venue } = await supabase.from("venues").select("id, user_id, name").eq("id", id).maybeSingle();
-  if (!venue || venue.user_id !== userId) return; // shared venues are hidden, never deleted
+  if (!venue) return;
+  // Shared venues are hidden, not deleted, except by the admin (who added them).
+  if (venue.user_id !== userId && !(venue.user_id === null && (await isAdmin(supabase)))) return;
 
   if (target !== "keep" && target !== "none") {
     if (target === id) return;

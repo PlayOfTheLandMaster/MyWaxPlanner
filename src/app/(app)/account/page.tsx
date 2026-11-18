@@ -1,3 +1,4 @@
+import { CopyLink } from "./copy-link";
 import { Suspense } from "react";
 import Link from "next/link";
 import { displayName } from "@/lib/profile/name";
@@ -194,8 +195,10 @@ async function Invitations() {
         Invitations
       </h2>
       <p className="text-sm text-muted">
-        Only these email addresses can create an account. Add someone, then send them the link. Existing accounts are not affected.
+        Only these email addresses can create an account. Add someone, then send them this link; they tap Create an account and
+        use the address you added. Existing accounts are not affected.
       </p>
+      <CopyLink />
       {invites.length > 0 && (
         <ul className="my-3 flex flex-col divide-y divide-line">
           {invites.map((i) => (

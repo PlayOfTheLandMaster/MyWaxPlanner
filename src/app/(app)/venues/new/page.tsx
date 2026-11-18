@@ -5,7 +5,10 @@ import type { Metadata } from "next";
 import { ForecastError, searchPlaces } from "@/lib/weather/forecast";
 import { VenueForm } from "../venue-form";
 import { AreaFields } from "./area-fields";
+import { SearchButton } from "./search-button";
 import { countryCode, provinceName } from "@/lib/venues/search-area";
+import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/learn/load";
 
 export const metadata: Metadata = { title: "Add a venue · My Wax Planner" };
 
@@ -47,6 +50,8 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
     elevation_m: one(p.elev),
   };
   const base = back === "/plan" ? "&back=plan" : back === "/" ? "&back=today" : "";
+  // The admin's venues go on the shared list (migration 20261215000000), so say so.
+  const shared = await isAdmin(await createClient());
 
   return (
     <>
@@ -54,6 +59,11 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
         <BackLink fallback={back} fallbackLabel={back === "/plan" ? "Plan" : back === "/" ? "Today" : "Venues"} />
         <h1 className="text-2xl font-bold">Add a venue</h1>
         <p className="text-sm text-muted">Where you ski. Forecasts are fetched for the venue, wherever your phone is.</p>
+        <p className="text-sm text-muted">
+          {shared
+            ? "As the admin, venues you add go on the shared list for every user."
+            : "Venues you add are yours alone; other users don't see them."}
+        </p>
       </div>
 
       <form method="get" className="flex flex-col gap-2">
@@ -65,13 +75,11 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
             name="q"
             type="search"
             defaultValue={q}
-            placeholder="Search a place, e.g. Lake Louise"
+            placeholder="A ski area, or the nearest town"
             aria-label="Search for a place"
             className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base"
           />
-          <button type="submit" className="min-h-11 shrink-0 rounded-lg border border-line px-4 text-sm font-semibold">
-            Search
-          </button>
+          <SearchButton />
         </div>
       </form>
 
@@ -101,7 +109,9 @@ async function Content({ searchParams }: { searchParams: PageProps<"/venues/new"
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{r.name}</span>
                     <span className="block truncate text-sm text-muted">
-                      {[r.kind, r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null].filter(Boolean).join(" · ")}
+                      {[r.kind, r.near ? `near ${r.near}` : null, r.detail, r.elevation_m !== null ? `${r.elevation_m} m` : null]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </span>
                   <span className="shrink-0 text-sm text-link">Use</span>

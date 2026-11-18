@@ -24,7 +24,7 @@ export function InviteForm() {
       )}
       {state.added && (
         <p role="status" className="text-sm">
-          {state.added} can now create an account. Send them the link: https://www.mywaxplanner.com
+          {state.added} can now create an account. Send them the link above.
         </p>
       )}
       <button
