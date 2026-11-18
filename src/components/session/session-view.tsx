@@ -328,21 +328,30 @@ export async function SessionView({
             {s.notes && <p className="whitespace-pre-line text-sm">{s.notes}</p>}
           </section>
 
+          {/* Rated: folded to one line, so How it went leads. */}
           {s.layers.length > 0 && (
-            <section className={card} aria-label="What went on the skis">
-              <Layers layers={s.layers} plan={s.plan} compare={compare} change={null} />
-            </section>
+            <details className="rounded-xl border border-line bg-surface">
+              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+                Waxes - {s.layers.length} {s.layers.length === 1 ? "layer" : "layers"} applied
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                <Layers layers={s.layers} plan={s.plan} compare={compare} change={null} />
+              </div>
+            </details>
           )}
         </>
       )}
 
       {/* A plan's steps are shown as the checklist above; anything else written as finish notes is shown here. */}
       {(s.finish_tags.length > 0 || (s.finish_notes && !(planned && steps.length > 0))) && (
-        <section className={card}>
-          <h2 className="font-semibold">Finish</h2>
-          {s.finish_tags.length > 0 && <p className="text-sm">{s.finish_tags.join(" → ")}</p>}
-          {s.finish_notes && !(planned && steps.length > 0) && <p className="whitespace-pre-line text-sm text-muted">{s.finish_notes}</p>}
-        </section>
+        // Folded once rated, like the waxes above; open while the session is under way.
+        <details open={planned} className="rounded-xl border border-line bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Finish</summary>
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            {s.finish_tags.length > 0 && <p className="text-sm">{s.finish_tags.join(" → ")}</p>}
+            {s.finish_notes && !(planned && steps.length > 0) && <p className="whitespace-pre-line text-sm text-muted">{s.finish_notes}</p>}
+          </div>
+        </details>
       )}
 
       {/* Folded to one line: the forecast's snow and air temperatures; opens on
