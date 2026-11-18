@@ -450,13 +450,6 @@ function SessionFormInner({
             name="ski_id"
             value={skiId}
             onChange={(e) => {
-              if (e.target.value === "__add") {
-                // Put the pull-down back on its pair first, then open the panel a frame later:
-                // Chrome on iPad (Apple's engine) showed the choice and opened nothing.
-                e.currentTarget.value = skiId;
-                requestAnimationFrame(() => setAddingSki(true));
-                return;
-              }
               setSkiId(e.target.value);
               const ski = allOptions.skis.find((k) => k.id === e.target.value);
               if (ski) setTechnique(ski.technique);
@@ -469,10 +462,9 @@ function SessionFormInner({
                 {k.name}
               </option>
             ))}
-            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
-        {/* A plain button as well as the pull-down's last choice: it works the same on every browser. */}
+        {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
         {!addingSki && (
           <button type="button" onClick={() => setAddingSki(true)} className="-mt-2 inline-flex min-h-11 items-center self-start text-sm text-link underline">
             + Add a pair of skis
@@ -861,12 +853,7 @@ function LayerRow({
         <select
           value={layer.user_product_id}
           onChange={(e) => {
-            if (e.target.value === "__add") {
-              // As for skis: put the pull-down back, then open the panel a frame later (iPad).
-              e.currentTarget.value = layer.user_product_id;
-              requestAnimationFrame(() => setAdding(true));
-              return;
-            }
+
             const wax = options.waxes.find((w) => w.id === e.target.value);
             onChange({
               user_product_id: e.target.value,
@@ -892,8 +879,13 @@ function LayerRow({
               ))}
             </optgroup>
           )}
-          <option value="__add">Add a wax…</option>
         </select>
+      )}
+      {/* Find or add a wax that is not in the box (a link, as for skis; not a choice in the list). */}
+      {!adding && (
+        <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
+          + Add a wax
+        </button>
       )}
       <div className="grid grid-cols-3 gap-2">
         <select value={layer.method} onChange={(e) => onChange({ method: e.target.value })} aria-label={`Layer ${n} method`} className={small}>

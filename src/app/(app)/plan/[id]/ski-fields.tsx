@@ -93,15 +93,7 @@ export function SkiFields({
           <select
             name="ski"
             value={skiId}
-            onChange={(e) => {
-              if (e.target.value === "__add") {
-                // Back to the pair first, then the panel a frame later: Chrome on iPad opened nothing.
-                e.currentTarget.value = skiId;
-                requestAnimationFrame(() => setAdding(true));
-                return;
-              }
-              setSkiId(e.target.value);
-            }}
+            onChange={(e) => setSkiId(e.target.value)}
             className={field}
           >
             <option value="">Select ski</option>
@@ -113,11 +105,10 @@ export function SkiFields({
                   : ""}
               </option>
             ))}
-            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
       )}
-      {/* A plain button as well as the pull-down's last choice, so it works on every browser. */}
+      {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
       {owner !== "other" && !adding && (
         <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
           + Add a pair of skis
