@@ -287,6 +287,19 @@ export function WaxForm({
         )}
       </fieldset>
 
+      {/* Out of More details: it is on the packaging and the wax-along needs it (the owner's call). */}
+      <label className={label}>
+        Iron temperature, °C
+        <input
+          name="iron_temp_c"
+          inputMode="numeric"
+          placeholder="e.g. 130, as on the packaging"
+          defaultValue={num(initial?.iron_temp_c)}
+          className={field}
+        />
+        <span className="text-xs font-normal text-muted">Leave blank for a wax that isn&apos;t ironed.</span>
+      </label>
+
       <label className={label}>
         Fluoro
         <select name="fluoro_status" defaultValue={initial?.fluoro_status ?? "fluoro_free"} className={field}>
@@ -319,7 +332,7 @@ export function WaxForm({
         onClick={() => setMoreOpen(!moreOpen)}
         className="fold-toggle inline-flex min-h-11 items-center self-start text-sm text-link underline active:opacity-70"
       >
-        {moreOpen ? "Fewer details" : "More details (snow types, humidity, iron temperature…)"}
+        {moreOpen ? "Fewer details" : "More details (snow types, humidity, form…)"}
       </button>
 
       {/* Hidden rather than unmounted, so folding it away keeps what was typed. */}
@@ -357,17 +370,6 @@ export function WaxForm({
               </option>
             ))}
           </select>
-        </label>
-
-        <label className={label}>
-          Iron temperature, °C
-          <input
-            name="iron_temp_c"
-            inputMode="numeric"
-            placeholder="e.g. 130"
-            defaultValue={num(initial?.iron_temp_c)}
-            className={field}
-          />
         </label>
 
         <label className={label}>

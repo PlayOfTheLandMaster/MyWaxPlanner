@@ -19,9 +19,16 @@ import type { HumidityBand, LayerRole, ProductForm, SnowType } from "@/lib/catal
 import { loadBoxRow, waxPhotoUrls } from "@/lib/wax-box/load";
 import { WaxPhoto } from "./wax-photo";
 import { rangeText } from "@/lib/wax-box/describe";
-import { clearSnowRange, removeFromBox, saveNotes, saveSnowRange, setAmount } from "../actions";
+import { clearSnowRange, removeFromBox, saveIronTemp, saveNotes, saveSnowRange, setAmount } from "../actions";
 import { NotesForm } from "./notes-form";
 import { SnowRangeForm } from "./snow-range-form";
+import { IronTempForm } from "./iron-temp-form";
+
+
+// Waxes that go on with an iron: solid and powder glide waxes, top coats and
+// grip base binders. Liquids, pastes, sprays, kick waxes and klisters are
+// not asked for an iron temperature.
+const IRONED = new Set(["hydrocarbon", "synthetic", "powder", "top_coat", "base_prep", "binder"]);
 
 export const metadata: Metadata = { title: "Wax · My Wax Planner" };
 
@@ -57,7 +64,7 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
     ["Snow humidity", p.humidity_bands.map((h) => HUMIDITY_LABELS[h as HumidityBand]).join(", ") || null],
     ["Used as", p.layer_roles.map((r) => LAYER_ROLE_LABELS[r as LayerRole]).join(", ") || null],
     ["Fluoro", FLUORO_LABELS[p.fluoro_status]],
-    ["Iron temperature", p.iron_temp_c !== null ? `${p.iron_temp_c} °C` : null],
+    [p.iron_is_yours ? "Iron temperature (yours)" : "Iron temperature", p.iron_temp_c !== null ? `${p.iron_temp_c} °C` : null],
   ];
 
   return (
@@ -117,6 +124,11 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
           save={saveSnowRange.bind(null, p.id)}
           clear={clearSnowRange.bind(null, p.id)}
         />
+      )}
+
+      {/* The maker's figure comes first; this fills a gap in the shared catalogue. */}
+      {!own && (p.iron_temp_c === null || p.iron_is_yours) && IRONED.has(p.category) && (
+        <IronTempForm yours={p.iron_is_yours ? p.iron_temp_c : null} save={saveIronTemp.bind(null, p.id)} />
       )}
 
       <NotesForm initial={row.notes} save={saveNotes.bind(null, row.id)} />

@@ -9,6 +9,8 @@ export type SnowRange = {
   /** The skier's own range for old or transformed snow; optional. */
   old_temp_min_c?: number | null;
   old_temp_max_c?: number | null;
+  /** The skier's own iron temperature, used only where the maker gives none. */
+  iron_temp_c?: number | null;
 };
 
 export type SnowRangeInput = { range: SnowRange; error?: undefined } | { range?: undefined; error: string };
@@ -45,6 +47,7 @@ type Ranged = {
   temp_max_c: number | null;
   old_temp_min_c?: number | null;
   old_temp_max_c?: number | null;
+  iron_temp_c?: number | null;
 };
 
 /**
@@ -56,12 +59,24 @@ type Ranged = {
 export function applySnowRanges<T extends Ranged>(
   waxes: T[],
   ranges: Map<string, SnowRange>,
-): (T & { snow_range_is_yours: boolean })[] {
+): (T & { snow_range_is_yours: boolean; iron_is_yours: boolean })[] {
   return waxes.map((w) => {
     const r = ranges.get(w.id);
-    if (!r) return { ...w, snow_range_is_yours: false };
+    // The maker's iron temperature comes first; the skier's fills a gap.
+    const yourIron = r?.iron_temp_c != null && w.iron_temp_c == null;
+    const iron = yourIron ? { iron_temp_c: r!.iron_temp_c } : {};
+    // A row may hold only an iron temperature: then the wax keeps its own range.
+    if (!r || (r.temp_min_c == null && r.temp_max_c == null)) return { ...w, ...iron, snow_range_is_yours: false, iron_is_yours: yourIron };
     // The skier's old-snow range, when they gave one, replaces the wax's own too.
     const old = r.old_temp_min_c != null || r.old_temp_max_c != null ? { old_temp_min_c: r.old_temp_min_c ?? null, old_temp_max_c: r.old_temp_max_c ?? null } : {};
-    return { ...w, temp_min_c: r.temp_min_c, temp_max_c: r.temp_max_c, ...old, snow_range_is_yours: true };
+    return { ...w, temp_min_c: r.temp_min_c, temp_max_c: r.temp_max_c, ...old, ...iron, snow_range_is_yours: true, iron_is_yours: yourIron };
   });
+}
+
+/** Reads Your iron temperature: blank clears it, otherwise 80–180 °C. */
+export function readIronTemp(form: FormData): { iron: number | null; error?: undefined } | { iron?: undefined; error: string } {
+  const v = readNumber(String(form.get("iron_temp_c") ?? ""));
+  if (v === "invalid") return { error: "The iron temperature should be a number in °C, such as 130." };
+  if (v !== null && (v < 80 || v > 180)) return { error: "The iron temperature should be between 80 and 180 °C." };
+  return { iron: v === null ? null : Math.round(v) };
 }
