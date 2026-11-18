@@ -42,3 +42,15 @@ export async function deleteNote(id: string) {
   revalidatePath("/learn");
   redirect(data?.length ? "/learn?deleted=1" : "/learn");
 }
+
+/**
+ * Publishes an admin's own note to every user, or takes it back. The database
+ * refuses anyone else (only the writer may change a note, only an admin may
+ * publish), so a refusal is counted rather than assumed away.
+ */
+export async function setPublished(id: string, publish: boolean) {
+  const { supabase } = await signedIn();
+  const { data } = await supabase.from("learn_notes").update({ published: publish }).eq("id", id).select("id");
+  revalidatePath("/learn");
+  redirect(data?.length ? `/learn/notes/${id}?${publish ? "published" : "unpublished"}=1` : `/learn/notes/${id}?notpublished=1`);
+}

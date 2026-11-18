@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { groupNotes, preview, readNote, searchNotes, type Note } from "./notes";
+import { groupNotes, preview, readNote, searchNotes, splitNotes, type Note } from "./notes";
 
 const form = (fields: Record<string, string>) => {
   const f = new FormData();
@@ -20,8 +20,10 @@ test("refuses a note with no section, no title or too much text", () => {
   assert.match(readNote(form({ section: "other", title: "x", body: "y".repeat(20001) })).error ?? "", /too long/);
 });
 
-const note = (id: string, section: Note["section"], updated_at: string, title = id, body = ""): Note => ({
+const note = (id: string, section: Note["section"], updated_at: string, title = id, body = "", user_id = "me", published = false): Note => ({
   id,
+  user_id,
+  published,
   section,
   title,
   body,
@@ -51,4 +53,18 @@ test("search matches every word, in the title or the text", () => {
   assert.deepEqual(searchNotes(notes, "cold swix").map((n) => n.id), ["a"]);
   assert.deepEqual(searchNotes(notes, "").map((n) => n.id), ["a", "b"]);
   assert.deepEqual(searchNotes(notes, "tube warm").map((n) => n.id), ["b"]);
+});
+
+test("the reader's own notes, and the admin's published ones, are kept apart", () => {
+  const { own, shared } = splitNotes(
+    [
+      note("mine", "other", "2026-01-01"),
+      note("mine-published", "other", "2026-01-02", "t", "", "me", true),
+      note("admin-old", "how_to", "2026-01-01", "t", "", "admin", true),
+      note("admin-new", "how_to", "2026-02-01", "t", "", "admin", true),
+    ],
+    "me",
+  );
+  assert.deepEqual(own.map((n) => n.id), ["mine", "mine-published"]);
+  assert.deepEqual(shared.map((n) => n.id), ["admin-new", "admin-old"]);
 });

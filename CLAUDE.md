@@ -200,6 +200,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - **Waxing notes are private; the video library is shared.** Both are on
   the Learn tab, but `learn_notes` is each skier's own (owner-only policies)
   while `learn_videos` is written by admins for everyone. Don't merge them.
+  The one exception: an admin may publish their own note (`published`;
+  only an admin may set it, by policy), and everyone reads it, read only.
+  The writer alone still edits or deletes it.
   A note's text is shown as plain text (`whitespace-pre-wrap`), never as HTML
   or markdown.
 - **The how-to guide is `src/lib/learn/how-to.ts`**, and the shareable Claude

@@ -5,7 +5,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { VIDEO_COLUMNS, isAdmin } from "@/lib/learn/load";
 import { LEVEL_LABELS, TOPICS, TOPIC_LABELS, thumbnailUrl, type Topic, type Video } from "@/lib/learn/videos";
-import { NOTE_COLUMNS, SECTION_LABELS, groupNotes, preview, searchNotes, type Note } from "@/lib/learn/notes";
+import { NOTE_COLUMNS, SECTION_LABELS, groupNotes, preview, searchNotes, splitNotes, type Note } from "@/lib/learn/notes";
+import { currentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Learn · My Wax Planner" };
 
@@ -54,10 +55,12 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
 async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["searchParams"] }) {
   const p = await searchParams;
   const nq = one(p.nq)?.trim().slice(0, 60);
-  const { data, error } = await (await createClient()).from("learn_notes").select(NOTE_COLUMNS);
+  const [{ data, error }, user] = await Promise.all([(await createClient()).from("learn_notes").select(NOTE_COLUMNS), currentUser()]);
   if (error) return <p role="alert" className="text-sm text-danger">Could not read your notes: {error.message}</p>;
-  const all = (data ?? []) as Note[];
+  // Row Level Security returns the reader's own notes and every published one.
+  const { own: all, shared: allShared } = splitNotes((data ?? []) as Note[], user?.id ?? "");
   const groups = groupNotes(searchNotes(all, nq));
+  const shared = searchNotes(allShared, nq);
   // Keeps the video filters when searching the notes, and the other way round.
   const keep = (["topic", "technique", "q"] as const).map((k) => [k, one(p[k])] as const).filter(([, v]) => v);
 
@@ -74,13 +77,21 @@ async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["sear
       >
         Write a note
       </Link>
+      {shared.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h3 className="font-semibold">
+            Shared by the admin <span className="font-normal text-muted">({shared.length})</span>
+          </h3>
+          <NoteList notes={shared} section />
+        </section>
+      )}
       {all.length === 0 ? (
         <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
           Keep your own waxing instructions, notes on products, how-tos and trip notes (places to stay, eat and shop) here, as short articles. Only you see them.
         </p>
       ) : (
         <>
-          {all.length > 4 && (
+          {all.length + allShared.length > 4 && (
             <form method="get" className="flex gap-2">
               {keep.map(([k, v]) => (
                 <input key={k} type="hidden" name={k} value={v} />
@@ -106,30 +117,44 @@ async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["sear
                 <h3 className="font-semibold">
                   {SECTION_LABELS[g.section]} <span className="font-normal text-muted">({g.notes.length})</span>
                 </h3>
-                <ul className="flex flex-col gap-1">
-                  {g.notes.map((n) => (
-                    <li key={n.id}>
-                      <Link
-                        href={`/learn/notes/${n.id}`}
-                        className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 active:bg-tile"
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate font-medium">{n.title}</span>
-                          {n.body && <span className="block truncate text-sm text-muted">{preview(n.body)}</span>}
-                        </span>
-                        <span aria-hidden className="text-muted">
-                          →
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <NoteList notes={g.notes} />
               </section>
             ))
           )}
         </>
       )}
     </>
+  );
+}
+
+/** Notes as rows to tap; `section` names each one's section, for the shared list that mixes them. */
+function NoteList({ notes, section }: { notes: Note[]; section?: boolean }) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {notes.map((n) => (
+        <li key={n.id}>
+          <Link
+            href={`/learn/notes/${n.id}`}
+            className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 active:bg-tile"
+          >
+            <span className="min-w-0">
+              <span className="block truncate font-medium">
+                {n.title}
+                {!section && n.published && <span className="ml-2 rounded-full bg-tile px-2 text-xs font-normal">Published</span>}
+              </span>
+              {(section || n.body) && (
+                <span className="block truncate text-sm text-muted">
+                  {[section ? SECTION_LABELS[n.section] : null, n.body ? preview(n.body) : null].filter(Boolean).join(" · ")}
+                </span>
+              )}
+            </span>
+            <span aria-hidden className="text-muted">
+              →
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

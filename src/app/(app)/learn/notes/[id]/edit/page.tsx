@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/nav-trail";
 import { createClient } from "@/lib/supabase/server";
 import { NOTE_COLUMNS, type Note } from "@/lib/learn/notes";
+import { currentUser } from "@/lib/auth/current-user";
 import { NoteForm } from "../../note-form";
 import { saveNote } from "../../actions";
 
@@ -21,8 +22,12 @@ export default function EditNotePage({ params }: PageProps<"/learn/notes/[id]/ed
 
 async function Form({ params }: { params: PageProps<"/learn/notes/[id]/edit">["params"] }) {
   const { id } = await params;
-  const { data, error } = await (await createClient()).from("learn_notes").select(NOTE_COLUMNS).eq("id", id).maybeSingle();
-  if (error?.code === "22P02" || (!error && !data)) notFound();
+  const [{ data, error }, user] = await Promise.all([
+    (await createClient()).from("learn_notes").select(NOTE_COLUMNS).eq("id", id).maybeSingle(),
+    currentUser(),
+  ]);
+  // A published note can be read by everyone but changed only by its writer.
+  if (error?.code === "22P02" || (!error && (!data || data.user_id !== user?.id))) notFound();
   if (error) return <p role="alert" className="text-sm text-danger">Could not read the note: {error.message}</p>;
   const note = data as Note;
   return (

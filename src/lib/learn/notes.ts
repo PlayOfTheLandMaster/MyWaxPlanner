@@ -14,9 +14,19 @@ export const SECTION_LABELS: Record<Section, string> = {
   other: "Other",
 };
 
-export type Note = { id: string; section: Section; title: string; body: string; created_at: string; updated_at: string };
+export type Note = {
+  id: string;
+  user_id: string;
+  section: Section;
+  title: string;
+  body: string;
+  /** Set by an admin on their own note: every signed-in user can read it. */
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
-export const NOTE_COLUMNS = "id, section, title, body, created_at, updated_at";
+export const NOTE_COLUMNS = "id, user_id, section, title, body, published, created_at, updated_at";
 
 export const TITLE_MAX = 120;
 export const BODY_MAX = 20000;
@@ -61,4 +71,12 @@ export function searchNotes(notes: Note[], q: string | undefined): Note[] {
     const text = `${n.title} ${n.body}`.toLowerCase();
     return words.every((w) => text.includes(w));
   });
+}
+
+/** Splits what the reader can see into their own notes and those an admin published for everyone. */
+export function splitNotes(notes: Note[], me: string): { own: Note[]; shared: Note[] } {
+  return {
+    own: notes.filter((n) => n.user_id === me),
+    shared: notes.filter((n) => n.user_id !== me && n.published).sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+  };
 }
