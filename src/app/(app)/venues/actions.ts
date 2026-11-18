@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dayIn } from "@/lib/venues/today";
 import { readerTimeZone } from "@/lib/reader-zone";
@@ -75,8 +75,12 @@ function revalidateVenues() {
 /** Sessions and conditions at this venue keep their data; they just stop naming it. */
 export async function deleteVenue(id: string) {
   const { supabase } = await signedIn();
-  await supabase.from("venues").delete().eq("id", id);
+  // A delete that Row Level Security refuses is not an error, only zero rows,
+  // so count what went: the admin's Delete once "did nothing" with no word why.
+  const { data: gone, error } = await supabase.from("venues").delete().eq("id", id).select("id");
+  if (error || !gone?.length) redirect("/venues?notdeleted=1");
   revalidateVenues();
+  refresh();
 }
 
 /** If home or today's location is `from`, point it at `to` (null: clear it). */

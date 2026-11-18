@@ -24,9 +24,19 @@ export default function VenuesPage({ searchParams }: PageProps<"/venues">) {
         Add a venue
       </Link>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <NotDeleted searchParams={searchParams} />
         <List />
       </Suspense>
     </main>
+  );
+}
+
+async function NotDeleted({ searchParams }: { searchParams: PageProps<"/venues">["searchParams"] }) {
+  if (!(await searchParams).notdeleted) return null;
+  return (
+    <p role="alert" className="rounded-lg border border-line bg-surface p-3 text-sm text-danger">
+      That venue could not be deleted. Reload the page and try again; if it is still there, tell the admin.
+    </p>
   );
 }
 
