@@ -440,7 +440,10 @@ function SessionFormInner({
             value={skiId}
             onChange={(e) => {
               if (e.target.value === "__add") {
-                setAddingSki(true);
+                // Put the pull-down back on its pair first, then open the panel a frame later:
+                // Chrome on iPad (Apple's engine) showed the choice and opened nothing.
+                e.currentTarget.value = skiId;
+                requestAnimationFrame(() => setAddingSki(true));
                 return;
               }
               setSkiId(e.target.value);
@@ -458,6 +461,12 @@ function SessionFormInner({
             <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
+        {/* A plain button as well as the pull-down's last choice: it works the same on every browser. */}
+        {!addingSki && (
+          <button type="button" onClick={() => setAddingSki(true)} className="-mt-2 inline-flex min-h-11 items-center self-start text-sm text-link underline">
+            + Add a pair of skis
+          </button>
+        )}
         {/* Adding a pair here keeps the wax job: leaving for the Wax box used to lose it. */}
         {addingSki && (
           <AddSkiInline
@@ -842,7 +851,9 @@ function LayerRow({
           value={layer.user_product_id}
           onChange={(e) => {
             if (e.target.value === "__add") {
-              setAdding(true);
+              // As for skis: put the pull-down back, then open the panel a frame later (iPad).
+              e.currentTarget.value = layer.user_product_id;
+              requestAnimationFrame(() => setAdding(true));
               return;
             }
             const wax = options.waxes.find((w) => w.id === e.target.value);

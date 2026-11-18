@@ -95,7 +95,9 @@ export function SkiFields({
             value={skiId}
             onChange={(e) => {
               if (e.target.value === "__add") {
-                setAdding(true);
+                // Back to the pair first, then the panel a frame later: Chrome on iPad opened nothing.
+                e.currentTarget.value = skiId;
+                requestAnimationFrame(() => setAdding(true));
                 return;
               }
               setSkiId(e.target.value);
@@ -115,10 +117,10 @@ export function SkiFields({
           </select>
         </label>
       )}
-      {/* No pairs saved yet for this person: offer to add one here rather than in the Wax box. */}
-      {pairs.length === 0 && owner !== "other" && !adding && (
+      {/* A plain button as well as the pull-down's last choice, so it works on every browser. */}
+      {owner !== "other" && !adding && (
         <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
-          Add a pair of skis
+          + Add a pair of skis
         </button>
       )}
       {adding && (
