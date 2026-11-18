@@ -88,13 +88,7 @@ async function List() {
                       </form>
                     )}
                     {/* Sessions here keep the name; Today's ✕ also offers to move them. */}
-                    {v.user_id && (
-                      <form action={removeVenue.bind(null, v.id, "keep")}>
-                        <button type="submit" className="min-h-11 rounded-lg px-3 text-sm text-danger">
-                          Delete
-                        </button>
-                      </form>
-                    )}
+                    {v.user_id && <ConfirmDelete action={removeVenue.bind(null, v.id, "keep")} label={v.name} />}
                     {/* The admin can delete a shared venue added by mistake (two taps);
                         everyone's sessions there keep its name. */}
                     {!v.user_id && admin && <ConfirmDelete action={removeVenue.bind(null, v.id, "keep")} label={v.name} />}
