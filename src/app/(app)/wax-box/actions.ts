@@ -145,9 +145,12 @@ export async function addWax(_prev: WaxFormState, formData: FormData): Promise<W
   }
 
   const notes = (record.notes ?? "").trim() || null;
+  // The photo picked on the form, already uploaded to the owner's "new" folder.
+  const photo = String(formData.get("photo_path") ?? "");
+  const photo_path = photo.startsWith(`${userId}/new/`) && !photo.includes("..") ? photo : null;
   const { data: added, error } = await supabase
     .from("user_products")
-    .insert({ user_id: userId, product_id: productId, amount_left: amount, notes })
+    .insert({ user_id: userId, product_id: productId, amount_left: amount, notes, photo_path })
     .select("id")
     .single();
   if (error) {

@@ -8,6 +8,7 @@ import { searchWaxes } from "@/lib/wax-box/search";
 import { rangeText } from "@/lib/wax-box/describe";
 import { WaxForm } from "../wax-form";
 import { addKnownWax, addWax } from "../actions";
+import { currentUser } from "@/lib/auth/current-user";
 
 export const metadata: Metadata = { title: "Add a wax · My Wax Planner" };
 
@@ -117,6 +118,6 @@ async function Find({ searchParams }: { searchParams: PageProps<"/wax-box/add">[
 }
 
 async function NewWaxForm() {
-  const brands = await loadBrands(await createClient());
-  return <WaxForm brands={brands} save={addWax} submitLabel="Add to wax box" />;
+  const [brands, user] = await Promise.all([loadBrands(await createClient()), currentUser()]);
+  return <WaxForm brands={brands} save={addWax} submitLabel="Add to wax box" photoUserId={user?.id} />;
 }
