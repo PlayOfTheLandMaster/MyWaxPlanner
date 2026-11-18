@@ -139,6 +139,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   `temp_min_c` directly. A shared catalogue wax cannot be edited, so its
   second range lives with the skier's own snow range (`user_snow_ranges`,
   old_* columns, the "Your snow range" card).
+- **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
+  packaging prints them: `formatRange`, the engine's reasons, the forecast
+  card and History's filter chip. Entry boxes stay From (colder) / To.
 
 ## iPad and Chrome on iOS (WebKit)
 

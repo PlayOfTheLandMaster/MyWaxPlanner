@@ -112,10 +112,11 @@ export const AMOUNT_LABELS = {
   empty: "Empty",
 } as const;
 
-/** "−12 to −6 °C", "up to 0 °C", "from −4 °C", or null for no range. */
+/** "−6 to −12 °C" (warmer end first), "up to 0 °C", "from −4 °C", or null for no range. */
 export function formatRange(min: number | null, max: number | null): string | null {
   const t = (n: number) => `${n > 0 ? "+" : ""}${n}`.replace("-", "−");
-  if (min !== null && max !== null) return `${t(min)} to ${t(max)} °C`;
+  // Warmer end first ("−1 to −10 °C"), as wax packaging prints it (the owner's choice).
+  if (min !== null && max !== null) return `${t(max)} to ${t(min)} °C`;
   if (max !== null) return `up to ${t(max)} °C`;
   if (min !== null) return `from ${t(min)} °C`;
   return null;

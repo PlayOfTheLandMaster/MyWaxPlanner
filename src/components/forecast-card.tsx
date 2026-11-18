@@ -32,7 +32,7 @@ export function ForecastCard({ w, compact = false, bare = false }: { w: Forecast
       <dl className="grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-lg bg-tile p-2">
           <dt className="text-xs text-muted">Snow temperature (estimate)</dt>
-          <dd className="font-semibold">{cold === warm ? deg(cold) : `${deg(cold)} to ${deg(warm)}`}</dd>
+          <dd className="font-semibold">{cold === warm ? deg(cold) : `${deg(warm)} to ${deg(cold)}`}</dd>
         </div>
         <div className="rounded-lg bg-tile p-2">
           <dt className="text-xs text-muted">Air humidity</dt>

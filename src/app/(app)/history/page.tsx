@@ -137,7 +137,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
     f.status && { field: "Status", label: STATUS_LABELS[f.status as "planned"], without: { status: undefined } },
     (f.tmin !== undefined || f.tmax !== undefined) && {
       field: "Snow temperature",
-      label: `${f.tmin !== undefined ? deg(f.tmin) : "…"} to ${f.tmax !== undefined ? deg(f.tmax) : "…"}`,
+      label: `${f.tmax !== undefined ? deg(f.tmax) : "…"} to ${f.tmin !== undefined ? deg(f.tmin) : "…"}`,
       without: { tmin: undefined, tmax: undefined },
     },
     f.snow && { field: "Snow type", label: SNOW_TYPE_LABELS[f.snow as "wet"], without: { snow: undefined } },

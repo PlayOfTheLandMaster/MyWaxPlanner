@@ -208,7 +208,7 @@ export function scoreProduct(
     if (tempCritical) reasons.push("no temperature range on record");
   } else {
     score = tf;
-    const range = `${r.old ? "old-snow range " : ""}${r.temp_min_c === null ? "…" : deg(Number(r.temp_min_c))} to ${r.temp_max_c === null ? "…" : deg(Number(r.temp_max_c))} °C`;
+    const range = `${r.old ? "old-snow range " : ""}${r.temp_max_c === null ? "…" : deg(Number(r.temp_max_c))} to ${r.temp_min_c === null ? "…" : deg(Number(r.temp_min_c))} °C`;
     reasons.push(
       tf >= 0.8 ? `${range} covers ${deg(c.snow_temp_c!)} °C snow` : `${range}, a little off ${deg(c.snow_temp_c!)} °C`,
     );
