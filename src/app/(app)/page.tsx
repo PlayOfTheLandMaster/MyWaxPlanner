@@ -302,7 +302,7 @@ async function Today() {
             href={venue ? `/plan?venue=${venue.id}` : "/plan"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
-            {who.current ? `Plan a wax session for ${who.current.name}` : "Plan a wax session"}
+            {who.current ? `Start a wax session for ${who.current.name}` : "Start a wax session"}
           </Link>
           <Link
             href={venue ? `/history/new?record=1&venue=${venue.id}` : "/history/new?record=1"}

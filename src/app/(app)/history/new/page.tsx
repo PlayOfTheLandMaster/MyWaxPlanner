@@ -185,7 +185,7 @@ async function Record({
           </Link>
         ) : (
           <Link href={venue ? `/plan?venue=${venue.id}` : "/plan"} className="inline-flex min-h-11 items-center text-base text-link underline">
-            Or Plan a wax session if you want suggestions
+            Or Start a wax session if you want suggestions
           </Link>
         )}
       </p>

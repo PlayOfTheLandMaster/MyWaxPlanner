@@ -102,6 +102,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   suggests) and **Record a wax job** (you enter the waxes). Today once said
   "Plan today's wax" while the Session tab said "Plan a wax", and the full form
   had three names. New entry points use these two names.
+  The owner has since reworded what a guided waxer sees: Today's main button,
+  the setup note and Record a wax job's link say **Start a wax session**, and
+  the Session tab's heading **Plan a guided wax session**. Expert-facing words
+  and the screens themselves keep "Plan a wax session".
 - **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from
   behaviour. Null means not chosen and behaves as guided.
 - **Optional checklist steps never keep the checklist open.** `progress().todo`
