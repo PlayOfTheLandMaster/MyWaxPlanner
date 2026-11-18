@@ -22,7 +22,7 @@ export const GUIDE: GuideSection[] = [
     title: "Today",
     steps: [
       "Check the Location card. Change it if you're skiing somewhere else today; tomorrow starts at home again.",
-      "Open Today's Skiing Conditions, check the snow (temperature, snowball test, type, track) and save. Recording a wax job needs this first.",
+      "Open Today's Skiing Conditions, check the snow (temperature, snowball test, type, track) and save. Recording a wax job needs this first. If the snow changes during the day, tap Change and save again.",
       "Sessions under way, and skied ones waiting for a rating, are on the Sessions tab. Tap one to open it.",
     ],
   },

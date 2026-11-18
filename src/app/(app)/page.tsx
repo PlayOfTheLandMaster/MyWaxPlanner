@@ -13,6 +13,7 @@ import { SnowCheckForm } from "@/components/snow-check-form";
 import { checkFor, recordBlocker, RECORD_BLOCKED } from "@/lib/snow/check";
 import { loadSnowCheck } from "@/lib/snow/load";
 import { HUMIDITY_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
+import { LocalTime } from "@/components/local-time";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { FALLBACK } from "@/lib/profile/name";
 import { progress, setupSteps } from "@/lib/setup/steps";
@@ -283,20 +284,35 @@ async function Conditions({ venue }: { venue: VenueRow }) {
       {/* Checked once here, used by every wax job today at this venue. */}
       <details className={fold}>
         <summary className={foldHead}>
-          <span className="font-semibold">Today&apos;s Skiing Conditions</span>
-          <span className="truncate text-sm text-muted">
-            {check
-              ? `· ${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`
-              : "· Not Entered yet"}
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Today&apos;s Skiing Conditions</span>
+            <span className="block truncate text-sm text-muted">
+              {check
+                ? `${temp(check.snow_temp_c)} · ${HUMIDITY_LABELS[check.snow_humidity_band].toLowerCase()} · ${SNOW_TYPE_LABELS[check.snow_type].toLowerCase()}`
+                : "Not entered yet"}
+            </span>
           </span>
+          {/* The snow can change during the day: say plainly that this opens to edit. */}
+          <span className="shrink-0 text-sm text-link underline">{check ? "Change" : "Enter"}</span>
         </summary>
         <div className="flex flex-col gap-3 px-4 pb-4">
           <p className="text-sm text-muted">
-            {check
-              ? "Checked today. Every wax job today at this venue uses these; change them if the snow changes."
-              : "Filled in from the forecast. At the trail, a snowball and a glance at the track beat any estimate. Save once; every wax job today uses it."}
+            {check ? (
+              <>
+                {check.checked_at ? (
+                  <>
+                    Checked at <LocalTime iso={check.checked_at} format="time" />.{" "}
+                  </>
+                ) : null}
+                Snow changed? Change it here and save: wax jobs from now on use the new conditions. Sessions already saved keep the ones
+                they were made with.
+              </>
+            ) : (
+              "Filled in from the forecast. At the trail, a snowball and a glance at the track beat any estimate. Save once; every wax job today uses it."
+            )}
           </p>
           <SnowCheckForm
+            editing={!!check}
             venueId={venue.id}
             day={day}
             initial={
