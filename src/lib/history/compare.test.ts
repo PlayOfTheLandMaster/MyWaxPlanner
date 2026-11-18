@@ -88,9 +88,9 @@ test("empty rows and sections are dropped; skate-only hides grip", () => {
   assert.equal(find([a, b], "Event"), undefined);
 });
 
-test("forecast-only conditions say so; notes are never marked", () => {
+test("forecast-only conditions say so; notes are not compared", () => {
   const a = session({ actual: null, forecast: session({}).actual, notes: "fast" });
   const b = session({ id: id(2), notes: "slow" });
   assert.equal(find([a, b], "Snow")?.values[0], "−5 °C (forecast)");
-  assert.equal(find([a, b], "Notes")?.differs, false);
+  assert.equal(find([a, b], "Notes"), undefined);
 });

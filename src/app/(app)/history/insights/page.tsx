@@ -72,7 +72,7 @@ async function Insights({ searchParams }: { searchParams: PageProps<"/history/in
               <h2 id="spread-h" className="text-lg font-semibold">
                 How each wax rated, by snow temperature
               </h2>
-              <p className="text-sm text-muted">One dot per session; darker is a better {word} rating.</p>
+              <p className="text-sm text-muted">One dot per session, showing its {word} rating, 1 to 5.</p>
             </div>
             <Legend />
             <SpreadChart spread={spread} zone={zone} />

@@ -128,8 +128,7 @@ export function compareSections(sessions: Session[], dateOf: (iso: string) => st
             ]
           : []),
         row("Lasted", sessions.map((s) => rating(s.durability_rating))),
-        // Notes always differ; marking them would only add noise.
-        { ...row("Notes", sessions.map((s) => [s.notes, s.finish_notes].map((n) => n?.trim()).filter(Boolean).join(" — ") || null)), differs: false },
+        // No Notes row: free text side by side did not compare (the owner's call); each session's page has them.
       ],
     },
   ];
