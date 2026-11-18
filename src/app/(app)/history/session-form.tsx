@@ -540,7 +540,7 @@ function SessionFormInner({
           )}
         </div>
         {allOptions.waxes.length === 0 && (
-          <p className="text-sm text-muted">Your wax box is empty: choose Add a wax… in a layer to find a wax and put it in your box as you go.</p>
+          <p className="text-sm text-muted">Your wax box is empty: tap + Add a wax under a layer to find a wax and put it in your box as you go.</p>
         )}
       </section>
 
