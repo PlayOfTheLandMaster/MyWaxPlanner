@@ -247,7 +247,7 @@ async function Today() {
           </summary>
           <div className="flex flex-col gap-2 px-4 pb-4">
             <p className="text-sm text-muted">
-              Every wax job today uses this location, until the end of the day. Tomorrow starts at your home venue again.
+              Wax jobs today use this location until you change it. Each morning it resets to your home venue.
             </p>
             <LocationPicker
               venues={usable.map((v) => ({ id: v.id, name: v.name, region: v.region, own: v.user_id !== null, sessions: sessionsAt.get(v.id) ?? 0 }))}
