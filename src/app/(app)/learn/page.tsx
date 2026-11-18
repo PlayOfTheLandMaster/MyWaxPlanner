@@ -19,10 +19,14 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Learn</h1>
-      {/* The app's own short guide, above the tabs. */}
+      {/* Notes and Videos are tabs, each its own list; the tab is in the address, so a link back keeps it. */}
+      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <Tabbed searchParams={searchParams} />
+      </Suspense>
+      {/* The app's own short guide, at the foot of the page (the owner's call). */}
       <Link
         href="/learn/how-to"
-        className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
+        className="mt-2 flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
       >
         <span>
           <span className="block font-semibold">How to use My Wax Planner</span>
@@ -32,10 +36,6 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
           →
         </span>
       </Link>
-      {/* Notes and Videos are tabs, each its own list; the tab is in the address, so a link back keeps it. */}
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Tabbed searchParams={searchParams} />
-      </Suspense>
     </main>
   );
 }
