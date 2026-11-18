@@ -563,9 +563,12 @@ function LayerRow({
   onMove: (by: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  // Waxes from the zone's part of the box first; cleaners and the rest after.
+  // Only the waxes for this layer's zone: glide waxes on a glide layer, grip
+  // waxes on a grip layer. A skate ski has only glide layers, so it never
+  // offers a kick wax. Cleaners and consumables follow, for cleaning layers;
+  // the other zone's waxes are never offered (the owner's call).
   const own = options.waxes.filter((w) => w.group === layer.zone);
-  const other = options.waxes.filter((w) => w.group !== layer.zone);
+  const other = options.waxes.filter((w) => w.group === "solvent" || w.group === "consumable");
   const typed = layer.user_product_id === "" && options.waxes.length > 0 ? layer.custom_product !== "" : true;
   const [typing, setTyping] = useState(typed || options.waxes.length === 0);
   const small = "min-h-11 w-full rounded-lg border border-line bg-surface px-2 text-sm";
@@ -637,7 +640,7 @@ function LayerRow({
             </option>
           ))}
           {other.length > 0 && (
-            <optgroup label="Other items">
+            <optgroup label="Cleaners and consumables">
               {other.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.label}
