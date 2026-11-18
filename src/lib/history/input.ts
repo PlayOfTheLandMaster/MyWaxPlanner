@@ -4,7 +4,7 @@
 
 import { HUMIDITY_BANDS, LAYER_ROLES, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { TECHNIQUES } from "@/lib/skis/input";
-import { KICK_FEELS, METHODS, MODES, SKIES, STATUSES, TRACKS, ZONES, type Status, type Zone } from "./vocab";
+import { DEBRIS, KICK_FEELS, METHODS, MODES, SKIES, STATUSES, TRACKS, ZONES, type Status, type Zone } from "./vocab";
 
 export type LayerInput = {
   zone: Zone;
@@ -157,6 +157,7 @@ function read(form: FormData): SessionPayload {
     new_snow_cm: num(form.get("new_snow_cm"), "New snow", 0, 300),
     sky: oneOf(SKIES, form.get("sky")),
     wind_kmh: num(form.get("wind_kmh"), "Wind", 0, 200),
+    debris: oneOf(DEBRIS, form.get("debris")),
     track: oneOf(TRACKS, form.get("track")),
   };
   const actual = Object.values(actualFields).some((v) => v !== null) ? actualFields : null;
