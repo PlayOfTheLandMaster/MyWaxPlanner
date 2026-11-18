@@ -4,30 +4,10 @@ import { redirect } from "next/navigation";
 import { refresh, revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { readProduct, type ProductRow } from "@/lib/catalogue/csv";
-import { TEMPERATURE_BASES, type TemperatureBasis } from "@/lib/catalogue/vocab";
+import { checkWax, ensureBrand, formRecord, isAmount, productColumns, putWaxInBox, sameNamed } from "@/lib/wax-box/create";
 import { readIronTemp, readSnowRange } from "@/lib/wax-box/snow-range";
 
 export type WaxFormState = { error?: string };
-
-// Field names that appear in readProduct's messages, in the form's words.
-const FIELD_WORDS: [RegExp, string][] = [
-  [/published_temp_min_c|published_temp_max_c/g, "temperature"],
-  [/snow_temp_min_c|snow_temp_max_c/g, "snow temperature"],
-  [/published range/g, "The temperature range"],
-  [/snow range/g, "The snow temperature range"],
-  [/iron_temp_c/g, "Iron temperature"],
-];
-
-function inFormWords(message: string): string {
-  return FIELD_WORDS.reduce((m, [pattern, words]) => m.replace(pattern, words), message);
-}
-
-const LIST_FIELDS = ["snow_types", "humidity_bands", "layer_roles"];
-const AMOUNTS = ["full", "half", "low", "empty"] as const;
-type Amount = (typeof AMOUNTS)[number];
-
-const isAmount = (v: unknown): v is Amount => (AMOUNTS as readonly unknown[]).includes(v);
 
 async function signedIn() {
   const supabase = await createClient();
@@ -36,80 +16,6 @@ async function signedIn() {
   return { supabase, userId: data.user.id };
 }
 
-/** Form fields → the record shape a CSV row has, so one set of rules checks both. */
-function formRecord(formData: FormData): Record<string, string> {
-  const record: Record<string, string> = {};
-  for (const [key, value] of formData.entries()) {
-    if (typeof value !== "string" || key.startsWith("$")) continue;
-    // Checkbox groups arrive as several values; join them as a CSV cell would.
-    record[key] = LIST_FIELDS.includes(key) && record[key] ? `${record[key]};${value}` : value;
-  }
-  record.brand = (record.brand ?? "").trim().replace(/\s+/g, " ");
-  record.name = (record.name ?? "").trim().replace(/\s+/g, " ");
-  return record;
-}
-
-type CheckedWax =
-  | { error: string }
-  | { error?: undefined; row: ProductRow; brandId: string | null; basis: TemperatureBasis };
-
-/**
- * Checks a typed wax and finds its brand among the ones this user can see
- * (shared catalogue and their own), matched ignoring case so "swix" finds
- * "Swix" rather than starting a second brand. Writes nothing: a new brand is
- * only created once everything else has passed (see `ensureBrand`).
- */
-async function checkWax(supabase: SupabaseClient, record: Record<string, string>): Promise<CheckedWax> {
-  if (!record.brand) return { error: "Enter the brand." };
-  if (!record.name) return { error: "Enter the wax's name." };
-
-  const { data: brands, error } = await supabase.from("brands").select("id, name, temperature_basis, created_by");
-  if (error) return { error: `Could not read your brands: ${error.message}` };
-  const matches = (brands ?? []).filter((b) => b.name.toLowerCase() === record.brand.toLowerCase());
-  // Prefer the shared brand if the user also typed one of their own.
-  const existing = matches.find((b) => b.created_by === null) ?? matches[0];
-
-  let basis: TemperatureBasis;
-  if (existing) {
-    basis = existing.temperature_basis;
-  } else if ((TEMPERATURE_BASES as readonly string[]).includes(record.temperature_basis)) {
-    basis = record.temperature_basis as TemperatureBasis;
-  } else {
-    return { error: `${record.brand} is a new brand: say whether it rates its waxes by air or snow temperature.` };
-  }
-
-  const checked = readProduct(record, basis);
-  if (!checked.row) return { error: inFormWords(checked.errors[0]) };
-  return { row: checked.row, brandId: existing?.id ?? null, basis };
-}
-
-async function ensureBrand(
-  supabase: SupabaseClient,
-  userId: string,
-  wax: { row: ProductRow; brandId: string | null; basis: TemperatureBasis },
-): Promise<{ id: string } | { error: string }> {
-  if (wax.brandId) return { id: wax.brandId };
-  const { data, error } = await supabase
-    .from("brands")
-    .insert({ name: wax.row.brand, temperature_basis: wax.basis, created_by: userId })
-    .select("id")
-    .single();
-  if (error) return { error: `Could not save the brand: ${error.message}` };
-  return { id: data.id as string };
-}
-
-/** Other waxes of this brand with this name, ignoring case. */
-async function sameNamed(supabase: SupabaseClient, brandId: string, name: string) {
-  const { data, error } = await supabase.from("products").select("id, name, created_by").eq("brand_id", brandId);
-  if (error) throw new Error(`Could not read your waxes: ${error.message}`);
-  return (data ?? []).filter((p) => p.name.toLowerCase() === name.toLowerCase());
-}
-
-function productColumns(row: ProductRow) {
-  const { brand: _brand, ...columns } = row;
-  void _brand;
-  return columns;
-}
 
 /**
  * Adds one wax to the signed-in user's box. If the brand or the wax is new, it
@@ -123,43 +29,15 @@ export async function addWax(_prev: WaxFormState, formData: FormData): Promise<W
   const amount = record.amount_left || "full";
   if (!isAmount(amount)) return { error: "Choose how much is left." };
 
-  // Everything is checked before anything is written.
-  const wax = await checkWax(supabase, record);
-  if (wax.error !== undefined) return { error: wax.error };
-
-  const brand = await ensureBrand(supabase, userId, wax);
-  if ("error" in brand) return { error: brand.error };
-
-  // Already known (in the shared catalogue, or typed in before)? Use that one.
-  const known = await sameNamed(supabase, brand.id, wax.row.name);
-  let productId = (known.find((p) => p.created_by === null) ?? known[0])?.id as string | undefined;
-
-  if (!productId) {
-    const { data, error } = await supabase
-      .from("products")
-      .insert({ ...productColumns(wax.row), brand_id: brand.id, created_by: userId })
-      .select("id")
-      .single();
-    if (error) return { error: `Could not save the wax: ${error.message}` };
-    productId = data.id as string;
-  }
-
   const notes = (record.notes ?? "").trim() || null;
   // The photo picked on the form, already uploaded to the owner's "new" folder.
   const photo = String(formData.get("photo_path") ?? "");
   const photo_path = photo.startsWith(`${userId}/new/`) && !photo.includes("..") ? photo : null;
-  const { data: added, error } = await supabase
-    .from("user_products")
-    .insert({ user_id: userId, product_id: productId, amount_left: amount, notes, photo_path })
-    .select("id")
-    .single();
-  if (error) {
-    // 23505: the one-row-per-wax constraint.
-    if (error.code === "23505") return { error: `${wax.row.brand} ${wax.row.name} is already in your wax box.` };
-    return { error: `Could not add it to your wax box: ${error.message}` };
-  }
+  const result = await putWaxInBox(supabase, userId, record, { amount_left: amount, notes, photo_path });
+  if ("error" in result) return { error: result.error };
+  if (result.already) return { error: `${record.brand} ${record.name} is already in your wax box.` };
 
-  redirect(`/wax-box?added=${added.id}`);
+  redirect(`/wax-box?added=${result.boxId}`);
 }
 
 /**

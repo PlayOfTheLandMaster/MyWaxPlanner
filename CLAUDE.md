@@ -142,6 +142,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   any of them after the page opened. A recorded wax job counts as waxed.
   Its form has no How it went section: rating is the rating step, on the
   session's page after skiing. Edit this record (same form) keeps it.
+- **A wax missing from the box is added from the layer** (Add a wax… in
+  the layer's pull-down, `history/add-layer-wax.tsx`): catalogue search first,
+  then a quick add by maker, name and type; it goes into the box and is
+  selected. Typing a name for one job only is the last resort. Add a wax and
+  this share `lib/wax-box/create.ts`, so one set of rules decides a new wax.
+  The panel is not a `<form>`: it sits inside the wax job's form.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself
@@ -168,7 +174,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   on this coding environment's allowed hosts for checking a figure. A
   `user_snow_ranges` row may hold only an iron temperature (or only an
   old-snow range): the first table rule demanded a new-snow end and refused
-  those saves until 20261219000000.
+  those saves until 20261219000000. On the wax job form a layer takes its
+  wax's iron temperature (maker's, else the skier's own) when the wax is
+  chosen or changed, replacing the old wax's figure but never a number typed
+  by hand (`ironForWax`); it once kept whatever was there first.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
@@ -219,6 +228,21 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - **The how-to guide is `src/lib/learn/how-to.ts`**, and the shareable Claude
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.
+
+## The weekly Android check
+
+`scripts/android-check.mjs` signs the test account in on an emulated Pixel 7
+at the live site and opens every main screen (sideways scroll, tap targets
+under 44 px, headings, server and script errors). A scheduled task runs it
+every Monday at 7 pm Pacific and pushes a summary to the owner.
+
+- The test account, `android-test@mywaxplanner.test`, is empty and kept on
+  purpose (the owner agreed). Its password is **scrambled between runs**: a
+  run sets a fresh random bcrypt hash with an `update auth.users`, signs in,
+  then scrambles it again. No password is stored anywhere. Deleting needs a
+  Supabase confirmation nobody is there to give, which is why the account is
+  reused rather than made and deleted each week.
+- The check reads only. Add a screen to `SCREENS` when one is added to the app.
 
 ## iPad and Chrome on iOS (WebKit)
 

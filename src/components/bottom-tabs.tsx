@@ -21,7 +21,8 @@ const TABS: Tab[] = [
   {
     href: "/",
     label: "Today",
-    match: (p) => p === "/",
+    // The planner and its step 2 open from Today, so they light Today.
+    match: (p) => p === "/" || p.startsWith("/plan/"),
     icon: (
       <svg viewBox="0 0 24 24" className="size-6" {...stroke}>
         <circle cx="12" cy="12" r="4" />
@@ -35,7 +36,7 @@ const TABS: Tab[] = [
     // wax session starts on Today, not here (the owner's call). Not "Wax",
     // which would sit beside "Wax box" and invite mix-ups.
     label: "Sessions",
-    match: (p) => p.startsWith("/plan") || p.startsWith("/session"),
+    match: (p) => p === "/plan" || p.startsWith("/session"),
     icon: (
       <svg viewBox="0 0 24 24" className="size-6" {...stroke}>
         <rect x="5" y="4" width="14" height="17" rx="2" />

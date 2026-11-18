@@ -21,19 +21,23 @@ export type WaxOption = {
 export type FormOptions = { skis: SkiOption[]; venues: VenueOption[]; waxes: WaxOption[] };
 
 export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOptions> {
-  const [skis, venues, box, hidden] = await Promise.all([
+  const [skis, venues, box, hidden, ownIron] = await Promise.all([
     supabase.from("skis").select("id, name, technique, category, skier_id, skier:skiers (name)").order("name"),
     supabase.from("venues").select("id, name").order("name"),
     supabase
       .from("user_products")
-      .select("id, product:products!inner (name, category_group, layer_roles, iron_temp_c, brand:brands!inner (name))"),
+      .select("id, product_id, product:products!inner (name, category_group, layer_roles, iron_temp_c, brand:brands!inner (name))"),
     loadHiddenVenueIds(supabase),
+    // The skier's own iron temperatures (Your iron temperature), for waxes the maker gives none for.
+    supabase.from("user_snow_ranges").select("product_id, iron_temp_c").not("iron_temp_c", "is", null),
   ]);
   const failed = skis.error ?? venues.error ?? box.error;
+  const yourIron = new Map((ownIron.data ?? []).map((r) => [r.product_id as string, Number(r.iron_temp_c)]));
   if (failed) throw new Error(`Could not read your skis, venues and waxes: ${failed.message}`);
 
   type BoxRow = {
     id: string;
+    product_id: string;
     product: { name: string; category_group: string; layer_roles: string[]; iron_temp_c: number | null; brand: { name: string } };
   };
   const waxes = ((box.data ?? []) as unknown as BoxRow[])
@@ -42,7 +46,8 @@ export async function loadFormOptions(supabase: SupabaseClient): Promise<FormOpt
       label: `${r.product.brand.name} ${r.product.name}`,
       group: r.product.category_group,
       layer_roles: r.product.layer_roles,
-      iron_temp_c: r.product.iron_temp_c,
+      // The maker's figure first; the skier's own fills a gap (as applySnowRanges does).
+      iron_temp_c: r.product.iron_temp_c ?? yourIron.get(r.product_id) ?? null,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
