@@ -55,7 +55,7 @@ export function SnowCheckForm({
         disabled={pending}
         className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Use for today's wax jobs"}
+        {pending ? "Saving…" : "Save today's conditions"}
       </button>
     </form>
   );
