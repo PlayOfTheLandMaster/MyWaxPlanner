@@ -230,7 +230,8 @@ export async function SessionView({
 
           {/* Folded by default, just above Start wax-along, which is the way in;
               the full list is here when wanted. An expert has neither. */}
-          {!expert && steps.length > 0 && (
+          {/* Gone once rating: the waxing is long done, and the page leads to How did it go?. */}
+          {!expert && steps.length > 0 && stage !== "rate" && (
             <details className="rounded-xl border border-line bg-surface">
               <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
                 Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
