@@ -8,7 +8,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 
 ## What is built so far
 
-**Sign-up by invitation.** Only email addresses on the invitation list can create an account. The rule lives in the database: a trigger on `auth.users` (`require_signup_invite`, migration `20261206000000_signup_invites.sql`) refuses any other address, so it holds even for a sign-up sent straight to Supabase with the public key. Admins (rows in `app_admins`) manage the list from the **Invitations** card on Account: add an address with an optional note, see who has joined, remove one not yet used. A refused sign-up gets a plain sentence rather than Supabase's "Database error saving new user" (`src/lib/invites/email.ts`, tested). Existing accounts are untouched.
+**Sign-up by invitation.** Only email addresses on the invitation list can create an account. The rule lives in the database: a trigger on `auth.users` (`require_signup_invite`, migration `20261206000000_signup_invites.sql`) refuses any other address, so it holds even for a sign-up sent straight to Supabase with the public key. Admins (rows in `app_admins`) manage the list from the **Invitations** card on Account: add an address with an optional note, see who has joined, remove one not yet used. The card shows the sign-up link (https://www.mywaxplanner.com) with a **Copy link** button to send to the person invited; they tap **New here? Create an account** with the address added. A refused sign-up gets a plain sentence rather than Supabase's "Database error saving new user" (`src/lib/invites/email.ts`, tested). Existing accounts are untouched.
 
 **Getting started.** A new account sees a checklist on Today: **Choose how you wax**, **Pick a home venue**, **Add skiers you wax for** (optional), **Add your skis**, **Add your waxes**, **Tick the tools you own** (optional for experts). Once a step is done, its own page shows the same checklist with the step ticked and the next one as the button, and each says the list can be added to later; when every required step is done the checklist goes for good (`src/lib/setup/`, tested; `components/setup-checklist.tsx`, `components/setup-next.tsx`). Checklist links carry `?start=` so a page knows it was opened from the list. With setup done, Today prompts when the skier picked has no skis of their own ("Anna E. has no skis yet").
 
@@ -81,7 +81,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 - **An optional catalogue loader**, `npm run seed`, for loading a shared list of brands and products from CSV. You don't need it: the wax box works without it.
 - A placeholder **Today** screen that shows who is signed in and links to the wax box.
 
-**How to use** (`/learn/how-to`): a brief guide in the app, reached from the top of Learn and from Account, one fold per part (getting started, Today, starting and recording a wax job, rating, the wax box, history). Its text is in `src/lib/learn/how-to.ts`, also the source of the shareable copy, so update it with the screens.
+**How to use** (`/learn/how-to`): a brief guide in the app, reached from the top of Learn and from Account, one fold per part (getting started, Today, starting and recording a wax job, rating, the wax box, venues, for the admin, history). Its text is in `src/lib/learn/how-to.ts`, also the source of the shareable copy, so update it with the screens.
 
 ## Set up
 

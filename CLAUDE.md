@@ -72,6 +72,10 @@ RLS-bound Supabase clients; `createServiceClient()` exists and nothing uses it.
 - **Every new table needs explicit `grant`s** as well as policies; without them
   PostgREST says "permission denied", which no policy explains.
 - **Add a case to `rls_check.sql`** for every new table: an allow and a deny.
+- **A delete or update that RLS refuses is not an error**: PostgREST answers
+  204 and touches no rows. The admin's Delete on a shared venue "did nothing"
+  for that reason. Where a refusal is possible, add `.select("id")` and check
+  that a row came back (`removeVenue`).
 
 ## Migrations
 
@@ -149,6 +153,38 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   The admin can also delete a shared venue (Venues page, two taps); a
   security-definer trigger (`keep_venue_name`) first copies its name onto
   every session that named it, other users' included, as `venue_label`.
+
+## Venue search (OpenStreetMap)
+
+- **Nominatim allows one request a second.** The search once sent five at
+  once; from Vercel's shared servers the extras were refused, and a refused
+  search reads as "nothing found". `osmSlot()` in `lib/weather/forecast.ts`
+  queues every Nominatim call a second apart, so a search takes several
+  seconds and the Search button says "Searching…". Add words to the search
+  only knowing each costs a second.
+- **Nominatim matches names, not what a place is.** "Rossland" never finds
+  Black Jack Cross Country Ski Club, so the search also looks around the
+  first resort or town found (`anchorOf`, a bounded viewbox, about 40 km)
+  for "ski", "nordic" and "cross country", keeping only places that are ski
+  places by kind. These are English words: a German "Loipe" is not found.
+  OpenStreetMap's Overpass API (trails by tag, any language) would be the
+  worldwide fix; it was unreachable from the coding session, so it is untried.
+- To test the search from a session: `NODE_USE_ENV_PROXY=1
+  NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt npx tsx` a script calling
+  `searchPlaces`; plain Node fetch ignores the proxy.
+
+## Forms that take a moment
+
+- **A button that starts slow work says so and takes no more taps.**
+  `ConfirmDelete` shows "Deleting…" and disables itself through
+  `useFormStatus` (it must be a child of the `<form>`). A Delete that looked
+  unchanged for two seconds was tapped again and again.
+- **A deploy while a page is open can freeze it** until it is reloaded; the
+  owner hit this on the preview while changes were being pushed. Reloading is
+  the fix, not a code change.
+- **The how-to guide is `src/lib/learn/how-to.ts`**, and the shareable Claude
+  Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
+  Update both when a screen changes.
 
 ## iPad and Chrome on iOS (WebKit)
 
