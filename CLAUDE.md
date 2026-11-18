@@ -149,6 +149,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   there is none, a skier enters their own (`user_snow_ranges.iron_temp_c`,
   "Your iron temperature"), which `applySnowRanges` uses only when the
   catalogue is blank. Never fill the catalogue from memory or a shop's page.
+  The box is offered only for waxes that are ironed (`IRONED` in
+  `wax-box/[id]/page.tsx`). A guide that gives a temperature per recipe or
+  per snow condition (Vauhti's 2024–25 guide: UP Polar 150 or 180 °C) is not
+  a per-wax figure; the catalogue keeps the cold end. The makers' sites
+  (swixsport.com, vauhti.fi, www.toko.ch, rexwax-usa.com, www.rexwax.cz) are
+  on this coding environment's allowed hosts for checking a figure.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
