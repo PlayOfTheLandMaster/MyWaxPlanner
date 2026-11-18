@@ -336,8 +336,8 @@ export function SessionForm({
         )}
       </section>
 
-      <section className={section} aria-label="Finish">
-        <h2 className="font-semibold">Finish</h2>
+      <section className={section} aria-label="Glide Finish">
+        <h2 className="font-semibold">Glide Finish</h2>
         <div className="flex flex-wrap gap-2">
           {/* Each tap adds the step to the end of the sequence, so a step can
               come more than once (brass, nylon, brass…). Undo and Clear below
