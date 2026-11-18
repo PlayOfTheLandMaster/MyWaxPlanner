@@ -90,7 +90,7 @@ async function Step({
     <>
       <div>
         <Link href={c.venue_id ? `/plan?venue=${c.venue_id}` : "/plan"} className="inline-flex min-h-11 items-center text-sm text-link underline">
-          ← Change conditions
+          ← My Sessions
         </Link>
         <h1 className="text-2xl font-bold">Plan a wax session</h1>
         <p className="text-sm text-muted">Step 2 of 2: your skis, then RECOMMEND.</p>
