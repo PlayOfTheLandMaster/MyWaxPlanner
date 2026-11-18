@@ -125,8 +125,28 @@ async function Today() {
           <span aria-hidden className="text-link">→</span>
         </Link>
       )}
-      {/* No skier picker on Today: the main button names the skier, and the
-          screen it opens (Plan a wax session, Record a wax job) has the picker. */}
+      {/* Who is waxing, and in which mode. No picker on Today: the main
+          button names the skier, and the screen it opens (Plan a wax session,
+          Record a wax job) has the picker. The mode is the account holder's,
+          set in Account, so the pill leads there. */}
+      <p className="-mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent bg-tile px-3 py-1 font-semibold">
+          <svg viewBox="0 0 24 24" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+          </svg>
+          {who.current ? `Waxing for ${who.current.name}` : who.me === FALLBACK ? "My skis" : who.me}
+        </span>
+        <Link
+          href="/account"
+          className="inline-flex min-h-11 items-center"
+          aria-label={`${expert ? "Expert" : "Guided"} mode. Change in Account`}
+        >
+          <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold active:bg-tile">
+            {expert ? "Expert mode" : "Guided mode"}
+          </span>
+        </Link>
+      </p>
 
       {/* The checklist covers the account's first pair; this is a skier
           picked later, with none of their own yet. */}
