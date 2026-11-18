@@ -10,6 +10,7 @@ import {
 } from "@/lib/skis/input";
 import type { PlanSki } from "@/lib/recommend/load";
 import { AddSkiInline } from "@/components/add-ski-inline";
+import { skisLabel } from "@/lib/skiers/possessive";
 
 const field =
   "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
@@ -88,7 +89,7 @@ export function SkiFields({
       )}
       {pairs.length > 0 && (
         <label className={label}>
-          Skis
+          {skisLabel(owner === "me" ? me : skiers.find((k) => k.id === owner)?.name)}
           <select
             name="ski"
             value={skiId}

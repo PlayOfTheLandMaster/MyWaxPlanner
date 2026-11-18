@@ -23,6 +23,7 @@ export function RecordForm({
   window: first,
   error: firstError,
   skiOwner,
+  skiOwnerName,
   draftName,
 }: {
   options: FormOptions;
@@ -32,6 +33,8 @@ export function RecordForm({
   error: string | null;
   /** Whose skis the form lists, for Add a pair of skis…. */
   skiOwner: string | null;
+  /** Their name, for the Skis label. */
+  skiOwnerName: string;
   /** Where the unsaved draft is kept (lib/history/draft.ts). */
   draftName: string;
 }) {
@@ -107,6 +110,7 @@ export function RecordForm({
         hidden={{ record: "1" }}
         onWhereWhen={follow}
         skiOwner={skiOwner}
+        skiOwnerName={skiOwnerName}
         draftName={draftName}
       />
     </>

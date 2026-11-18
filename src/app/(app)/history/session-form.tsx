@@ -2,6 +2,7 @@
 
 import { AddLayerWax } from "./add-layer-wax";
 import { AddSkiInline } from "@/components/add-ski-inline";
+import { skisLabel } from "@/lib/skiers/possessive";
 import { ironForWax } from "@/lib/history/iron";
 import { draftFields, draftKey, readDraft, type Draft } from "@/lib/history/draft";
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
@@ -169,6 +170,7 @@ function SessionFormInner({
   hidden,
   onWhereWhen,
   skiOwner = null,
+  skiOwnerName,
 }: {
   /** The unsaved draft to start from (SessionForm reads it), or null. */
   draft: Draft | null;
@@ -188,6 +190,8 @@ function SessionFormInner({
   onWhereWhen?: (venueId: string, at: string | null) => void;
   /** Whose skis the form lists (a skier id, or null for the account holder): a pair added here is theirs. */
   skiOwner?: string | null;
+  /** Their name, for the label: "Anna E's Skis". */
+  skiOwnerName?: string;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   // Waxes added from a layer (Add a wax…) join the box's list for every layer at once.
@@ -430,7 +434,7 @@ function SessionFormInner({
           </div>
         </fieldset>
         <label className={label}>
-          Skis
+          {skisLabel(skiOwnerName)}
           <select
             name="ski_id"
             value={skiId}
