@@ -147,6 +147,8 @@ export function SessionForm({
   const tz = client ? String(new Date().getTimezoneOffset()) : "";
 
   const classic = technique === "classic";
+  // Record a wax job (record=1): waxing done before skiing, so no rating here.
+  const recording = hidden?.record === "1";
   const shownLayers = classic ? layers : layers.filter((l) => l.zone === "glide");
   const skisForTechnique = useMemo(
     () => options.skis.filter((k) => !technique || k.technique === technique),
@@ -468,6 +470,9 @@ export function SessionForm({
         </div>
       </details>
 
+      {/* Recording a wax job is done before skiing: rating comes later, on the
+          session's own page (the rating step), so the form asks nothing of it. */}
+      {!recording && (
       <section className={section} aria-label="How it went">
         <h2 className="font-semibold">How it went</h2>
         <p className="-mt-2 text-sm text-muted">Any rating marks the session as done.</p>
@@ -502,6 +507,7 @@ export function SessionForm({
           <textarea name="notes" rows={3} defaultValue={s(initial?.notes)} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
         </label>
       </section>
+      )}
 
       {state.error && (
         <p role="alert" className="text-sm text-danger">

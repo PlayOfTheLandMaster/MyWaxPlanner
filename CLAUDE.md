@@ -136,6 +136,8 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - **Record a wax job's forecast is worked out on the server at Save**, for the
   date, time and venue saved, never taken from the page: the person may change
   any of them after the page opened. A recorded wax job counts as waxed.
+  Its form has no How it went section: rating is the rating step, on the
+  session's page after skiing. Edit this record (same form) keeps it.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself
