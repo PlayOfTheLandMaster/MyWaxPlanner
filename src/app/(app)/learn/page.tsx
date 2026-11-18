@@ -25,7 +25,7 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       </Suspense>
       {/* The app's own guide: a plain link at the foot of the page, apart from the tabs'
           lists (mt-auto keeps it at the bottom even when a list is short). The owner's call. */}
-      <footer className="mt-auto border-t border-line pt-4">
+      <footer className="mt-auto flex justify-center border-t border-line pt-4">
         <Link href="/learn/how-to" className="inline-flex min-h-11 items-center text-sm text-link underline">
           How to use My Wax Planner
         </Link>
