@@ -22,12 +22,18 @@ export function RecordForm({
   initial,
   window: first,
   error: firstError,
+  skiOwner,
+  draftName,
 }: {
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
   initial?: SessionInitial;
   window: ForecastWindow | null;
   error: string | null;
+  /** Whose skis the form lists, for Add a pair of skis…. */
+  skiOwner: string | null;
+  /** Where the unsaved draft is kept (lib/history/draft.ts). */
+  draftName: string;
 }) {
   const [card, setCard] = useState<Card>({ window: first, error: firstError, loading: false });
   const asked = useRef(0);
@@ -100,6 +106,8 @@ export function RecordForm({
         cancelHref="/"
         hidden={{ record: "1" }}
         onWhereWhen={follow}
+        skiOwner={skiOwner}
+        draftName={draftName}
       />
     </>
   );

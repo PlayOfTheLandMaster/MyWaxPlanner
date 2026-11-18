@@ -47,6 +47,7 @@ export const GUIDE: GuideSection[] = [
       "On Today, tap Record a wax job (or Already waxed? Record a wax job).",
       "Check the date, time and venue; the forecast card follows them.",
       "Choose the skis, then add each layer: its role, the wax (only waxes for that layer are offered), method and temperature.",
+      "Skis not listed? Choose Add a pair of skis… in the Skis list. And if you leave the page before saving, your wax job is kept: it is restored when you come back the same day.",
       "Wax not in your box? Choose Add a wax… in the layer's list: search for it and tap Add & use, or add a new one by maker, name and type. It goes into your Wax box too.",
       "Tap the finish steps in the order you did them, then Save. You're back on Today with the job ready to ski.",
     ],

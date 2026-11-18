@@ -38,7 +38,8 @@ async function Edit({
   const [session, allOptions] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase)]);
   if (!session) notFound();
   // Only the skis of the person this session is for.
-  const options = { ...allOptions, skis: skisOf(allOptions.skis, formOwner(allOptions.skis, session, null)) };
+  const owner = formOwner(allOptions.skis, session, null);
+  const options = { ...allOptions, skis: skisOf(allOptions.skis, owner) };
 
   const initial: SessionInitial = {
     ...session,
@@ -68,7 +69,7 @@ async function Edit({
           Ratings saved. Now correct {fix.join(" and ")} below, then Save changes.
         </p>
       )}
-      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} />
+      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} skiOwner={owner} draftName={`edit:${id}`} />
     </>
   );
 }

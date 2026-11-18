@@ -129,6 +129,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         me={who.me}
         skierName={who.current?.name ?? null}
         expert={isExpert(who.style)}
+        owner={owner}
       />
     );
 
@@ -146,6 +147,8 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         initial={initial}
         submitLabel="Save session"
         cancelHref={source ? `/history/${source.id}` : "/history"}
+        skiOwner={owner}
+        draftName={`new:${owner ?? "me"}:${source?.id ?? "blank"}`}
       />
     </>
   );
@@ -164,6 +167,7 @@ async function Record({
   venue,
   skierName,
   expert,
+  owner,
 }: {
   options: FormOptions;
   initial: SessionInitial | undefined;
@@ -172,6 +176,8 @@ async function Record({
   me: string;
   skierName: string | null;
   expert: boolean;
+  /** Whose skis the form lists. */
+  owner: string | null;
 }) {
   // For the moment the form opens on, as the forecast saved with it will be.
   const forecast = venue ? await forecastFor(venue, { at: new Date().toISOString(), hours: 2 }) : null;
@@ -218,6 +224,8 @@ async function Record({
         initial={start}
         window={forecast?.window ?? null}
         error={forecast?.error ?? null}
+        skiOwner={owner}
+        draftName={`record:${owner ?? "me"}:${source?.id ?? "blank"}`}
       />
     </>
   );
