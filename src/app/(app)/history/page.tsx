@@ -23,6 +23,7 @@ import { historyQuery } from "@/lib/history/query";
 import { ExportLink } from "@/components/history/export-link";
 import { deleteFilter, saveFilter } from "./actions";
 import { SaveFilterForm } from "./save-filter-form";
+import { SimilarOption } from "./similar-option";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { forecastable, loadVenues } from "@/lib/venues/load";
 import { loadTodayVenue } from "@/lib/venues/today-load";
@@ -188,11 +189,6 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
         ))}
       </nav>
 
-      {/* Its own boundary: it waits on the forecast, the list does not. */}
-      <Suspense fallback={null}>
-        <SimilarToday skier={f.skier} />
-      </Suspense>
-
       {/* Folded after applying: the chips below show what is active. */}
       <details className="rounded-xl border border-line bg-surface">
         {/* No justify-between: on iPad the fold's triangle is a flex item too,
@@ -210,6 +206,10 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
             button, bookmarks and saved filters all just work. */}
         <form method="get" action="/history" className="flex flex-col gap-3 p-4 pt-0">
           {f.sort !== "date" && <input type="hidden" name="sort" value={f.sort} />}
+          {/* Its own boundary: it waits on the forecast, the rest of the fold does not. */}
+          <Suspense fallback={null}>
+            <SimilarToday />
+          </Suspense>
           <label className={label}>
             Period
             <select name="period" defaultValue={f.period} className={field}>
@@ -461,32 +461,21 @@ function SessionRow({ row: r }: { row: Row }) {
 }
 
 /**
- * "Similar to today" (it was a tile on Today): the home venue's forecast for
- * the next two hours, and History filtered to sessions in snow like it.
- * Nothing shows without a home venue or a forecast.
+ * "Days similar to today", the first choice in the Filter fold: the home
+ * venue's forecast for the next two hours fills the snow filters. Nothing
+ * shows without a home venue or a forecast.
  */
-async function SimilarToday({ skier }: { skier: string | undefined }) {
+async function SimilarToday() {
   const supabase = await createClient();
   const [venues, today] = await Promise.all([loadVenues(supabase), loadTodayVenue(supabase)]);
   const venue = venues.filter(forecastable).find((v) => v.id === today.id);
   if (!venue) return null;
   const w = (await forecastFor(venue, { hours: 2 })).window;
   if (!w) return null;
-  const href = `/history?${similarQuery(w)}${skier ? `&skier=${encodeURIComponent(skier)}` : ""}`;
   return (
-    <Link
-      href={href}
-      className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-2 active:bg-tile"
-    >
-      <span className="min-w-0">
-        <span className="block font-semibold">Filter - Days similar to today</span>
-        <span className="block truncate text-sm text-muted">
-          Snow within 3 °C of today&apos;s {deg(Math.round(w.snow_temp_c * 10) / 10)} at {venue.name}, best glide first
-        </span>
-      </span>
-      <span aria-hidden className="text-muted">
-        →
-      </span>
-    </Link>
+    <SimilarOption
+      fields={Object.fromEntries(new URLSearchParams(similarQuery(w)))}
+      detail={`Snow within 3 °C of today's ${deg(Math.round(w.snow_temp_c * 10) / 10)} at ${venue.name}, all seasons, best glide first`}
+    />
   );
 }
