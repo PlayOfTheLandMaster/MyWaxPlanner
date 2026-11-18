@@ -105,7 +105,7 @@ export type Session = {
   durability_hours: number | null;
   kick_feel: "slipping" | "good" | "icing" | null;
   notes: string | null;
-  ski: { name: string } | null;
+  ski: { name: string; category: string | null } | null;
   skier: { name: string } | null;
   /** The skier the session is for; null is the account holder. */
   skier_id: string | null;
@@ -144,7 +144,7 @@ export async function loadSession(supabase: SupabaseClient, id: string): Promise
        event_result, finish_notes, finish_tags, glide_rating, grip_rating, durability_rating,
        durability_km, durability_hours, kick_feel, notes, actual_conditions_id, forecast_conditions_id,
        recommendation_id, wax_steps_done, waxed_at, done_at, skier_id, venue_label,
-       ski:skis (name), skier:skiers (name), venue:venues (name),
+       ski:skis (name, category), skier:skiers (name), venue:venues (name),
        layers:wax_session_layers (id, zone, position, layer_role, product_id, user_product_id, custom_product,
          method, iron_temp_c, passes, scrape_brush_steps, notes,
          product:products (name, fluoro_status, brand:brands (name))),

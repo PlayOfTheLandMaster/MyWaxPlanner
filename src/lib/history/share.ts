@@ -16,6 +16,8 @@ export type ShareInput = {
   occurred_at: string;
   technique: "classic" | "skate";
   mode: "recreational" | "race";
+  /** The skis' grip type (classic only): waxable, skin, zero or hairies. The skis themselves are never named. */
+  grip_type?: string | null;
   event_name: string | null;
   event_distance_km: number | null;
   event_result: string | null;
@@ -92,10 +94,14 @@ function rating(label: string, n: number | null): string | null {
   return n ? `${label}: ${RATING_WORDS[n]} (${n}/5)` : null;
 }
 
+/** The grip type as a share says it: short, for the line above the title. */
+const GRIP_WORDS: Record<string, string> = { waxable: "waxable", skin: "skins", zero: "zero skis", hairies: "hairies" };
+
 export function shareSummary(s: ShareInput, opts: { notes: boolean; timeZone: string }): ShareSummary {
   const race = s.mode === "race";
   const kicker = [
     TECHNIQUE_LABELS[s.technique],
+    s.technique === "classic" && s.grip_type ? `Grip: ${GRIP_WORDS[s.grip_type] ?? s.grip_type}` : null,
     race ? MODE_LABELS.race : null,
     race && s.event_distance_km ? `${Number(s.event_distance_km)} km` : null,
   ]
@@ -165,6 +171,7 @@ export function toShareInput(s: Session): ShareInput {
     occurred_at: s.occurred_at,
     technique: s.technique as ShareInput["technique"],
     mode: s.mode,
+    grip_type: s.ski?.category ?? null,
     event_name: s.event_name,
     event_distance_km: s.event_distance_km,
     event_result: s.event_result,
