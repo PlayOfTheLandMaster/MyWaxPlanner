@@ -75,3 +75,12 @@ test("after Use this plan, back from the session skips the plan step", () => {
   // Anywhere else, the plan step is a normal place to go back to.
   assert.equal(previous(["/plan/draft?c=x&go=1", "/wax-box/1"], "/wax-box/1"), "/plan/draft?c=x&go=1");
 });
+
+test("Learn's back links name the tab, the note or the video", () => {
+  assert.equal(backLabel("/learn"), "Notes");
+  assert.equal(backLabel("/learn?tab=videos"), "Videos");
+  assert.equal(backLabel("/learn/notes/0f14e86e-b754-44b7-94f8-e4d865ca4acf"), "Note");
+  assert.equal(backLabel("/learn/notes/new"), "Notes");
+  assert.equal(backLabel("/learn/0f14e86e-b754-44b7-94f8-e4d865ca4acf"), "Video");
+  assert.equal(backLabel("/learn/how-to"), "How to use");
+});

@@ -70,7 +70,11 @@ export function backLabel(url: string): string {
   // The Session tab's start page lives at /plan, titled My Sessions.
   if (p.startsWith("/plan")) return "My Sessions";
   if (p === "/learn/how-to") return "How to use";
-  if (/^\/learn\/[^/]+$/.test(p)) return "Video";
+  if (/^\/learn\/notes\/[^/]+$/.test(p) && p !== "/learn/notes/new") return "Note";
+  if (p.startsWith("/learn/notes")) return "Notes";
+  if (/^\/learn\/[^/]+$/.test(p) && p !== "/learn/add") return "Video";
+  // Learn's own tabs: back to the one that was open.
+  if (p === "/learn") return /[?&]tab=videos\b/.test(url) ? "Videos" : "Notes";
   if (p.startsWith("/learn")) return "Learn";
   if (p.startsWith("/venues")) return "Venues";
   return "Back";

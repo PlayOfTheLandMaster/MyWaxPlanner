@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Waxing note · My Wax Planner" };
 export default function NotePage({ params, searchParams }: PageProps<"/learn/notes/[id]">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
-      <BackLink fallback="/learn" fallbackLabel="Learn" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
+      <BackLink fallback="/learn" fallbackLabel="Notes" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Article params={params} searchParams={searchParams} />
       </Suspense>

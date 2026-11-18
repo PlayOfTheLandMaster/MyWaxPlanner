@@ -11,7 +11,7 @@ export default function NewNotePage({ searchParams }: PageProps<"/learn/notes/ne
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
-        <BackLink fallback="/learn" fallbackLabel="Learn" />
+        <BackLink fallback="/learn" fallbackLabel="Notes" />
         <h1 className="text-2xl font-bold">Write a note</h1>
         <p className="text-sm text-muted">Your waxing notes are yours alone; nobody else sees them.</p>
       </div>

@@ -81,6 +81,8 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 - **An optional catalogue loader**, `npm run seed`, for loading a shared list of brands and products from CSV. You don't need it: the wax box works without it.
 - A placeholder **Today** screen that shows who is signed in and links to the wax box.
 
+**Learn tabs.** Learn has tabs at the top, each its own list: **Notes** (the default) and **Videos** (`?tab=videos`). They are listed in `src/lib/learn/tabs.ts`; a new tab is an entry there and a component on the page. The How to use guide sits above the tabs.
+
 **My waxing notes** (`/learn`, `/learn/notes/…`): each skier's own short articles (waxing instructions, notes on products, how-tos, accommodation, restaurants, shops, other; migration `20261221000000` added the three trip sections), listed by section on the Learn tab, newest edit first, with a search once there are more than four. Tap one to read it; Edit and Delete (two taps) are on its page. Plain text, line breaks kept. Private to their writer by Row Level Security (table `learn_notes`, migration `20261220000000_learn_notes.sql`), except that an admin can **Publish to all users** one of their own (migration `20261222000000`): every user then reads it, read only, under *Shared by the admin*, and only the admin can edit, unpublish or delete it; the rules are in `src/lib/learn/notes.ts`, tested.
 
 **How to use** (`/learn/how-to`): a brief guide in the app, reached from the top of Learn and from Account, one fold per part (getting started, Today, starting and recording a wax job, rating, the wax box, venues, for the admin, history). Its text is in `src/lib/learn/how-to.ts`, also the source of the shareable copy, so update it with the screens.

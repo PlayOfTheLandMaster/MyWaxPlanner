@@ -7,6 +7,7 @@ import { VIDEO_COLUMNS, isAdmin } from "@/lib/learn/load";
 import { LEVEL_LABELS, TOPICS, TOPIC_LABELS, thumbnailUrl, type Topic, type Video } from "@/lib/learn/videos";
 import { NOTE_COLUMNS, SECTION_LABELS, groupNotes, preview, searchNotes, splitNotes, type Note } from "@/lib/learn/notes";
 import { currentUser } from "@/lib/auth/current-user";
+import { DEFAULT_TAB, LEARN_TABS, learnTab } from "@/lib/learn/tabs";
 
 export const metadata: Metadata = { title: "Learn · My Wax Planner" };
 
@@ -18,7 +19,7 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       {/* A tab, but still reached from somewhere: back to the page you came from, else Today. */}
       <BackLink fallback="/" fallbackLabel="Today" className="-mb-3 inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <h1 className="text-2xl font-bold">Learn</h1>
-      {/* The app's own short guide, above the video library. */}
+      {/* The app's own short guide, above the tabs. */}
       <Link
         href="/learn/how-to"
         className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
@@ -31,24 +32,35 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
           →
         </span>
       </Link>
-      {/* The skier's own waxing notes, then the shared video library. */}
-      <section aria-labelledby="notes" className="flex flex-col gap-3">
-        <h2 id="notes" className="text-lg font-semibold">
-          My waxing notes
-        </h2>
-        <Suspense fallback={<p className="text-muted">Loading…</p>}>
-          <Notes searchParams={searchParams} />
-        </Suspense>
-      </section>
-      <section aria-labelledby="videos" className="flex flex-col gap-3 border-t border-line pt-5">
-        <h2 id="videos" className="text-lg font-semibold">
-          Videos
-        </h2>
-        <Suspense fallback={<p className="text-muted">Loading…</p>}>
-          <Library searchParams={searchParams} />
-        </Suspense>
-      </section>
+      {/* Notes and Videos are tabs, each its own list; the tab is in the address, so a link back keeps it. */}
+      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+        <Tabbed searchParams={searchParams} />
+      </Suspense>
     </main>
+  );
+}
+
+async function Tabbed({ searchParams }: { searchParams: PageProps<"/learn">["searchParams"] }) {
+  const tab = learnTab(one((await searchParams).tab));
+  return (
+    <>
+      <nav aria-label="Learn" className="grid gap-1 rounded-xl bg-tile p-1" style={{ gridTemplateColumns: `repeat(${LEARN_TABS.length}, minmax(0, 1fr))` }}>
+        {LEARN_TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={t.key === DEFAULT_TAB ? "/learn" : `/learn?tab=${t.key}`}
+            aria-current={tab === t.key ? "page" : undefined}
+            className={`flex min-h-11 items-center justify-center rounded-lg text-sm ${tab === t.key ? "bg-surface font-semibold shadow-sm" : "text-muted"}`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+      <section aria-label={LEARN_TABS.find((t) => t.key === tab)?.label} className="flex flex-col gap-3">
+        {tab === "notes" && <Notes searchParams={searchParams} />}
+        {tab === "videos" && <Library searchParams={searchParams} />}
+      </section>
+    </>
   );
 }
 
@@ -61,8 +73,6 @@ async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["sear
   const { own: all, shared: allShared } = splitNotes((data ?? []) as Note[], user?.id ?? "");
   const groups = groupNotes(searchNotes(all, nq));
   const shared = searchNotes(allShared, nq);
-  // Keeps the video filters when searching the notes, and the other way round.
-  const keep = (["topic", "technique", "q"] as const).map((k) => [k, one(p[k])] as const).filter(([, v]) => v);
 
   return (
     <>
@@ -93,9 +103,6 @@ async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["sear
         <>
           {all.length + allShared.length > 4 && (
             <form method="get" className="flex gap-2">
-              {keep.map(([k, v]) => (
-                <input key={k} type="hidden" name={k} value={v} />
-              ))}
               <input
                 name="nq"
                 type="search"
@@ -185,7 +192,7 @@ async function Library({ searchParams }: { searchParams: PageProps<"/learn">["se
     const s = new URLSearchParams(
       Object.entries({ topic, technique, q, ...change }).filter((e): e is [string, string] => !!e[1]),
     ).toString();
-    return s ? `/learn?${s}` : "/learn";
+    return s ? `/learn?tab=videos&${s}` : "/learn?tab=videos";
   };
   const usedTopics = TOPICS.filter((t) => videos.some((v) => v.topic === t));
 
@@ -204,6 +211,7 @@ async function Library({ searchParams }: { searchParams: PageProps<"/learn">["se
       ) : (
         <>
           <form method="get" className="flex gap-2">
+            <input type="hidden" name="tab" value="videos" />
             {topic && <input type="hidden" name="topic" value={topic} />}
             {technique && <input type="hidden" name="technique" value={technique} />}
             <input
