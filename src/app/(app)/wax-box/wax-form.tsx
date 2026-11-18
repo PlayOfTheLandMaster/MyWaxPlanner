@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState, useState } from "react";
 import type { WaxFormState } from "./actions";
+import { AddPhoto } from "./add-photo";
 import {
   CATEGORY_GROUPS,
   CATEGORY_LABELS,
@@ -56,8 +57,11 @@ export function WaxForm({
   save,
   initial,
   submitLabel,
+  photoUserId,
 }: {
   brands: KnownBrand[];
+  /** Add a wax only: offers a photo of the container, saved with the wax. */
+  photoUserId?: string;
   save: (prev: WaxFormState, data: FormData) => Promise<WaxFormState>;
   initial?: WaxInitial;
   submitLabel: string;
@@ -328,6 +332,8 @@ export function WaxForm({
           <textarea name="notes" rows={3} defaultValue={initial?.notes ?? ""} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
         </label>
       </div>
+
+      {photoUserId && <AddPhoto userId={photoUserId} />}
 
       {state.error && (
         <p role="alert" className="text-sm text-danger">

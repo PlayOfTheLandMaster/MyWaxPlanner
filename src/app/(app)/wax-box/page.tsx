@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { AMOUNT_LABELS, CATEGORY_GROUPS, CATEGORY_LABELS, FLUORO_LABELS } from "@/lib/catalogue/labels";
-import { loadBox, type BoxRow } from "@/lib/wax-box/load";
+import { loadBox, waxPhotoUrls, type BoxRow } from "@/lib/wax-box/load";
 import { rangeText } from "@/lib/wax-box/describe";
 import { WaxBoxNav } from "@/components/wax-box-nav";
 
@@ -34,7 +34,9 @@ export default function WaxBoxPage({ searchParams }: PageProps<"/wax-box">) {
 
 async function Box({ searchParams }: { searchParams: PageProps<"/wax-box">["searchParams"] }) {
   const added = (await searchParams).added;
-  const rows = await loadBox(await createClient());
+  const supabase = await createClient();
+  const rows = await loadBox(supabase);
+  const photos = await waxPhotoUrls(supabase, rows.map((r) => r.photo_path));
 
   if (rows.length === 0) {
     return (
@@ -87,7 +89,7 @@ async function Box({ searchParams }: { searchParams: PageProps<"/wax-box">["sear
             </h2>
             <ul className="flex flex-col gap-2">
               {inGroup.map((r) => (
-                <WaxRow key={r.id} row={r} justAdded={r.id === added} />
+                <WaxRow key={r.id} row={r} justAdded={r.id === added} photo={r.photo_path ? (photos.get(r.photo_path) ?? null) : null} />
               ))}
             </ul>
           </section>
@@ -97,7 +99,7 @@ async function Box({ searchParams }: { searchParams: PageProps<"/wax-box">["sear
   );
 }
 
-function WaxRow({ row, justAdded }: { row: BoxRow; justAdded: boolean }) {
+function WaxRow({ row, justAdded, photo }: { row: BoxRow; justAdded: boolean; photo: string | null }) {
   const p = row.product;
   const range = rangeText(p);
   const low = row.amount_left === "low" || row.amount_left === "empty";
@@ -110,7 +112,12 @@ function WaxRow({ row, justAdded }: { row: BoxRow; justAdded: boolean }) {
         className={`block rounded-xl border bg-surface p-3 active:bg-tile ${justAdded ? "border-accent" : "border-line"}`}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          {/* The container's photo, when there is one, so the wax can be spotted in the box. */}
+          {photo && (
+            // eslint-disable-next-line @next/next/no-img-element -- a signed, short-lived URL from a private bucket
+            <img src={photo} alt="" loading="lazy" className="size-14 shrink-0 rounded-lg bg-tile object-cover" />
+          )}
+          <div className="min-w-0 flex-1">
             <p className="truncate font-medium">
               {p.brand.name} {p.name}
             </p>

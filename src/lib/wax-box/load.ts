@@ -34,6 +34,8 @@ export type BoxRow = {
   id: string;
   amount_left: keyof typeof AMOUNT_LABELS;
   notes: string | null;
+  /** Key in the private wax-photos bucket: <user_id>/<box row id>/<file>, or null. */
+  photo_path: string | null;
   product: Product;
 };
 
@@ -64,7 +66,7 @@ export async function loadBox(supabase: SupabaseClient): Promise<BoxRow[]> {
   const [{ data, error }, ranges] = await Promise.all([
     supabase
       .from("user_products")
-      .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
+      .select(`id, amount_left, notes, photo_path, product:products!inner (${PRODUCT_COLUMNS})`)
       .order("created_at", { ascending: false }),
     loadSnowRanges(supabase),
   ]);
@@ -76,7 +78,7 @@ export async function loadBoxRow(supabase: SupabaseClient, id: string): Promise<
   const [{ data, error }, ranges] = await Promise.all([
     supabase
       .from("user_products")
-      .select(`id, amount_left, notes, product:products!inner (${PRODUCT_COLUMNS})`)
+      .select(`id, amount_left, notes, photo_path, product:products!inner (${PRODUCT_COLUMNS})`)
       .eq("id", id)
       .maybeSingle(),
     loadSnowRanges(supabase),
@@ -110,4 +112,12 @@ export async function loadBrands(supabase: SupabaseClient): Promise<KnownBrand[]
     brands.push(b);
   }
   return brands;
+}
+
+/** Short-lived links to the box's wax photos, by storage key. Private bucket, so each is signed. */
+export async function waxPhotoUrls(supabase: SupabaseClient, paths: (string | null)[]): Promise<Map<string, string>> {
+  const keys = paths.filter((p): p is string => Boolean(p));
+  if (keys.length === 0) return new Map();
+  const { data } = await supabase.storage.from("wax-photos").createSignedUrls(keys, 3600);
+  return new Map((data ?? []).filter((d) => d.path && d.signedUrl).map((d) => [d.path as string, d.signedUrl as string]));
 }

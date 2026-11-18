@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { refresh } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { readProduct, type ProductRow } from "@/lib/catalogue/csv";
@@ -145,9 +145,12 @@ export async function addWax(_prev: WaxFormState, formData: FormData): Promise<W
   }
 
   const notes = (record.notes ?? "").trim() || null;
+  // The photo picked on the form, already uploaded to the owner's "new" folder.
+  const photo = String(formData.get("photo_path") ?? "");
+  const photo_path = photo.startsWith(`${userId}/new/`) && !photo.includes("..") ? photo : null;
   const { data: added, error } = await supabase
     .from("user_products")
-    .insert({ user_id: userId, product_id: productId, amount_left: amount, notes })
+    .insert({ user_id: userId, product_id: productId, amount_left: amount, notes, photo_path })
     .select("id")
     .single();
   if (error) {
@@ -255,8 +258,30 @@ export async function saveNotes(boxId: string, _prev: WaxFormState, formData: Fo
  */
 export async function removeFromBox(boxId: string) {
   const { supabase } = await signedIn();
+  // Its photo goes too: nothing else points at it.
+  const { data: row } = await supabase.from("user_products").select("photo_path").eq("id", boxId).maybeSingle();
   await supabase.from("user_products").delete().eq("id", boxId);
+  if (row?.photo_path) await supabase.storage.from("wax-photos").remove([row.photo_path as string]);
   redirect("/wax-box");
+}
+
+/**
+ * Records a wax's photo (a key the browser has just uploaded to wax-photos),
+ * or clears it with null, and removes the photo it replaces. Row Level
+ * Security and the column's check keep both to the owner's own box and
+ * folder. Returns an error message, or null.
+ */
+export async function setWaxPhoto(boxId: string, path: string | null): Promise<string | null> {
+  const { supabase, userId } = await signedIn();
+  if (path !== null && !path.startsWith(`${userId}/${boxId}/`)) return "That photo is not in your folder.";
+  const { data: row, error } = await supabase.from("user_products").select("photo_path").eq("id", boxId).maybeSingle();
+  if (error || !row) return "That wax is no longer in your box.";
+  const { error: saveError } = await supabase.from("user_products").update({ photo_path: path }).eq("id", boxId);
+  if (saveError) return `Could not save the photo: ${saveError.message}`;
+  if (row.photo_path && row.photo_path !== path) await supabase.storage.from("wax-photos").remove([row.photo_path as string]);
+  revalidatePath("/wax-box");
+  refresh();
+  return null;
 }
 
 /**

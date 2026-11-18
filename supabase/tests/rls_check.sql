@@ -127,6 +127,13 @@ insert into public.wax_session_layers (user_id, session_id, zone, position, prod
           '00000000-0000-0000-0000-0000000000a1', 'iron', 130);
 insert into storage.objects (bucket_id, name)
   values ('session-photos', '00000000-0000-0000-0000-00000000000a/s1/photo.jpg');
+-- A photo of a wax in A's box (wax-photos, migration 20261212000000).
+insert into storage.objects (bucket_id, name)
+  values ('wax-photos', '00000000-0000-0000-0000-00000000000a/a1/wax.jpg');
+update public.user_products set photo_path = '00000000-0000-0000-0000-00000000000a/a1/wax.jpg'
+  where id = '00000000-0000-0000-0000-0000000000a1';
+select pg_temp.expect((select photo_path from public.user_products where id = '00000000-0000-0000-0000-0000000000a1') is not null,
+  'A can photograph a wax in their own box');
 
 select pg_temp.expect((select air_humidity_band from public.conditions
                        where id = '00000000-0000-0000-0000-0000000000f1') = 'wet',
@@ -167,6 +174,14 @@ select pg_temp.expect_error(
   $$insert into storage.objects (bucket_id, name)
     values ('session-photos', '00000000-0000-0000-0000-00000000000b/s1/photo.jpg')$$,
   'A cannot upload into B''s photo folder');
+select pg_temp.expect_error(
+  $$insert into storage.objects (bucket_id, name)
+    values ('wax-photos', '00000000-0000-0000-0000-00000000000b/a1/wax.jpg')$$,
+  'A cannot upload into B''s wax photo folder');
+select pg_temp.expect_error(
+  $$update public.user_products set photo_path = '00000000-0000-0000-0000-00000000000b/a1/wax.jpg'
+    where id = '00000000-0000-0000-0000-0000000000a1'$$,
+  'a wax photo must sit in its owner''s own folder');
 with t as (update public.venues set name = 'Mine now'
            where id = '00000000-0000-0000-0000-0000000000d0' returning 1)
 select pg_temp.expect((select count(*) from t) = 0, 'A cannot edit a shared venue');
