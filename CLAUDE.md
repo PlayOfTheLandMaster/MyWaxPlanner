@@ -267,6 +267,15 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
   The select rule in `globals.css` sets both. Measure a size in a browser
   rather than reading the classes.
 
+## React
+
+- **Never set state in a form's capture handler** (`onInputCapture`,
+  `onClickCapture`). With React 19 a parent re-rendering in the capture
+  phase throws away a controlled child input's keystroke: the wax job draft
+  did this, and the Add a pair of skis and Add a wax boxes would not take
+  typing (proved with a two-component page; the draft now saves from plain
+  `addEventListener` listeners and a ref, with no re-render).
+
 ## Tailwind
 
 - Two classes setting the same property on one element (`bg-surface` and

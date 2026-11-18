@@ -5,7 +5,7 @@ import { AddSkiInline } from "@/components/add-ski-inline";
 import { skisLabel } from "@/lib/skiers/possessive";
 import { ironForWax } from "@/lib/history/iron";
 import { draftFields, draftKey, readDraft, type Draft } from "@/lib/history/draft";
-import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
@@ -239,38 +239,53 @@ function SessionFormInner({
   // The draft: saved a moment after each change, once the browser has been
   // checked for one; cleared by Save and Cancel; "Start over" throws it away.
   const formRef = useRef<HTMLFormElement>(null);
-  const [touched, setTouched] = useState(0);
   const off = useRef(false);
   const skip = useMemo(() => new Set([...STATE_FIELDS, ...Object.keys(hidden ?? {})]), [hidden]);
+  // The latest state, for a save made from a plain browser listener (below).
+  const latest = useRef<DraftState | null>(null);
   useEffect(() => {
-    if (!draftName || !draftReady || touched === 0 || off.current) return;
-    const t = setTimeout(() => {
+    latest.current = {
+    technique,
+    skiId,
+    mode,
+    venue,
+    tags,
+    when: whenEdited,
+    layers: layers.map((l) => {
+      const { key, ...rest } = l;
+      void key;
+      return rest;
+    }),
+    addedWaxes,
+    addedSkis,
+  };
+  });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDraftSoon = useCallback(() => {
+    if (!draftName || !draftReady || off.current) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
       const form = formRef.current;
-      if (!form || off.current) return;
-      const state: DraftState = {
-        technique,
-        skiId,
-        mode,
-        venue,
-        tags,
-        when: whenEdited,
-        layers: layers.map((l) => {
-          const { key, ...rest } = l;
-          void key;
-          return rest;
-        }),
-        addedWaxes,
-        addedSkis,
-      };
-      const d: Draft = { v: 1, day: localDay(), state, fields: draftFields(new FormData(form).entries(), skip) };
+      if (!form || off.current || !latest.current) return;
+      const d: Draft = { v: 1, day: localDay(), state: latest.current, fields: draftFields(new FormData(form).entries(), skip) };
       try {
         localStorage.setItem(draftKey(draftName), JSON.stringify(d));
       } catch {
         // Storage full or refused: the form still works, just without a draft.
       }
     }, 500);
-    return () => clearTimeout(t);
-  }, [draftName, draftReady, touched, technique, skiId, mode, venue, tags, whenEdited, layers, addedWaxes, addedSkis, skip]);
+  }, [draftName, draftReady, skip]);
+  // Plain browser listeners, not React state: redrawing the whole form on every
+  // keystroke left the Add a wax and Add a pair of skis boxes unable to take typing.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    for (const type of ["input", "change", "click"]) form.addEventListener(type, saveDraftSoon);
+    return () => {
+      for (const type of ["input", "change", "click"]) form.removeEventListener(type, saveDraftSoon);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [saveDraftSoon]);
   const discardDraft = () => {
     off.current = true;
     try {
@@ -305,10 +320,9 @@ function SessionFormInner({
   useEffect(() => {
     if (state.error) {
       off.current = false;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTouched((n) => n + 1);
+      saveDraftSoon();
     }
-  }, [state]);
+  }, [state, saveDraftSoon]);
 
   const update = (key: number, change: Partial<LayerDraft>) =>
     setLayers((ls) => ls.map((l) => (l.key === key ? { ...l, ...change } : l)));
@@ -325,9 +339,6 @@ function SessionFormInner({
   return (
     <form
       ref={formRef}
-      // Any change, typed or tapped, saves the draft a moment later.
-      onInputCapture={() => setTouched((n) => n + 1)}
-      onClickCapture={() => setTouched((n) => n + 1)}
       // The server checks every field and says what is missing beside Save.
       // The browser's own check is off: Classic/Skate are visually hidden
       // radios, so on iPad a missing technique blocked Save with no message.
