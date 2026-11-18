@@ -99,7 +99,7 @@ export const GUIDE: GuideSection[] = [
     title: "My waxing notes",
     intro: "Your own short articles on the Learn tab. Only you see them.",
     steps: [
-      "On Learn, tap Write a note. Pick a section (Waxing instructions, Notes on products, How-to or Other), give it a title and write it.",
+      "On Learn, tap Write a note. Pick a section (Waxing instructions, Notes on products, How-to, Accommodation, Restaurants, Shops or Other), give it a title and write it.",
       "Tap Save. Your notes are listed under their sections, newest first; tap one to read it.",
       "On a note, tap Edit to change it, or Delete, then Delete again, to remove it.",
     ],

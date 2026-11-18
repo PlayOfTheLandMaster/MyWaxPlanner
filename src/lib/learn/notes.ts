@@ -1,13 +1,16 @@
 // Waxing notes: a skier's own articles on the Learn tab (table learn_notes).
 // Pure, so the form's rules and the list's grouping can be tested.
 
-export const SECTIONS = ["instructions", "products", "how_to", "other"] as const;
+export const SECTIONS = ["instructions", "products", "how_to", "accommodation", "restaurants", "shops", "other"] as const;
 export type Section = (typeof SECTIONS)[number];
 
 export const SECTION_LABELS: Record<Section, string> = {
   instructions: "Waxing instructions",
   products: "Notes on products",
   how_to: "How-to",
+  accommodation: "Accommodation",
+  restaurants: "Restaurants",
+  shops: "Shops",
   other: "Other",
 };
 

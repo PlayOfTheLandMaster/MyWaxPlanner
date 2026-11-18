@@ -76,7 +76,7 @@ async function Notes({ searchParams }: { searchParams: PageProps<"/learn">["sear
       </Link>
       {all.length === 0 ? (
         <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
-          Keep your own waxing instructions, notes on products and how-tos here, as short articles. Only you see them.
+          Keep your own waxing instructions, notes on products, how-tos and trip notes (places to stay, eat and shop) here, as short articles. Only you see them.
         </p>
       ) : (
         <>
