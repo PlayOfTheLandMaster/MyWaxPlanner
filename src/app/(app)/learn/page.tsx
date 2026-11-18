@@ -23,19 +23,13 @@ export default function LearnPage({ searchParams }: PageProps<"/learn">) {
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Tabbed searchParams={searchParams} />
       </Suspense>
-      {/* The app's own short guide, at the foot of the page (the owner's call). */}
-      <Link
-        href="/learn/how-to"
-        className="mt-2 flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 active:bg-tile"
-      >
-        <span>
-          <span className="block font-semibold">How to use My Wax Planner</span>
-          <span className="block text-sm text-muted">Getting started, Today, waxing, rating, the wax box, venues, notes and history.</span>
-        </span>
-        <span aria-hidden className="text-muted">
-          →
-        </span>
-      </Link>
+      {/* The app's own guide: a plain link at the foot of the page, apart from the tabs'
+          lists (mt-auto keeps it at the bottom even when a list is short). The owner's call. */}
+      <footer className="mt-auto border-t border-line pt-4">
+        <Link href="/learn/how-to" className="inline-flex min-h-11 items-center text-sm text-link underline">
+          How to use My Wax Planner
+        </Link>
+      </footer>
     </main>
   );
 }
