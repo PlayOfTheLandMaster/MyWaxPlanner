@@ -172,23 +172,17 @@ async function Record({
       </div>
       {/* Under the title and its note: who this wax job is for. */}
       <SkierBanner />
-      {/* The note under the title says the app suggests nothing here; this
-          names the setting for an expert, and points a guided waxer at the
-          way in that does suggest. A quiet pill, like the skier line. */}
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        {expert && (
+      {/* An expert sees the setting, and where to change it. A guided waxer
+          sees nothing here: this form is for waxing already done, so pointing
+          at suggestions (once "Or Start a wax session…") came too late. */}
+      {expert && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-semibold">Expert mode</span>
-        )}
-        {expert ? (
           <Link href="/account" className="inline-flex min-h-11 items-center text-link underline">
             Change in Account
           </Link>
-        ) : (
-          <Link href={venue ? `/plan?venue=${venue.id}` : "/plan"} className="inline-flex min-h-11 items-center text-base text-link underline">
-            Or Start a wax session if you want suggestions
-          </Link>
-        )}
-      </p>
+        </p>
+      )}
 
       <RecordForm
         options={options}
