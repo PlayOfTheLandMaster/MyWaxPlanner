@@ -10,6 +10,7 @@ import { WaxBoxNav } from "@/components/wax-box-nav";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkierBanner } from "@/components/skier-banner";
 import { SKI_CATEGORY_LABELS, TECHNIQUE_LABELS, type SkiCategory, type Technique } from "@/lib/skis/input";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata: Metadata = { title: "Skis · My Wax Planner" };
 
@@ -123,7 +124,9 @@ function SkiRows({ skis }: { skis: Ski[] }) {
     <ul className="flex flex-col gap-2">
       {skis.map((s) => (
         <li key={s.id} className="flex items-center gap-1 rounded-xl border border-line bg-surface pr-2">
-          <Link href={`/wax-box/skis/${s.id}`} className="block min-w-0 flex-1 rounded-xl p-3 active:bg-tile">
+          <Link href={`/wax-box/skis/${s.id}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-3 active:bg-tile">
+            <BrandLogo brand={s.brand} />
+            <span className="min-w-0 flex-1">
             <p className="truncate font-medium">{s.name}</p>
             <p className="truncate text-sm text-muted">
               {[
@@ -135,6 +138,7 @@ function SkiRows({ skis }: { skis: Ski[] }) {
                 .filter(Boolean)
                 .join(" · ")}
             </p>
+            </span>
           </Link>
           <ConfirmDelete action={deleteSki.bind(null, s.id, "list")} label={s.name} />
         </li>
