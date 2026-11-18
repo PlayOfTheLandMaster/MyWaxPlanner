@@ -142,7 +142,7 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   any of them after the page opened. A recorded wax job counts as waxed.
   Its form has no How it went section: rating is the rating step, on the
   session's page after skiing. Edit this record (same form) keeps it.
-- **A wax missing from the box is added from the layer** (+ Add a wax under
+- **A wax missing from the box is added from the layer** (+ Add a wax to the list under
   the layer's pull-down, `history/add-layer-wax.tsx`): catalogue search first,
   then a quick add by maker, name and type; it goes into the box and is
   selected. Typing a name for one job only is the last resort. Add a wax and
@@ -275,7 +275,7 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
 
 - **No "Add…" choice inside a pull-down.** On iPad (Chrome, Apple's
   engine) choosing one showed it and opened nothing, so adding a wax or a
-  pair is a link under the list (+ Add a wax, + Add a pair of skis).
+  pair is a link under the list (+ Add a wax to the list, + Add a pair of skis to the list).
 - **Never set state in a form's capture handler** (`onInputCapture`,
   `onClickCapture`). With React 19 a parent re-rendering in the capture
   phase throws away a controlled child input's keystroke: the wax job draft

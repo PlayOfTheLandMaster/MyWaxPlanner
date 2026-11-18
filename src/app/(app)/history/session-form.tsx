@@ -467,7 +467,7 @@ function SessionFormInner({
         {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
         {!addingSki && (
           <button type="button" onClick={() => setAddingSki(true)} className="-mt-2 inline-flex min-h-11 items-center self-start text-sm text-link underline">
-            + Add a pair of skis
+            + Add a pair of skis to the list
           </button>
         )}
         {/* Adding a pair here keeps the wax job: leaving for the Wax box used to lose it. */}
@@ -540,7 +540,7 @@ function SessionFormInner({
           )}
         </div>
         {allOptions.waxes.length === 0 && (
-          <p className="text-sm text-muted">Your wax box is empty: tap + Add a wax under a layer to find a wax and put it in your box as you go.</p>
+          <p className="text-sm text-muted">Your wax box is empty: tap + Add a wax to the list under a layer to find a wax and put it in your box as you go.</p>
         )}
       </section>
 
@@ -884,7 +884,7 @@ function LayerRow({
       {/* Find or add a wax that is not in the box (a link, as for skis; not a choice in the list). */}
       {!adding && (
         <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
-          + Add a wax
+          + Add a wax to the list
         </button>
       )}
       <div className="grid grid-cols-3 gap-2">

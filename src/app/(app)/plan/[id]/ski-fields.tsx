@@ -111,7 +111,7 @@ export function SkiFields({
       {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
       {owner !== "other" && !adding && (
         <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
-          + Add a pair of skis
+          + Add a pair of skis to the list
         </button>
       )}
       {adding && (
