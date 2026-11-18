@@ -5,7 +5,7 @@ import { AddSkiInline } from "@/components/add-ski-inline";
 import { skisLabel } from "@/lib/skiers/possessive";
 import { ironForWax } from "@/lib/history/iron";
 import { draftFields, draftKey, readDraft, type Draft } from "@/lib/history/draft";
-import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
@@ -239,38 +239,53 @@ function SessionFormInner({
   // The draft: saved a moment after each change, once the browser has been
   // checked for one; cleared by Save and Cancel; "Start over" throws it away.
   const formRef = useRef<HTMLFormElement>(null);
-  const [touched, setTouched] = useState(0);
   const off = useRef(false);
   const skip = useMemo(() => new Set([...STATE_FIELDS, ...Object.keys(hidden ?? {})]), [hidden]);
+  // The latest state, for a save made from a plain browser listener (below).
+  const latest = useRef<DraftState | null>(null);
   useEffect(() => {
-    if (!draftName || !draftReady || touched === 0 || off.current) return;
-    const t = setTimeout(() => {
+    latest.current = {
+    technique,
+    skiId,
+    mode,
+    venue,
+    tags,
+    when: whenEdited,
+    layers: layers.map((l) => {
+      const { key, ...rest } = l;
+      void key;
+      return rest;
+    }),
+    addedWaxes,
+    addedSkis,
+  };
+  });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDraftSoon = useCallback(() => {
+    if (!draftName || !draftReady || off.current) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
       const form = formRef.current;
-      if (!form || off.current) return;
-      const state: DraftState = {
-        technique,
-        skiId,
-        mode,
-        venue,
-        tags,
-        when: whenEdited,
-        layers: layers.map((l) => {
-          const { key, ...rest } = l;
-          void key;
-          return rest;
-        }),
-        addedWaxes,
-        addedSkis,
-      };
-      const d: Draft = { v: 1, day: localDay(), state, fields: draftFields(new FormData(form).entries(), skip) };
+      if (!form || off.current || !latest.current) return;
+      const d: Draft = { v: 1, day: localDay(), state: latest.current, fields: draftFields(new FormData(form).entries(), skip) };
       try {
         localStorage.setItem(draftKey(draftName), JSON.stringify(d));
       } catch {
         // Storage full or refused: the form still works, just without a draft.
       }
     }, 500);
-    return () => clearTimeout(t);
-  }, [draftName, draftReady, touched, technique, skiId, mode, venue, tags, whenEdited, layers, addedWaxes, addedSkis, skip]);
+  }, [draftName, draftReady, skip]);
+  // Plain browser listeners, not React state: redrawing the whole form on every
+  // keystroke left the Add a wax and Add a pair of skis boxes unable to take typing.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    for (const type of ["input", "change", "click"]) form.addEventListener(type, saveDraftSoon);
+    return () => {
+      for (const type of ["input", "change", "click"]) form.removeEventListener(type, saveDraftSoon);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [saveDraftSoon]);
   const discardDraft = () => {
     off.current = true;
     try {
@@ -305,10 +320,9 @@ function SessionFormInner({
   useEffect(() => {
     if (state.error) {
       off.current = false;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTouched((n) => n + 1);
+      saveDraftSoon();
     }
-  }, [state]);
+  }, [state, saveDraftSoon]);
 
   const update = (key: number, change: Partial<LayerDraft>) =>
     setLayers((ls) => ls.map((l) => (l.key === key ? { ...l, ...change } : l)));
@@ -325,9 +339,6 @@ function SessionFormInner({
   return (
     <form
       ref={formRef}
-      // Any change, typed or tapped, saves the draft a moment later.
-      onInputCapture={() => setTouched((n) => n + 1)}
-      onClickCapture={() => setTouched((n) => n + 1)}
       // The server checks every field and says what is missing beside Save.
       // The browser's own check is off: Classic/Skate are visually hidden
       // radios, so on iPad a missing technique blocked Save with no message.
@@ -439,10 +450,6 @@ function SessionFormInner({
             name="ski_id"
             value={skiId}
             onChange={(e) => {
-              if (e.target.value === "__add") {
-                setAddingSki(true);
-                return;
-              }
               setSkiId(e.target.value);
               const ski = allOptions.skis.find((k) => k.id === e.target.value);
               if (ski) setTechnique(ski.technique);
@@ -455,9 +462,14 @@ function SessionFormInner({
                 {k.name}
               </option>
             ))}
-            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
+        {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
+        {!addingSki && (
+          <button type="button" onClick={() => setAddingSki(true)} className="-mt-2 inline-flex min-h-11 items-center self-start text-sm text-link underline">
+            + Add a pair of skis to the list
+          </button>
+        )}
         {/* Adding a pair here keeps the wax job: leaving for the Wax box used to lose it. */}
         {addingSki && (
           <AddSkiInline
@@ -528,7 +540,7 @@ function SessionFormInner({
           )}
         </div>
         {allOptions.waxes.length === 0 && (
-          <p className="text-sm text-muted">Your wax box is empty: choose Add a wax… in a layer to find a wax and put it in your box as you go.</p>
+          <p className="text-sm text-muted">Your wax box is empty: tap + Add a wax to the list under a layer to find a wax and put it in your box as you go.</p>
         )}
       </section>
 
@@ -841,10 +853,7 @@ function LayerRow({
         <select
           value={layer.user_product_id}
           onChange={(e) => {
-            if (e.target.value === "__add") {
-              setAdding(true);
-              return;
-            }
+
             const wax = options.waxes.find((w) => w.id === e.target.value);
             onChange({
               user_product_id: e.target.value,
@@ -870,8 +879,13 @@ function LayerRow({
               ))}
             </optgroup>
           )}
-          <option value="__add">Add a wax…</option>
         </select>
+      )}
+      {/* Find or add a wax that is not in the box (a link, as for skis; not a choice in the list). */}
+      {!adding && (
+        <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
+          + Add a wax to the list
+        </button>
       )}
       <div className="grid grid-cols-3 gap-2">
         <select value={layer.method} onChange={(e) => onChange({ method: e.target.value })} aria-label={`Layer ${n} method`} className={small}>

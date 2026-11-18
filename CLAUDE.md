@@ -142,7 +142,7 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   any of them after the page opened. A recorded wax job counts as waxed.
   Its form has no How it went section: rating is the rating step, on the
   session's page after skiing. Edit this record (same form) keeps it.
-- **A wax missing from the box is added from the layer** (Add a wax… in
+- **A wax missing from the box is added from the layer** (+ Add a wax to the list under
   the layer's pull-down, `history/add-layer-wax.tsx`): catalogue search first,
   then a quick add by maker, name and type; it goes into the box and is
   selected. Typing a name for one job only is the last resort. Add a wax and
@@ -152,8 +152,8 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   unsaved draft in the browser (`lib/history/draft.ts`): per device, for the
   day only, one per form (`record:`, `new:`, `edit:` names), cleared by Save
   and Cancel, restored with a "Start over" note. Nothing reaches the database
-  before Save. Skis can be added from the skis pull-down (Add a pair of
-  skis…, `components/add-ski-inline.tsx`) on the form and on plan step 2, for
+  before Save. Skis can be added from a link under the skis pull-down (+ Add a
+  pair of skis, `components/add-ski-inline.tsx`) on the form and on plan step 2, for
   whoever the session is for. Drafts on the server were judged not worth it.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
@@ -259,6 +259,10 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
 - A `<summary>` styled as a plain row still drew a disclosure triangle in
   Chrome on iPad; `summary.list-none` hides it.
 - Every tap target is at least 44 px (`min-h-11`).
+- The bottom tab bar is fixed to the screen's bottom, and the iPad keyboard
+  left it floating partway up the page after typing. It is put away while a
+  text box has focus (`BottomTabs`) and the page nudged when the keyboard
+  closes.
 - A `required` field the browser cannot show (the Classic/Skate radios are
   `sr-only`) blocks submit with no message at all: Save on Record a wax job
   "did nothing". Forms use `noValidate` and show the server's message instead.
@@ -266,6 +270,18 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
   40 px pin and every pull-down stood 4 px taller than the text box beside it.
   The select rule in `globals.css` sets both. Measure a size in a browser
   rather than reading the classes.
+
+## React
+
+- **No "Add…" choice inside a pull-down.** On iPad (Chrome, Apple's
+  engine) choosing one showed it and opened nothing, so adding a wax or a
+  pair is a link under the list (+ Add a wax to the list, + Add a pair of skis to the list).
+- **Never set state in a form's capture handler** (`onInputCapture`,
+  `onClickCapture`). With React 19 a parent re-rendering in the capture
+  phase throws away a controlled child input's keystroke: the wax job draft
+  did this, and the Add a pair of skis and Add a wax boxes would not take
+  typing (proved with a two-component page; the draft now saves from plain
+  `addEventListener` listeners and a ref, with no re-render).
 
 ## Tailwind
 

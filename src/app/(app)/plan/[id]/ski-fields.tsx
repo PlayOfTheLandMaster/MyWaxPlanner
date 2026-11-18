@@ -93,13 +93,7 @@ export function SkiFields({
           <select
             name="ski"
             value={skiId}
-            onChange={(e) => {
-              if (e.target.value === "__add") {
-                setAdding(true);
-                return;
-              }
-              setSkiId(e.target.value);
-            }}
+            onChange={(e) => setSkiId(e.target.value)}
             className={field}
           >
             <option value="">Select ski</option>
@@ -111,14 +105,13 @@ export function SkiFields({
                   : ""}
               </option>
             ))}
-            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
       )}
-      {/* No pairs saved yet for this person: offer to add one here rather than in the Wax box. */}
-      {pairs.length === 0 && owner !== "other" && !adding && (
+      {/* A link under the list, not a choice in it: an Add… choice in a pull-down opened nothing on iPad. */}
+      {owner !== "other" && !adding && (
         <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
-          Add a pair of skis
+          + Add a pair of skis to the list
         </button>
       )}
       {adding && (
