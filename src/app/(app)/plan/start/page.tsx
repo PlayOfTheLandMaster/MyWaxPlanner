@@ -110,11 +110,12 @@ async function Plan({ searchParams }: { searchParams: PageProps<"/plan/start">["
               ))}
             </select>
           </label>
-          <Link href="/venues/new?back=plan" className="-mt-1 self-start text-sm text-link underline">
+          <Link href="/venues/new?back=plan" className="-mt-2 inline-flex min-h-11 items-center self-start text-sm text-link underline">
             Add a venue
           </Link>
-          <div className="grid grid-cols-3 gap-2">
-            <label className={label}>
+          {/* The date gets the row's full width: a phone's date box, in a third of it, read "mm/dd/". */}
+          <div className="grid grid-cols-2 gap-2">
+            <label className={`${label} col-span-2`}>
               Date
               <input type="date" name="date" defaultValue={result?.date ?? one(p.date)} className={field} />
             </label>
