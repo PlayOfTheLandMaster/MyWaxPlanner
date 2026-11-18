@@ -40,6 +40,11 @@ export type ProductRow = {
   published_temp_max_c: number | null;
   temp_min_c: number | null;
   temp_max_c: number | null;
+  /** A second range for old or transformed snow (e.g. Swix grip waxes), same shape as the first. */
+  old_published_temp_min_c: number | null;
+  old_published_temp_max_c: number | null;
+  old_temp_min_c: number | null;
+  old_temp_max_c: number | null;
   snow_types: SnowType[];
   humidity_bands: HumidityBand[];
   fluoro_status: FluoroStatus;
@@ -67,6 +72,10 @@ export const PRODUCT_COLUMNS = [
   "published_temp_max_c",
   "snow_temp_min_c",
   "snow_temp_max_c",
+  "old_published_temp_min_c",
+  "old_published_temp_max_c",
+  "old_snow_temp_min_c",
+  "old_snow_temp_max_c",
   "snow_types",
   "humidity_bands",
   "fluoro_status",
@@ -262,6 +271,10 @@ export function readProduct(
   const pubMax = num("published_temp_max_c");
   let snowMin = num("snow_temp_min_c");
   let snowMax = num("snow_temp_max_c");
+  const oldPubMin = num("old_published_temp_min_c");
+  const oldPubMax = num("old_published_temp_max_c");
+  let oldSnowMin = num("old_snow_temp_min_c");
+  let oldSnowMax = num("old_snow_temp_max_c");
   const iron = num("iron_temp_c");
   const price = num("price");
 
@@ -270,6 +283,12 @@ export function readProduct(
   }
   if (snowMin !== null && snowMax !== null && snowMin > snowMax) {
     errors.push(`snow range ${snowMin} to ${snowMax} °C runs backwards`);
+  }
+  if (oldPubMin !== null && oldPubMax !== null && oldPubMin > oldPubMax) {
+    errors.push(`old-snow range ${oldPubMin} to ${oldPubMax} °C runs backwards`);
+  }
+  if (oldSnowMin !== null && oldSnowMax !== null && oldSnowMin > oldSnowMax) {
+    errors.push(`old-snow snow range ${oldSnowMin} to ${oldSnowMax} °C runs backwards`);
   }
   if (iron !== null && (iron < 80 || iron > 180)) {
     errors.push(`iron_temp_c ${iron} is outside 80–180 °C`);
@@ -291,6 +310,19 @@ export function readProduct(
     } else if (basis === "air") {
       warnings.push(
         `"${brand} ${name}" is rated by air temperature and has no snow_temp range yet; it will not be recommended until it has one`,
+      );
+    }
+  }
+
+  // The old-snow range follows the same rule. An air-rated brand without its
+  // snow version simply falls back to the first range on old snow.
+  if (oldSnowMin === null && oldSnowMax === null && (oldPubMin !== null || oldPubMax !== null)) {
+    if (basis === "snow") {
+      oldSnowMin = oldPubMin;
+      oldSnowMax = oldPubMax;
+    } else if (basis === "air") {
+      warnings.push(
+        `"${brand} ${name}" has an old-snow range by air temperature but no old_snow_temp range; on old snow its first range is used`,
       );
     }
   }
@@ -332,6 +364,10 @@ export function readProduct(
       published_temp_max_c: pubMax,
       temp_min_c: snowMin,
       temp_max_c: snowMax,
+      old_published_temp_min_c: oldPubMin,
+      old_published_temp_max_c: oldPubMax,
+      old_temp_min_c: oldSnowMin,
+      old_temp_max_c: oldSnowMax,
       snow_types: snowTypes,
       humidity_bands: humidity,
       fluoro_status: fluoro as FluoroStatus,

@@ -64,7 +64,7 @@ export function SettingsForm({
       </div>
       <BodyFields initial={me} years={years} />
       <label className={label}>
-        Home venue — its forecast is on Today
+        Home Venue
         <select name="home_venue_id" defaultValue={home ?? ""} className={field}>
           <option value="">None</option>
           {venues.map((v) => (

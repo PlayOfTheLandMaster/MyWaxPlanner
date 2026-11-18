@@ -7,6 +7,7 @@ import type { SkiInput } from "@/lib/skis/input";
 import { loadSkierContext } from "@/lib/skiers/current";
 import { SkiForm } from "../ski-form";
 import { deleteSki, updateSki } from "../actions";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata: Metadata = { title: "Edit skis · My Wax Planner" };
 
@@ -37,7 +38,10 @@ async function Edit({ params }: { params: PageProps<"/wax-box/skis/[id]">["param
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{ski.name}</h1>
+      <div className="flex items-center gap-3">
+        <BrandLogo brand={ski.brand ?? null} size="size-12" />
+        <h1 className="min-w-0 text-2xl font-bold">{ski.name}</h1>
+      </div>
       <SkiForm save={updateSki.bind(null, id)} initial={ski} submitLabel="Save changes" skiers={skiers} me={me} />
       <details className="rounded-lg border border-line">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-danger">

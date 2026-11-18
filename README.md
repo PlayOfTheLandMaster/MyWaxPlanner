@@ -68,7 +68,7 @@ The full product spec is in [docs/xc-wax-app-spec.md](docs/xc-wax-app-spec.md). 
 - **Wax box** has three sections, switched at the top: **Waxes**, **Tools** and **Skis**.
 - **Waxes:** your waxes grouped by Glide, Grip, Cleaners and Consumables, with anything low or empty gathered under **Running low** at the top. Tap a wax to change how much is left (one tap), add notes, edit it, or remove it from the box. **Photo** on a wax's page takes a picture of the container (camera or library), shrunk on the device to about 1200 px and kept in the private `wax-photos` bucket (migration `20261212000000_wax_photos.sql`); it shows as a thumbnail beside the wax on the list, and goes when the wax is removed from the box. A wax you remove stays saved, and **Add a wax → Find a wax you've added before** puts it back without retyping. Waxes from a shared catalogue, if you ever load one, can be found there too, but not edited.
 - **Tools:** the checklist from the spec, grouped as scrapers, hand brushes, roto brushes, irons, cork and fibertex, and bench tools. Tick what you own and, if you like, how worn it is. Later, waxing plans will only use ticked tools.
-- **Skis:** add, edit and delete your pairs: name, classic or skate, grip type (classic only), grip zone length (waxable only), brand, model, base, grind, flex and notes. Deleting a pair keeps its waxing history.
+- **Skis:** add, edit and delete your pairs: name, classic or skate, grip type (classic only), grip zone length (waxable only), brand, model, base, grind, flex and notes. Deleting a pair keeps its waxing history. A known cross-country maker's logo (Fischer, Atomic, Rossignol, Salomon, Madshus, Peltonen and others) shows beside the pair on the list and on its page: the brand typed is matched to the maker's website and the browser loads that site's icon from Google's public favicon service (`src/lib/skis/brand-logo.ts`, tested). Only the maker's website is sent; an unknown brand shows no logo.
 
 **Build prompt 1** — the foundation:
 
@@ -128,6 +128,8 @@ The live app runs at **https://www.mywaxplanner.com** (the bare domain forwards 
 
 Each wax you add is saved for you alone. The next time you add a wax, brands you've used before are suggested as you type, and adding the same wax twice tells you it's already in your box.
 
+**Two ranges.** Some waxes print one range for new snow and another for old or transformed snow (Swix kick waxes, e.g. −1 to −7 °C falling, −3 to −10 °C old). *Add a wax* has an optional **Second range: old or transformed snow**, open for grip waxes and under *More details* for others (migration `20261213000000_old_snow_range.sql`). Suggestions use it on fine-grained, transformed, icy, wet, dirty or man-made snow and the first range on falling or fresh snow (`src/lib/wax-box/old-snow.ts`, tested); the list shows both.
+
 **Air versus snow temperature.** Recommendations compare snow temperatures. If a brand rates its waxes by snow temperature, the range you type is used as it is. If it rates by air temperature, the form also offers a snow-temperature range. The app won't convert air to snow on its own, because the conversion depends on sun, humidity and the night before. Leave the snow range blank if you don't know it: the wax is still saved, the wax box says "no snow range yet", and it won't be recommended until it has one.
 
 Temperatures are entered in °C for now.
@@ -167,6 +169,8 @@ npm run seed -- --brands path/to/brands.csv --products path/to/products.csv
 | `form` | | `block` `liquid` `spray` `paste` `powder` `tube` `gel` `sheet` `roll` `insert` `other` |
 | `published_temp_min_c`, `published_temp_max_c` | | the range printed on the product, in °C |
 | `snow_temp_min_c`, `snow_temp_max_c` | | the same range as **snow** temperature (see below) |
+| `old_published_temp_min_c`, `old_published_temp_max_c` | | a second printed range, for old or transformed snow (e.g. Swix kick waxes) |
+| `old_snow_temp_min_c`, `old_snow_temp_max_c` | | that second range as **snow** temperature |
 | `snow_types` | | any of `falling` `fresh_set` `fine_grained` `transformed` `icy` `wet` `dirty` `man_made`, separated by `;` |
 | `humidity_bands` | | any of `dry` `mid` `wet`, separated by `;` |
 | `fluoro_status` | | `fluoro_free` `low` `high` `unknown` (blank means unknown) |

@@ -3,7 +3,13 @@
 
 import { readNumber } from "@/lib/catalogue/csv";
 
-export type SnowRange = { temp_min_c: number | null; temp_max_c: number | null };
+export type SnowRange = {
+  temp_min_c: number | null;
+  temp_max_c: number | null;
+  /** The skier's own range for old or transformed snow; optional. */
+  old_temp_min_c?: number | null;
+  old_temp_max_c?: number | null;
+};
 
 export type SnowRangeInput = { range: SnowRange; error?: undefined } | { range?: undefined; error: string };
 
@@ -23,10 +29,23 @@ export function readSnowRange(form: FormData): SnowRangeInput {
   if (min !== null && max !== null && min > max) {
     return { error: "The range runs backwards: From should be the colder end." };
   }
-  return { range: { temp_min_c: min, temp_max_c: max } };
+  const oldMin = read("old_snow_temp_min_c", "Old snow From");
+  if (typeof oldMin === "string") return { error: oldMin };
+  const oldMax = read("old_snow_temp_max_c", "Old snow To");
+  if (typeof oldMax === "string") return { error: oldMax };
+  if (oldMin !== null && oldMax !== null && oldMin > oldMax) {
+    return { error: "The old-snow range runs backwards: From should be the colder end." };
+  }
+  return { range: { temp_min_c: min, temp_max_c: max, old_temp_min_c: oldMin, old_temp_max_c: oldMax } };
 }
 
-type Ranged = { id: string; temp_min_c: number | null; temp_max_c: number | null };
+type Ranged = {
+  id: string;
+  temp_min_c: number | null;
+  temp_max_c: number | null;
+  old_temp_min_c?: number | null;
+  old_temp_max_c?: number | null;
+};
 
 /**
  * Gives each wax the skier's own snow range where they have one, and marks
@@ -41,6 +60,8 @@ export function applySnowRanges<T extends Ranged>(
   return waxes.map((w) => {
     const r = ranges.get(w.id);
     if (!r) return { ...w, snow_range_is_yours: false };
-    return { ...w, temp_min_c: r.temp_min_c, temp_max_c: r.temp_max_c, snow_range_is_yours: true };
+    // The skier's old-snow range, when they gave one, replaces the wax's own too.
+    const old = r.old_temp_min_c != null || r.old_temp_max_c != null ? { old_temp_min_c: r.old_temp_min_c ?? null, old_temp_max_c: r.old_temp_max_c ?? null } : {};
+    return { ...w, temp_min_c: r.temp_min_c, temp_max_c: r.temp_max_c, ...old, snow_range_is_yours: true };
   });
 }

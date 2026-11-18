@@ -12,7 +12,8 @@ import { airHumidityBand, type DraftConditions } from "@/lib/plan/draft";
 // catalogue and rules).
 
 const PRODUCT = `id, created_by, name, category, category_group, form, published_temp_min_c,
-  published_temp_max_c, temp_min_c, temp_max_c, snow_types, humidity_bands, layer_roles,
+  published_temp_max_c, temp_min_c, temp_max_c, old_published_temp_min_c, old_published_temp_max_c,
+  old_temp_min_c, old_temp_max_c, snow_types, humidity_bands, layer_roles,
   fluoro_status, iron_temp_c, price, currency, buy_url, brand:brands!inner (name, temperature_basis)`;
 
 export type PlanConditions = Conditions & {
@@ -87,6 +88,10 @@ function normalise(p: Record<string, unknown>): Omit<Candidate, "user_product_id
     temp_max_c: asNumber(p.temp_max_c),
     published_temp_min_c: asNumber(p.published_temp_min_c),
     published_temp_max_c: asNumber(p.published_temp_max_c),
+    old_temp_min_c: asNumber(p.old_temp_min_c),
+    old_temp_max_c: asNumber(p.old_temp_max_c),
+    old_published_temp_min_c: asNumber(p.old_published_temp_min_c),
+    old_published_temp_max_c: asNumber(p.old_published_temp_max_c),
     price: asNumber(p.price),
   };
 }

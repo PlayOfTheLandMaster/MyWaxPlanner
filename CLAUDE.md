@@ -132,6 +132,16 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   shows its Record buttons greyed with the reason; the Record page itself
   refuses too, because a bookmark or the back button skips Today. "Use this
   session data for today's wax job" opens the same page, so it waits as well.
+- **A wax can have two ranges: new snow and old snow** (`old_*` columns,
+  `rangeFor` in `lib/wax-box/old-snow.ts`). Old snow is every snow type but
+  falling and fresh_set, wet, dirty and man-made included (the owner's call).
+  Anything that compares a wax with the snow goes through `rangeFor`, never
+  `temp_min_c` directly. A shared catalogue wax cannot be edited, so its
+  second range lives with the skier's own snow range (`user_snow_ranges`,
+  old_* columns, the "Your snow range" card).
+- **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
+  packaging prints them: `formatRange`, the engine's reasons, the forecast
+  card and History's filter chip. Entry boxes stay From (colder) / To.
 
 ## iPad and Chrome on iOS (WebKit)
 

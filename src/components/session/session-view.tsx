@@ -177,14 +177,17 @@ export async function SessionView({
       {/* Rating: the session's status sits with its title, not in the middle of the page. */}
       {stage === "rate" && s.done_at && doneLine}
 
-      {/* A coach waxing a squad the same way: one session, copied to each pair. */}
-      {s.layers.length > 0 && (
+      {/* A coach waxing a squad the same way: one session, copied to each pair.
+          Here while the session is under way; once rated it sits beside Share a summary. */}
+      {s.layers.length > 0 && stage !== "done" && (
+        <div className="self-start">
         <Link
           href={`/session/${s.id}/copy`}
-          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
         >
           <span aria-hidden>⧉</span> Copy to other skis
         </Link>
+        </div>
       )}
 
       {/* A past session can be today's answer: the same skis, waxes and
@@ -199,12 +202,22 @@ export async function SessionView({
       )}
 
       {stage === "done" && (
-        <Link
-          href={`/session/${s.id}/share`}
-          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
-        >
-          <span aria-hidden>↗</span> Share a summary
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/session/${s.id}/share`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+          >
+            <span aria-hidden>↗</span> Share a summary
+          </Link>
+          {s.layers.length > 0 && (
+            <Link
+              href={`/session/${s.id}/copy`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+            >
+              <span aria-hidden>⧉</span> Copy to other skis
+            </Link>
+          )}
+        </div>
       )}
 
       {planned ? (
@@ -230,7 +243,8 @@ export async function SessionView({
 
           {/* Folded by default, just above Start wax-along, which is the way in;
               the full list is here when wanted. An expert has neither. */}
-          {!expert && steps.length > 0 && (
+          {/* Gone once rating: the waxing is long done, and the page leads to How did it go?. */}
+          {!expert && steps.length > 0 && stage !== "rate" && (
             <details className="rounded-xl border border-line bg-surface">
               <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
                 Wax{s.waxed_at || !waxing ? " ✓" : " · step by step"}
@@ -327,21 +341,30 @@ export async function SessionView({
             {s.notes && <p className="whitespace-pre-line text-sm">{s.notes}</p>}
           </section>
 
+          {/* Rated: folded to one line, so How it went leads. */}
           {s.layers.length > 0 && (
-            <section className={card} aria-label="What went on the skis">
-              <Layers layers={s.layers} plan={s.plan} compare={compare} change={null} />
-            </section>
+            <details className="rounded-xl border border-line bg-surface">
+              <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">
+                Waxes - {s.layers.length} {s.layers.length === 1 ? "layer" : "layers"} applied
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                <Layers layers={s.layers} plan={s.plan} compare={compare} change={null} />
+              </div>
+            </details>
           )}
         </>
       )}
 
       {/* A plan's steps are shown as the checklist above; anything else written as finish notes is shown here. */}
       {(s.finish_tags.length > 0 || (s.finish_notes && !(planned && steps.length > 0))) && (
-        <section className={card}>
-          <h2 className="font-semibold">Finish</h2>
-          {s.finish_tags.length > 0 && <p className="text-sm">{s.finish_tags.join(" → ")}</p>}
-          {s.finish_notes && !(planned && steps.length > 0) && <p className="whitespace-pre-line text-sm text-muted">{s.finish_notes}</p>}
-        </section>
+        // Folded once rated, like the waxes above; open while the session is under way.
+        <details open={planned} className="rounded-xl border border-line bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Finish</summary>
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            {s.finish_tags.length > 0 && <p className="text-sm">{s.finish_tags.join(" → ")}</p>}
+            {s.finish_notes && !(planned && steps.length > 0) && <p className="whitespace-pre-line text-sm text-muted">{s.finish_notes}</p>}
+          </div>
+        </details>
       )}
 
       {/* Folded to one line: the forecast's snow and air temperatures; opens on

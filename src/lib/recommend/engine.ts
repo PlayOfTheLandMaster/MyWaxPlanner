@@ -13,6 +13,7 @@
 
 import type { Product } from "@/lib/wax-box/load";
 import type { HumidityBand, SnowType } from "@/lib/catalogue/vocab";
+import { rangeFor } from "@/lib/wax-box/old-snow";
 
 export type Mode = "recreational" | "race";
 export type GripType = "waxable" | "skin" | "zero" | "hairies" | null;
@@ -198,14 +199,16 @@ export function scoreProduct(
   // Temperature matters most for the temperature wax and the kick wax; base,
   // cleaning and top coats are often all-round.
   const tempCritical = role === "temperature" || role === "kick" || role === "cover";
-  const tf = temperatureFit(p, c.snow_temp_c);
+  // On old or transformed snow, a wax with a second range is judged by that one.
+  const r = rangeFor(p, c.snow_type);
+  const tf = temperatureFit(r, c.snow_temp_c);
   let score: number;
   if (tf === null) {
     score = tempCritical ? 0.35 : 0.65;
     if (tempCritical) reasons.push("no temperature range on record");
   } else {
     score = tf;
-    const range = `${p.temp_min_c === null ? "…" : deg(Number(p.temp_min_c))} to ${p.temp_max_c === null ? "…" : deg(Number(p.temp_max_c))} °C`;
+    const range = `${r.old ? "old-snow range " : ""}${r.temp_max_c === null ? "…" : deg(Number(r.temp_max_c))} to ${r.temp_min_c === null ? "…" : deg(Number(r.temp_min_c))} °C`;
     reasons.push(
       tf >= 0.8 ? `${range} covers ${deg(c.snow_temp_c!)} °C snow` : `${range}, a little off ${deg(c.snow_temp_c!)} °C`,
     );
@@ -289,7 +292,10 @@ export function recommend(
   const kick = layers.find((l) => l.role === "kick");
   if (kick?.pick && c.snow_temp_c !== null) {
     const others = box.filter((p) => (p.category === "hardwax" || p.category === "klister") && p.id !== kick.pick!.product.id && p.amount_left !== "empty");
-    const mid = (p: Candidate) => ((p.temp_min_c ?? -20) + (p.temp_max_c ?? 0)) / 2;
+    const mid = (p: Candidate) => {
+      const r = rangeFor(p, c.snow_type);
+      return ((r.temp_min_c ?? -20) + (r.temp_max_c ?? 0)) / 2;
+    };
     const current = mid(kick.pick.product);
     const warmer = others.filter((p) => mid(p) > current).sort((a, b) => mid(a) - mid(b))[0];
     const colder = others.filter((p) => mid(p) < current).sort((a, b) => mid(b) - mid(a))[0];

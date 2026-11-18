@@ -83,3 +83,10 @@ test("file names are dated and tidy", () => {
   assert.equal(shareFilename(base, tz, "png"), "wax-2026-11-15-canmore-nordic-centre.png");
   assert.equal(shareFilename({ ...base, event_name: "Coupe de l'Été!", venue: null }, tz, "pdf"), "wax-2026-11-15-coupe-de-lete.pdf");
 });
+
+test("a classic share names the grip type, never the skis", () => {
+  const s = shareSummary({ ...base, technique: "classic", grip_type: "skin" }, { notes: false, timeZone: tz });
+  assert.equal(s.kicker, "Classic · Grip: skins");
+  const skate = shareSummary({ ...base, technique: "skate", grip_type: "skin" }, { notes: false, timeZone: tz });
+  assert.equal(skate.kicker, "Skate");
+});

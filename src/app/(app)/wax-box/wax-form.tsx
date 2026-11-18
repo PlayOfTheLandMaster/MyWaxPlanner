@@ -34,6 +34,10 @@ export type WaxInitial = {
   published_temp_max_c: number | null;
   temp_min_c: number | null;
   temp_max_c: number | null;
+  old_published_temp_min_c?: number | null;
+  old_published_temp_max_c?: number | null;
+  old_temp_min_c?: number | null;
+  old_temp_max_c?: number | null;
   snow_types: string[];
   humidity_bands: string[];
   layer_roles: string[];
@@ -243,6 +247,45 @@ export function WaxForm({
           </div>
         </fieldset>
       )}
+
+      {/* A second range for old or transformed snow (Swix prints two on its grip
+          waxes; some custom glide waxes too). Open for grip waxes, otherwise
+          with More details. Hidden, not removed, so folding keeps what was typed. */}
+      <fieldset
+        hidden={!(group === "grip" || moreOpen || initial?.old_published_temp_min_c != null || initial?.old_published_temp_max_c != null)}
+        className="flex flex-col gap-2 rounded-lg border border-line p-3"
+      >
+        <legend className="px-1 text-sm font-medium">Second range: old or transformed snow, °C (optional)</legend>
+        <p className="text-sm text-muted">
+          For a wax printed with two ranges, e.g. Swix kick waxes: the range above for new snow, this one for old or transformed
+          snow. Suggestions use it on fine-grained, transformed, icy, wet, dirty or man-made snow.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className={label}>
+            <span className="font-normal text-muted">From{basis === "air" ? " (air)" : ""}</span>
+            <input name="old_published_temp_min_c" inputMode="decimal" placeholder="−10" defaultValue={num(initial?.old_published_temp_min_c ?? null)} className={field} />
+          </label>
+          <label className={label}>
+            <span className="font-normal text-muted">To{basis === "air" ? " (air)" : ""}</span>
+            <input name="old_published_temp_max_c" inputMode="decimal" placeholder="−3" defaultValue={num(initial?.old_published_temp_max_c ?? null)} className={field} />
+          </label>
+        </div>
+        {basis === "air" && (
+          <>
+            <p className="text-sm text-muted">The same range as snow temperature, if you know it; blank uses the first range on old snow.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={label}>
+                <span className="font-normal text-muted">From (snow)</span>
+                <input name="old_snow_temp_min_c" inputMode="decimal" defaultValue={num(initial?.old_temp_min_c ?? null)} className={field} />
+              </label>
+              <label className={label}>
+                <span className="font-normal text-muted">To (snow)</span>
+                <input name="old_snow_temp_max_c" inputMode="decimal" defaultValue={num(initial?.old_temp_max_c ?? null)} className={field} />
+              </label>
+            </div>
+          </>
+        )}
+      </fieldset>
 
       <label className={label}>
         Fluoro

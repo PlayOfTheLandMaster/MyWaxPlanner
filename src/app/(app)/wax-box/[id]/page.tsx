@@ -52,6 +52,7 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
     ["Form", p.form ? FORM_LABELS[p.form as ProductForm] : null],
     ["Snow temperature", rangeText(p)],
     [`As printed (${p.brand.temperature_basis} temperature)`, printed],
+    [`Old or transformed snow, as printed (${p.brand.temperature_basis})`, formatRange(p.old_published_temp_min_c ?? null, p.old_published_temp_max_c ?? null)],
     ["Snow types", p.snow_types.map((s) => SNOW_TYPE_LABELS[s as SnowType]).join(", ") || null],
     ["Snow humidity", p.humidity_bands.map((h) => HUMIDITY_LABELS[h as HumidityBand]).join(", ") || null],
     ["Used as", p.layer_roles.map((r) => LAYER_ROLE_LABELS[r as LayerRole]).join(", ") || null],
@@ -108,7 +109,11 @@ async function Wax({ params }: { params: PageProps<"/wax-box/[id]">["params"] })
       {!own && (
         <SnowRangeForm
           printed={printed}
-          yours={p.snow_range_is_yours ? { temp_min_c: p.temp_min_c, temp_max_c: p.temp_max_c } : null}
+          yours={
+            p.snow_range_is_yours
+              ? { temp_min_c: p.temp_min_c, temp_max_c: p.temp_max_c, old_temp_min_c: p.old_temp_min_c, old_temp_max_c: p.old_temp_max_c }
+              : null
+          }
           save={saveSnowRange.bind(null, p.id)}
           clear={clearSnowRange.bind(null, p.id)}
         />

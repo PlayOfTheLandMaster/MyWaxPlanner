@@ -26,6 +26,11 @@ export type Product = {
   fluoro_status: FluoroStatus;
   iron_temp_c: number | null;
   brand: { name: string; temperature_basis: TemperatureBasis };
+  /** The second range, for old or transformed snow (see lib/wax-box/old-snow.ts). */
+  old_published_temp_min_c?: number | null;
+  old_published_temp_max_c?: number | null;
+  old_temp_min_c?: number | null;
+  old_temp_max_c?: number | null;
   /** True when temp_min_c / temp_max_c are the skier's own snow range (user_snow_ranges). */
   snow_range_is_yours?: boolean;
 };
@@ -40,16 +45,20 @@ export type BoxRow = {
 };
 
 const PRODUCT_COLUMNS = `id, created_by, name, category, category_group, form, published_temp_min_c,
-  published_temp_max_c, temp_min_c, temp_max_c, snow_types, humidity_bands, layer_roles,
+  published_temp_max_c, temp_min_c, temp_max_c, old_published_temp_min_c, old_published_temp_max_c,
+  old_temp_min_c, old_temp_max_c, snow_types, humidity_bands, layer_roles,
   fluoro_status, iron_temp_c, brand:brands!inner (name, temperature_basis)`;
 
 /** The skier's own snow ranges, by wax id. Row Level Security returns only theirs. */
 export async function loadSnowRanges(supabase: SupabaseClient): Promise<Map<string, SnowRange>> {
-  const { data, error } = await supabase.from("user_snow_ranges").select("product_id, temp_min_c, temp_max_c");
+  const { data, error } = await supabase.from("user_snow_ranges").select("product_id, temp_min_c, temp_max_c, old_temp_min_c, old_temp_max_c");
   if (error) throw new Error(`Could not read your snow ranges: ${error.message}`);
   const num = (n: unknown) => (n === null || n === undefined ? null : Number(n));
   return new Map(
-    (data ?? []).map((r) => [r.product_id as string, { temp_min_c: num(r.temp_min_c), temp_max_c: num(r.temp_max_c) }]),
+    (data ?? []).map((r) => [
+      r.product_id as string,
+      { temp_min_c: num(r.temp_min_c), temp_max_c: num(r.temp_max_c), old_temp_min_c: num(r.old_temp_min_c), old_temp_max_c: num(r.old_temp_max_c) },
+    ]),
   );
 }
 
