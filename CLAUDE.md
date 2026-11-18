@@ -143,6 +143,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   `temp_min_c` directly. A shared catalogue wax cannot be edited, so its
   second range lives with the skier's own snow range (`user_snow_ranges`,
   old_* columns, the "Your snow range" card).
+- **Iron temperatures come from the maker, or from the skier.** The shared
+  catalogue holds only figures a maker prints (migration 20261218000000 says
+  where each came from; a printed range is stored as its lower end). Where
+  there is none, a skier enters their own (`user_snow_ranges.iron_temp_c`,
+  "Your iron temperature"), which `applySnowRanges` uses only when the
+  catalogue is blank. Never fill the catalogue from memory or a shop's page.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.

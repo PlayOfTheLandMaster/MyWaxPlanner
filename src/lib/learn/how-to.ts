@@ -69,6 +69,7 @@ export const GUIDE: GuideSection[] = [
       "Add a photo of the container so you can spot it on the list.",
       "Grip waxes (and some glide waxes) have a second range for old or transformed snow. Suggestions use it on old snow.",
       "Waxes from the shared catalogue can't be edited; enter your own snow range in Your snow range instead.",
+      "The iron temperature comes from the maker where they publish one. Where they don't, enter your own under Your iron temperature on the wax's page.",
       "Ranges read warmer end first, as on the packaging: −1 to −10 °C.",
     ],
   },
