@@ -73,6 +73,27 @@ export const GUIDE: GuideSection[] = [
     ],
   },
   {
+    id: "venues",
+    title: "Venues",
+    intro: "Forecasts are for the venue you pick, never for where your phone is.",
+    steps: [
+      "In Venues, tap Add a venue. Choose the country and province or state, then search.",
+      "Search a ski area's name, or just the nearest town or resort: Rossland finds Black Jack Cross Country Ski Club. A search takes a few seconds.",
+      "Places found that way say near the town on their line. Tap Use, check the details and save.",
+      "Venues you add are yours alone. Shared venues are everyone's; Hide takes one off your lists, and Show again brings it back.",
+      "To delete your own venue, tap Delete, then Delete again. Sessions there keep the venue's name.",
+    ],
+  },
+  {
+    id: "admin",
+    title: "For the admin",
+    steps: [
+      "Venues the admin adds go on the shared list for every user. A shared venue added by mistake can be deleted (Delete, then Delete again); everyone's sessions there keep its name.",
+      "To invite someone, open Account → Invitations, add their email address, then tap Copy link and send it to them.",
+      "They open the link, tap New here? Create an account, and use the address you added. Any other address is refused.",
+    ],
+  },
+  {
     id: "history",
     title: "History",
     steps: [
