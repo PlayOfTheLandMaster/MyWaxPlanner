@@ -154,7 +154,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   per snow condition (Vauhti's 2024–25 guide: UP Polar 150 or 180 °C) is not
   a per-wax figure; the catalogue keeps the cold end. The makers' sites
   (swixsport.com, vauhti.fi, www.toko.ch, rexwax-usa.com, www.rexwax.cz) are
-  on this coding environment's allowed hosts for checking a figure.
+  on this coding environment's allowed hosts for checking a figure. A
+  `user_snow_ranges` row may hold only an iron temperature (or only an
+  old-snow range): the first table rule demanded a new-snow end and refused
+  those saves until 20261219000000.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
@@ -194,6 +197,14 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - **A deploy while a page is open can freeze it** until it is reloaded; the
   owner hit this on the preview while changes were being pushed. Reloading is
   the fix, not a code change.
+- **Waxing notes are private; the video library is shared.** Both are on
+  the Learn tab, but `learn_notes` is each skier's own (owner-only policies)
+  while `learn_videos` is written by admins for everyone. Don't merge them.
+  The one exception: an admin may publish their own note (`published`;
+  only an admin may set it, by policy), and everyone reads it, read only.
+  The writer alone still edits or deletes it.
+  A note's text is shown as plain text (`whitespace-pre-wrap`), never as HTML
+  or markdown.
 - **The how-to guide is `src/lib/learn/how-to.ts`**, and the shareable Claude
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.

@@ -185,6 +185,22 @@ select pg_temp.expect_error(
 with t as (update public.venues set name = 'Mine now'
            where id = '00000000-0000-0000-0000-0000000000d0' returning 1)
 select pg_temp.expect((select count(*) from t) = 0, 'A cannot edit a shared venue');
+insert into public.user_snow_ranges (user_id, product_id, iron_temp_c)
+  values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000c2', 135);
+select pg_temp.expect((select count(*) from public.user_snow_ranges where iron_temp_c = 135) = 1,
+  'A can keep only an iron temperature for a wax');
+insert into public.learn_notes (id, section, title, body)
+  values ('00000000-0000-0000-0000-0000000000e1', 'how_to', 'Hot scrape', 'Iron in, scrape warm.');
+select pg_temp.expect((select user_id from public.learn_notes where id = '00000000-0000-0000-0000-0000000000e1')
+  = '00000000-0000-0000-0000-00000000000a', 'A can write a waxing note, and it is theirs');
+with t as (update public.learn_notes set title = 'Hot scrape, twice' where id = '00000000-0000-0000-0000-0000000000e1' returning 1)
+select pg_temp.expect((select count(*) from t) = 1, 'A can edit their own note');
+select pg_temp.expect_error(
+  $$insert into public.learn_notes (section, title) values ('diary', 'x')$$,
+  'a note must be in one of the sections');
+select pg_temp.expect_error(
+  $$update public.learn_notes set published = true where id = '00000000-0000-0000-0000-0000000000e1'$$,
+  'someone who is not an admin cannot publish a note');
 
 -- ---------------------------------------------------------------- user B
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
@@ -206,6 +222,15 @@ select pg_temp.expect_error(
   $$insert into public.user_snow_ranges (user_id, product_id, temp_min_c)
     values ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000c2', -5)$$,
   'B cannot add a snow range for a wax only A can see');
+select pg_temp.expect((select count(*) from public.learn_notes) = 0, 'B cannot read A''s waxing notes');
+with t as (update public.learn_notes set body = '' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'B cannot change A''s notes');
+with t as (delete from public.learn_notes returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'B cannot delete A''s notes');
+select pg_temp.expect_error(
+  $$insert into public.learn_notes (user_id, section, title)
+    values ('00000000-0000-0000-0000-00000000000a', 'other', 'In A''s name')$$,
+  'B cannot write a note in A''s name');
 select pg_temp.expect((select count(*) from public.profiles) = 1, 'B sees only their own profile');
 -- Only shared rows (created_by null) may be visible to B so far: B has typed
 -- nothing in yet, and none of A's may show. The test's shared rows must be there.
@@ -298,6 +323,8 @@ insert into public.venues (user_id, name)
   values ('00000000-0000-0000-0000-00000000000a', 'Admin Nordic Centre');
 select pg_temp.expect((select user_id from public.venues where name = 'Admin Nordic Centre') is null,
   'a venue an admin adds goes on the shared list');
+with t as (update public.learn_notes set published = true where id = '00000000-0000-0000-0000-0000000000e1' returning 1)
+select pg_temp.expect((select count(*) from t) = 1, 'an admin can publish their own note');
 reset role;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect((select count(*) from public.signup_invites) = 0,
@@ -306,6 +333,15 @@ select pg_temp.expect_error($$insert into public.signup_invites (email) values (
   'someone who is not an admin cannot invite');
 select pg_temp.expect((select count(*) from public.venues where name = 'Admin Nordic Centre') = 1,
   'everyone sees a venue the admin added');
+select pg_temp.expect((select count(*) from public.learn_notes where id = '00000000-0000-0000-0000-0000000000e1') = 1,
+  'everyone can read a note the admin published');
+with t as (update public.learn_notes set title = 'Changed by B' where id = '00000000-0000-0000-0000-0000000000e1' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'a published note can be changed only by its writer');
+with t as (delete from public.learn_notes where id = '00000000-0000-0000-0000-0000000000e1' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'a published note can be deleted only by its writer');
+select pg_temp.expect_error(
+  $$insert into public.learn_notes (section, title, published) values ('other', 'For everyone', true)$$,
+  'someone who is not an admin cannot write a published note');
 insert into public.venues (user_id, name)
   values ('00000000-0000-0000-0000-00000000000b', 'B''s Secret Loop');
 select pg_temp.expect((select user_id from public.venues where name = 'B''s Secret Loop') = '00000000-0000-0000-0000-00000000000b',
@@ -338,5 +374,7 @@ select pg_temp.expect_error($$select 1 from public.wax_session_list limit 1$$,
   'a signed-out visitor cannot read the history list');
 select pg_temp.expect_error($$select 1 from public.signup_invites limit 1$$,
   'a signed-out visitor cannot read invitations');
+select pg_temp.expect_error($$select 1 from public.learn_notes limit 1$$,
+  'a signed-out visitor cannot read waxing notes');
 
 rollback;

@@ -92,6 +92,18 @@ export const GUIDE: GuideSection[] = [
       "Venues the admin adds go on the shared list for every user. A shared venue added by mistake can be deleted (Delete, then Delete again); everyone's sessions there keep its name.",
       "To invite someone, open Account → Invitations, add their email address, then tap Copy link and send it to them.",
       "They open the link, tap New here? Create an account, and use the address you added. Any other address is refused.",
+      "To share one of your waxing notes with every user, open it on Learn and tap Publish to all users. Unpublish takes it back.",
+    ],
+  },
+  {
+    id: "notes",
+    title: "My waxing notes",
+    intro: "Your own short articles on the Learn tab. Only you see them.",
+    steps: [
+      "On Learn, the Notes tab is your own notes and the Videos tab the video library. On Notes, tap Write a note. Pick a section (Waxing instructions, Notes on products, How-to, Accommodation, Restaurants, Shops or Other), give it a title and write it.",
+      "Tap Save. Your notes are listed under their sections, newest first; tap one to read it.",
+      "On a note, tap Edit to change it, or Delete, then Delete again, to remove it.",
+      "Notes the admin publishes for everyone appear under Shared by the admin, to read.",
     ],
   },
   {

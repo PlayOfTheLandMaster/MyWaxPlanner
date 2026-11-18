@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Video · My Wax Planner" };
 export default function VideoPage({ params }: PageProps<"/learn/[id]">) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-4 py-6">
-      <BackLink fallback="/learn" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
+      <BackLink fallback="/learn?tab=videos" fallbackLabel="Videos" className="inline-flex min-h-11 items-center self-start text-sm text-link underline" />
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
         <Detail params={params} />
       </Suspense>

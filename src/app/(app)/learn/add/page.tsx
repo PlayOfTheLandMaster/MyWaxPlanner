@@ -13,7 +13,7 @@ export default function AddVideoPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-5 px-4 py-6">
       <div>
-        <BackLink fallback="/learn" />
+        <BackLink fallback="/learn?tab=videos" fallbackLabel="Videos" />
         <h1 className="text-2xl font-bold">Add a video</h1>
       </div>
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
@@ -26,5 +26,5 @@ export default function AddVideoPage() {
 async function Form() {
   // Only library editors get the form; the database refuses anyone else anyway.
   if (!(await isAdmin(await createClient()))) redirect("/learn");
-  return <VideoForm save={saveVideo.bind(null, null)} submitLabel="Add to library" cancelHref="/learn" />;
+  return <VideoForm save={saveVideo.bind(null, null)} submitLabel="Add to library" cancelHref="/learn?tab=videos" />;
 }

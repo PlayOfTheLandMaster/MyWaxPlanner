@@ -78,5 +78,5 @@ export async function deleteVideo(id: string) {
   const supabase = await createClient();
   await supabase.from("learn_videos").delete().eq("id", id);
   revalidatePath("/learn");
-  redirect("/learn");
+  redirect("/learn?tab=videos");
 }
