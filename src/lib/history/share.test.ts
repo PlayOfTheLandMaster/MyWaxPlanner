@@ -39,6 +39,9 @@ test("a recreational session is titled by its venue", () => {
   assert.equal(s.place, null);
   assert.equal(s.date, "Sunday, November 15, 2026");
   assert.deepEqual(s.conditions, ["Snow −5 °C", "Air −2.5 °C", "Fine-grained, older", "Snow humidity: dry"]);
+  const withDebris = (debris: string) => shareSummary({ ...base, conditions: { ...base.conditions!, debris } }, { notes: false, timeZone: tz });
+  assert.equal(withDebris("needles").conditions.at(-1), "Debris: needles");
+  assert.equal(withDebris("none").conditions.at(-1), "No debris");
   assert.deepEqual(s.ratings, ["Glide: Good (4/5)", "Grip: Excellent (5/5)", "Kick: good"]);
 });
 
