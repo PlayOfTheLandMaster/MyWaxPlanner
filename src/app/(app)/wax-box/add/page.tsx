@@ -28,7 +28,7 @@ export default function AddWaxPage({ searchParams }: PageProps<"/wax-box/add">) 
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-semibold">A new wax</h2>
+          <h2 className="text-lg font-semibold">Add a new wax not on the list</h2>
           <p className="mt-1 text-sm text-muted">
             Copy what&apos;s on the label. Only the brand, name and type are needed; the temperature range is what
             recommendations use most.
