@@ -177,14 +177,17 @@ export async function SessionView({
       {/* Rating: the session's status sits with its title, not in the middle of the page. */}
       {stage === "rate" && s.done_at && doneLine}
 
-      {/* A coach waxing a squad the same way: one session, copied to each pair. */}
-      {s.layers.length > 0 && (
+      {/* A coach waxing a squad the same way: one session, copied to each pair.
+          Here while the session is under way; once rated it sits beside Share a summary. */}
+      {s.layers.length > 0 && stage !== "done" && (
+        <div className="self-start">
         <Link
           href={`/session/${s.id}/copy`}
-          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
         >
           <span aria-hidden>⧉</span> Copy to other skis
         </Link>
+        </div>
       )}
 
       {/* A past session can be today's answer: the same skis, waxes and
@@ -199,12 +202,22 @@ export async function SessionView({
       )}
 
       {stage === "done" && (
-        <Link
-          href={`/session/${s.id}/share`}
-          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
-        >
-          <span aria-hidden>↗</span> Share a summary
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/session/${s.id}/share`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+          >
+            <span aria-hidden>↗</span> Share a summary
+          </Link>
+          {s.layers.length > 0 && (
+            <Link
+              href={`/session/${s.id}/copy`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile"
+            >
+              <span aria-hidden>⧉</span> Copy to other skis
+            </Link>
+          )}
+        </div>
       )}
 
       {planned ? (
