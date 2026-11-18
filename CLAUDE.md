@@ -146,6 +146,9 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   trigger (`share_admin_venue`) clears `user_id` on an admin's insert, and a
   second insert policy allows exactly that. It follows the admin role, not an
   address; the owner's own account is the one admin today.
+  The admin can also delete a shared venue (Venues page, two taps); a
+  security-definer trigger (`keep_venue_name`) first copies its name onto
+  every session that named it, other users' included, as `venue_label`.
 
 ## iPad and Chrome on iOS (WebKit)
 

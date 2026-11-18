@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dayIn } from "@/lib/venues/today";
 import { readerTimeZone } from "@/lib/reader-zone";
+import { isAdmin } from "@/lib/learn/load";
 
 export type VenueFormState = { error?: string };
 
@@ -97,7 +98,9 @@ async function repoint(supabase: Awaited<ReturnType<typeof createClient>>, userI
 export async function removeVenue(id: string, target: string) {
   const { supabase, userId } = await signedIn();
   const { data: venue } = await supabase.from("venues").select("id, user_id, name").eq("id", id).maybeSingle();
-  if (!venue || venue.user_id !== userId) return; // shared venues are hidden, never deleted
+  if (!venue) return;
+  // Shared venues are hidden, not deleted, except by the admin (who added them).
+  if (venue.user_id !== userId && !(venue.user_id === null && (await isAdmin(supabase)))) return;
 
   if (target !== "keep" && target !== "none") {
     if (target === id) return;

@@ -6,6 +6,8 @@ import { SetupNext } from "@/components/setup-next";
 import { createClient } from "@/lib/supabase/server";
 import { loadHomeVenueId, loadVenues } from "@/lib/venues/load";
 import { hideVenue, removeVenue, setHomeVenue, unhideVenue } from "./actions";
+import { ConfirmDelete } from "@/components/confirm-delete";
+import { isAdmin } from "@/lib/learn/load";
 
 export const metadata: Metadata = { title: "Venues · My Wax Planner" };
 
@@ -30,7 +32,7 @@ export default function VenuesPage({ searchParams }: PageProps<"/venues">) {
 
 async function List() {
   const supabase = await createClient();
-  const [all, home] = await Promise.all([loadVenues(supabase, { includeHidden: true }), loadHomeVenueId(supabase)]);
+  const [all, home, admin] = await Promise.all([loadVenues(supabase, { includeHidden: true }), loadHomeVenueId(supabase), isAdmin(supabase)]);
   const venues = all.filter((v) => !v.hidden);
   const hidden = all.filter((v) => v.hidden);
   const sections = [
@@ -83,7 +85,10 @@ async function List() {
                         </button>
                       </form>
                     )}
-                    {!v.user_id && (
+                    {/* The admin can delete a shared venue added by mistake (two taps);
+                        everyone's sessions there keep its name. */}
+                    {!v.user_id && admin && <ConfirmDelete action={removeVenue.bind(null, v.id, "keep")} label={v.name} />}
+                    {!v.user_id && !admin && (
                       <form action={hideVenue.bind(null, v.id)}>
                         <button type="submit" className="min-h-11 rounded-lg px-3 text-sm text-danger">
                           Hide

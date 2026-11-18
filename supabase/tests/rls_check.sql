@@ -312,6 +312,14 @@ select pg_temp.expect((select user_id from public.venues where name = 'B''s Secr
   'a venue anyone else adds stays their own');
 select pg_temp.expect_error($$insert into public.venues (user_id, name) values (null, 'Sneaky shared')$$,
   'someone who is not an admin cannot add a shared venue');
+with t as (delete from public.venues where name = 'Admin Nordic Centre' returning 1)
+select pg_temp.expect((select count(*) from t) = 0, 'someone who is not an admin cannot delete a shared venue');
+reset role;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+with t as (delete from public.venues where name = 'Admin Nordic Centre' returning 1)
+select pg_temp.expect((select count(*) from t) = 1, 'an admin can delete a shared venue');
+reset role;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 delete from public.signup_invites;
 reset role;
 select pg_temp.expect((select count(*) from public.signup_invites) = 3,
