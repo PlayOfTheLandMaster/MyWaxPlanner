@@ -208,7 +208,7 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
           {f.sort !== "date" && <input type="hidden" name="sort" value={f.sort} />}
           {/* Its own boundary: it waits on the forecast, the rest of the fold does not. */}
           <Suspense fallback={null}>
-            <SimilarToday />
+            <SimilarToday f={f} />
           </Suspense>
           <label className={label}>
             Period
@@ -465,16 +465,21 @@ function SessionRow({ row: r }: { row: Row }) {
  * venue's forecast for the next two hours fills the snow filters. Nothing
  * shows without a home venue or a forecast.
  */
-async function SimilarToday() {
+async function SimilarToday({ f }: { f: Filters }) {
   const supabase = await createClient();
   const [venues, today] = await Promise.all([loadVenues(supabase), loadTodayVenue(supabase)]);
   const venue = venues.filter(forecastable).find((v) => v.id === today.id);
   if (!venue) return null;
   const w = (await forecastFor(venue, { hours: 2 })).window;
   if (!w) return null;
+  const fields = Object.fromEntries(new URLSearchParams(similarQuery(w)));
+  // Already applied (the page opened with these values): shown ticked.
+  const now = f as unknown as Record<string, unknown>;
+  const initiallyOn = Object.entries(fields).every(([k, v]) => String(now[k] ?? "") === v);
   return (
     <SimilarOption
-      fields={Object.fromEntries(new URLSearchParams(similarQuery(w)))}
+      fields={fields}
+      initiallyOn={initiallyOn}
       detail={`Snow within 3 °C of today's ${deg(Math.round(w.snow_temp_c * 10) / 10)} at ${venue.name}, all seasons, best glide first`}
     />
   );
