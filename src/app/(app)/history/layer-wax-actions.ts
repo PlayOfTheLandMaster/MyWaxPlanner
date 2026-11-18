@@ -48,13 +48,19 @@ async function asOption(boxId: string): Promise<AddedWax> {
   const { supabase } = await signedIn();
   const { data, error } = await supabase
     .from("user_products")
-    .select("id, product:products!inner (name, category_group, layer_roles, iron_temp_c, brand:brands!inner (name))")
+    .select("id, product_id, product:products!inner (name, category_group, layer_roles, iron_temp_c, brand:brands!inner (name))")
     .eq("id", boxId)
     .maybeSingle();
   if (error || !data) return { error: "It was added, but could not be read back. Reload the page to pick it." };
   const p = data.product as unknown as { name: string; category_group: string; layer_roles: string[]; iron_temp_c: number | null; brand: { name: string } };
+  // The maker's iron temperature first, else the skier's own (Your iron temperature).
+  let iron = p.iron_temp_c;
+  if (iron == null) {
+    const { data: own } = await supabase.from("user_snow_ranges").select("iron_temp_c").eq("product_id", data.product_id as string).maybeSingle();
+    iron = own?.iron_temp_c != null ? Number(own.iron_temp_c) : null;
+  }
   revalidatePath("/wax-box");
-  return { wax: { id: data.id as string, label: `${p.brand.name} ${p.name}`, group: p.category_group, layer_roles: p.layer_roles, iron_temp_c: p.iron_temp_c } };
+  return { wax: { id: data.id as string, label: `${p.brand.name} ${p.name}`, group: p.category_group, layer_roles: p.layer_roles, iron_temp_c: iron } };
 }
 
 /** A wax found by the search into the box (or the row it already has there). */

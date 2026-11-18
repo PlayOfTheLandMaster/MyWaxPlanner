@@ -1,6 +1,7 @@
 "use client";
 
 import { AddLayerWax } from "./add-layer-wax";
+import { ironForWax } from "@/lib/history/iron";
 import { startTransition, useActionState, useMemo, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
@@ -625,7 +626,8 @@ function LayerRow({
             onWaxAdded(w);
             setAdding(false);
             setTyping(false);
-            onChange({ user_product_id: w.id, custom_product: "", iron_temp_c: layer.iron_temp_c || (w.iron_temp_c ? String(w.iron_temp_c) : "") });
+            const before = options.waxes.find((x) => x.id === layer.user_product_id);
+            onChange({ user_product_id: w.id, custom_product: "", iron_temp_c: ironForWax(layer.iron_temp_c, before, w) });
           }}
           onType={() => {
             setAdding(false);
@@ -659,7 +661,7 @@ function LayerRow({
             onChange({
               user_product_id: e.target.value,
               custom_product: "",
-              iron_temp_c: layer.iron_temp_c || (wax?.iron_temp_c ? String(wax.iron_temp_c) : ""),
+              iron_temp_c: ironForWax(layer.iron_temp_c, options.waxes.find((x) => x.id === layer.user_product_id), wax),
             });
           }}
           aria-label={`Layer ${n} wax`}

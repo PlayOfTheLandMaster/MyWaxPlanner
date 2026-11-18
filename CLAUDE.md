@@ -174,7 +174,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   on this coding environment's allowed hosts for checking a figure. A
   `user_snow_ranges` row may hold only an iron temperature (or only an
   old-snow range): the first table rule demanded a new-snow end and refused
-  those saves until 20261219000000.
+  those saves until 20261219000000. On the wax job form a layer takes its
+  wax's iron temperature (maker's, else the skier's own) when the wax is
+  chosen or changed, replacing the old wax's figure but never a number typed
+  by hand (`ironForWax`); it once kept whatever was there first.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
