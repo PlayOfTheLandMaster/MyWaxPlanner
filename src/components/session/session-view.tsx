@@ -194,7 +194,7 @@ export async function SessionView({
           href={`/history/new?record=1&from=${s.id}`}
           className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-on-accent active:opacity-70"
         >
-          Use this session data for today&apos;s wax job
+          Use this session for today&apos;s wax job
         </Link>
       )}
 
@@ -433,7 +433,7 @@ export async function SessionView({
             href={`/history/new?record=1&from=${id}`}
             className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-center font-semibold text-on-accent active:opacity-70"
           >
-            Use this session data for today&apos;s wax job
+            Use this session for today&apos;s wax job
           </Link>
         </div>
       )}

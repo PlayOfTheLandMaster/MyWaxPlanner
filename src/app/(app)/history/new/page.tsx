@@ -53,7 +53,7 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // Whose skis the form lists, by name: "Anna E's Skis".
   const ownerName = owner ? (who.skiers.find((k) => k.id === owner)?.name ?? who.me) : who.me;
 
-  // "Use this session data for today's wax job" (was Use this wax today, and Repeat this prep): the same skis, layers and finish as a past session,
+  // "Use this session for today's wax job" (was Use this wax today, and Repeat this prep): the same skis, layers and finish as a past session,
   // planned for now. Ratings, conditions and race details start empty.
   // Layers whose wax has left the box are kept, by name.
   const boxIds = new Set(options.waxes.map((w) => w.id));

@@ -115,7 +115,7 @@ export const GUIDE: GuideSection[] = [
     steps: [
       "Filter by season, skis, venue, snow and more. Days similar to today, inside Filter, fills in today's snow.",
       "Open a past session to Share a summary (a picture or PDF, never with names or skis) or Copy to other skis.",
-      "Use this session data for today's wax job starts a new wax job from it; Edit this record corrects it.",
+      "Use this session for today's wax job starts a new wax job from it; Edit this record corrects it.",
       "Compare puts two to four sessions side by side; Insights shows which waxes worked at which temperatures.",
       "Download as spreadsheet gives you every session as a CSV file.",
     ],
