@@ -1,8 +1,11 @@
 "use client";
 
 import { AddLayerWax } from "./add-layer-wax";
+import { AddSkiInline } from "@/components/add-ski-inline";
+import { skisLabel } from "@/lib/skiers/possessive";
 import { ironForWax } from "@/lib/history/iron";
-import { startTransition, useActionState, useMemo, useState } from "react";
+import { draftFields, draftKey, readDraft, type Draft } from "@/lib/history/draft";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
@@ -111,7 +114,54 @@ const blankLayer = (zone: Zone, role = ""): LayerDraft => ({
   scrape_brush_steps: "",
 });
 
-export function SessionForm({
+/** What the draft keeps of the form's own state (the rest are plain named fields). */
+type DraftState = {
+  technique: Technique | "";
+  skiId: string;
+  mode: string;
+  venue: string;
+  tags: string[];
+  when: string | null;
+  layers: Omit<LayerDraft, "key">[];
+  addedWaxes: WaxOption[];
+  addedSkis: FormOptions["skis"];
+};
+// Fields the form's state already holds, or that are not the person's typing.
+const STATE_FIELDS = ["tz_offset", "status", "technique", "ski_id", "mode", "venue_id", "occurred_at", "layers", "finish_tags"];
+
+type SessionFormProps = Parameters<typeof SessionFormInner>[0];
+
+/**
+ * The wax job form, with its unsaved draft (lib/history/draft.ts): read from
+ * the browser once, after the page has drawn, and the form drawn again from
+ * it when there is one. Leaving for another tab used to lose everything.
+ */
+export function SessionForm(props: Omit<SessionFormProps, "draft" | "draftReady">) {
+  const { draftName } = props;
+  const [draft, setDraft] = useState<Draft | null | undefined>(undefined);
+  useEffect(() => {
+    let d: Draft | null = null;
+    if (draftName) {
+      try {
+        d = readDraft(localStorage.getItem(draftKey(draftName)), localDay());
+      } catch {
+        // No storage (a private window): the form simply starts empty.
+      }
+    }
+    // Browser storage can only be read after hydration, so this one read sets state here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(d);
+  }, [draftName]);
+  return <SessionFormInner key={draft ? "draft" : "fresh"} {...props} draft={draft ?? null} draftReady={draft !== undefined} />;
+}
+
+/** The reader's own date, as a draft is dated. */
+const localDay = () => new Date().toLocaleDateString("en-CA");
+
+function SessionFormInner({
+  draft,
+  draftReady,
+  draftName,
   options,
   save,
   initial,
@@ -119,7 +169,15 @@ export function SessionForm({
   cancelHref,
   hidden,
   onWhereWhen,
+  skiOwner = null,
+  skiOwnerName,
 }: {
+  /** The unsaved draft to start from (SessionForm reads it), or null. */
+  draft: Draft | null;
+  /** False until the browser's draft has been looked for: nothing is saved before. */
+  draftReady: boolean;
+  /** Where this form's draft is kept, e.g. "record:me:new"; none, no draft. */
+  draftName?: string;
   options: FormOptions;
   save: (prev: SessionFormState, data: FormData) => Promise<SessionFormState>;
   initial?: SessionInitial;
@@ -130,27 +188,40 @@ export function SessionForm({
   hidden?: Record<string, string>;
   /** Told the venue and the moment (ISO, or null while the time is incomplete) whenever either changes. */
   onWhereWhen?: (venueId: string, at: string | null) => void;
+  /** Whose skis the form lists (a skier id, or null for the account holder): a pair added here is theirs. */
+  skiOwner?: string | null;
+  /** Their name, for the label: "Anna E's Skis". */
+  skiOwnerName?: string;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
   // Waxes added from a layer (Add a wax…) join the box's list for every layer at once.
-  const [addedWaxes, setAddedWaxes] = useState<WaxOption[]>([]);
+  const saved = (draft?.state ?? {}) as Partial<DraftState>;
+  const [addedWaxes, setAddedWaxes] = useState<WaxOption[]>(saved.addedWaxes ?? []);
+  // Pairs added from the skis list (Add a pair of skis…), likewise.
+  const [addedSkis, setAddedSkis] = useState<FormOptions["skis"]>(saved.addedSkis ?? []);
+  const [addingSki, setAddingSki] = useState(false);
   const allOptions: FormOptions = {
     ...options,
+    skis: [...options.skis, ...addedSkis.filter((a) => !options.skis.some((k) => k.id === a.id))],
     waxes: [...options.waxes, ...addedWaxes.filter((a) => !options.waxes.some((w) => w.id === a.id))].sort((a, b) => a.label.localeCompare(b.label)),
   };
-  const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
-  const [skiId, setSkiId] = useState(initial?.ski_id ?? "");
-  const [mode, setMode] = useState(initial?.mode ?? "recreational");
-  const [venue, setVenue] = useState(initial?.venue_id ?? "");
-  const [tags, setTags] = useState<string[]>(initial?.finish_tags ?? []);
+  const [technique, setTechnique] = useState<Technique | "">(saved.technique ?? initial?.technique ?? "");
+  const [skiId, setSkiId] = useState(saved.skiId ?? initial?.ski_id ?? "");
+  const [mode, setMode] = useState(saved.mode ?? initial?.mode ?? "recreational");
+  const [venue, setVenue] = useState(saved.venue ?? initial?.venue_id ?? "");
+  const [tags, setTags] = useState<string[]>(saved.tags ?? initial?.finish_tags ?? []);
   const [layers, setLayers] = useState<LayerDraft[]>(() =>
-    initial?.layers.length ? initial.layers.map((l) => ({ ...l, key: nextKey++ })) : [blankLayer("glide", "temperature")],
+    saved.layers?.length
+      ? saved.layers.map((l) => ({ ...l, key: nextKey++ }))
+      : initial?.layers.length
+        ? initial.layers.map((l) => ({ ...l, key: nextKey++ }))
+        : [blankLayer("glide", "temperature")],
   );
   // The time and zone are set in the browser, after the first render, so the
   // page drawn on the server (which has no idea where you are) matches.
   const client = useIsClient();
   const [opened] = useState(() => new Date().toISOString());
-  const [whenEdited, setWhen] = useState<string | null>(null);
+  const [whenEdited, setWhen] = useState<string | null>(saved.when ?? null);
   const when = whenEdited ?? (client ? toLocalInput(initial?.occurred_at ?? opened) : "");
   const tz = client ? String(new Date().getTimezoneOffset()) : "";
 
@@ -159,11 +230,85 @@ export function SessionForm({
   const recording = hidden?.record === "1";
   const shownLayers = classic ? layers : layers.filter((l) => l.zone === "glide");
   const skisForTechnique = useMemo(
-    () => options.skis.filter((k) => !technique || k.technique === technique),
-    [options.skis, technique],
+    () => allOptions.skis.filter((k) => !technique || k.technique === technique),
+    [allOptions.skis, technique],
   );
   const a = initial?.actual ?? {};
   const hasActual = Object.values(a).some((v) => v !== null && v !== "" && v !== true && v !== false);
+
+  // The draft: saved a moment after each change, once the browser has been
+  // checked for one; cleared by Save and Cancel; "Start over" throws it away.
+  const formRef = useRef<HTMLFormElement>(null);
+  const [touched, setTouched] = useState(0);
+  const off = useRef(false);
+  const skip = useMemo(() => new Set([...STATE_FIELDS, ...Object.keys(hidden ?? {})]), [hidden]);
+  useEffect(() => {
+    if (!draftName || !draftReady || touched === 0 || off.current) return;
+    const t = setTimeout(() => {
+      const form = formRef.current;
+      if (!form || off.current) return;
+      const state: DraftState = {
+        technique,
+        skiId,
+        mode,
+        venue,
+        tags,
+        when: whenEdited,
+        layers: layers.map((l) => {
+          const { key, ...rest } = l;
+          void key;
+          return rest;
+        }),
+        addedWaxes,
+        addedSkis,
+      };
+      const d: Draft = { v: 1, day: localDay(), state, fields: draftFields(new FormData(form).entries(), skip) };
+      try {
+        localStorage.setItem(draftKey(draftName), JSON.stringify(d));
+      } catch {
+        // Storage full or refused: the form still works, just without a draft.
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [draftName, draftReady, touched, technique, skiId, mode, venue, tags, whenEdited, layers, addedWaxes, addedSkis, skip]);
+  const discardDraft = () => {
+    off.current = true;
+    try {
+      if (draftName) localStorage.removeItem(draftKey(draftName));
+    } catch {
+      // Nothing to clear.
+    }
+  };
+  // The plain fields (notes, conditions…) are not React state: put the draft's back in place.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form || !draft) return;
+    for (const [name, value] of Object.entries(draft.fields)) {
+      const values = Array.isArray(value) ? value : [value];
+      for (const el of Array.from(form.elements)) {
+        const input = el as HTMLInputElement;
+        if (input.name !== name) continue;
+        if (input.type === "radio" || input.type === "checkbox") input.checked = values.includes(input.value);
+        else input.value = values[0] ?? "";
+        // A restored field inside a closed fold opens it, so nothing restored is hidden.
+        if (input.value) input.closest("details")?.setAttribute("open", "");
+      }
+    }
+  }, [draft]);
+  // A restored venue or time: the forecast card above follows it, as when changed by hand.
+  useEffect(() => {
+    if (draft && (saved.venue || saved.when)) onWhereWhen?.(venue, momentOf(when));
+    // Once, for the draft restored on opening.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
+  // A refused save keeps the draft: Save cleared it, so write it again.
+  useEffect(() => {
+    if (state.error) {
+      off.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTouched((n) => n + 1);
+    }
+  }, [state]);
 
   const update = (key: number, change: Partial<LayerDraft>) =>
     setLayers((ls) => ls.map((l) => (l.key === key ? { ...l, ...change } : l)));
@@ -179,6 +324,10 @@ export function SessionForm({
 
   return (
     <form
+      ref={formRef}
+      // Any change, typed or tapped, saves the draft a moment later.
+      onInputCapture={() => setTouched((n) => n + 1)}
+      onClickCapture={() => setTouched((n) => n + 1)}
       // The server checks every field and says what is missing beside Save.
       // The browser's own check is off: Classic/Skate are visually hidden
       // radios, so on iPad a missing technique blocked Save with no message.
@@ -198,10 +347,27 @@ export function SessionForm({
           ),
         );
         data.set("finish_tags", tags.join(", "));
+        // Saved for real now; a refused save writes the draft again (above).
+        discardDraft();
         startTransition(() => action(data));
       }}
       className="flex flex-col gap-5"
     >
+      {draft && (
+        <p role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent bg-tile p-3 text-sm">
+          <span>Your unsaved wax job from earlier today was restored.</span>
+          <button
+            type="button"
+            onClick={() => {
+              discardDraft();
+              window.location.reload();
+            }}
+            className="inline-flex min-h-11 items-center text-link underline"
+          >
+            Start over
+          </button>
+        </p>
+      )}
       <input type="hidden" name="tz_offset" value={tz} />
       {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
 
@@ -258,7 +424,7 @@ export function SessionForm({
                   checked={technique === t}
                   onChange={() => {
                     setTechnique(t);
-                    if (skiId && options.skis.find((k) => k.id === skiId)?.technique !== t) setSkiId("");
+                    if (skiId && allOptions.skis.find((k) => k.id === skiId)?.technique !== t) setSkiId("");
                   }}
                   className="sr-only"
                 />
@@ -268,13 +434,17 @@ export function SessionForm({
           </div>
         </fieldset>
         <label className={label}>
-          Skis
+          {skisLabel(skiOwnerName)}
           <select
             name="ski_id"
             value={skiId}
             onChange={(e) => {
+              if (e.target.value === "__add") {
+                setAddingSki(true);
+                return;
+              }
               setSkiId(e.target.value);
-              const ski = options.skis.find((k) => k.id === e.target.value);
+              const ski = allOptions.skis.find((k) => k.id === e.target.value);
               if (ski) setTechnique(ski.technique);
             }}
             className={field}
@@ -285,8 +455,23 @@ export function SessionForm({
                 {k.name}
               </option>
             ))}
+            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
+        {/* Adding a pair here keeps the wax job: leaving for the Wax box used to lose it. */}
+        {addingSki && (
+          <AddSkiInline
+            owner={skiOwner}
+            technique={technique || null}
+            onAdded={(k) => {
+              setAddedSkis((ks) => [...ks, { id: k.id, name: k.name, technique: k.technique, category: k.category as FormOptions["skis"][number]["category"], skier_id: k.skier_id }]);
+              setSkiId(k.id);
+              setTechnique(k.technique);
+              setAddingSki(false);
+            }}
+            onCancel={() => setAddingSki(false)}
+          />
+        )}
         <div className="grid grid-cols-2 gap-2">
           {MODES.map((m) => (
             <label key={m} className={choice}>
@@ -525,9 +710,12 @@ export function SessionForm({
       )}
       <div className="grid grid-cols-2 gap-2">
         {/* Leaving saves nothing: a repeated prep or a new session only exists once saved. */}
-        <BackLink fallback={cancelHref} className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
-          Cancel
-        </BackLink>
+        {/* Cancel throws the draft away too: leaving by Cancel means "not this one". */}
+        <span onClickCapture={discardDraft} className="contents">
+          <BackLink fallback={cancelHref} className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold active:bg-tile">
+            Cancel
+          </BackLink>
+        </span>
         <button
           type="submit"
           disabled={pending}

@@ -45,3 +45,29 @@ export async function deleteSki(id: string, from: "edit" | "list" = "edit") {
   if (from === "list") refresh();
   else redirect("/wax-box/skis");
 }
+
+export type AddedSki = {
+  ski?: { id: string; name: string; technique: "classic" | "skate"; category: string | null; skier_id: string | null; grind: string | null; grip_zone_cm: number | null };
+  error?: string;
+};
+
+/**
+ * Adds a pair from inside a wax job or a plan (Add a pair of skis…), for the
+ * person those skis are for, and returns it so the picker can select it
+ * without leaving the page. The same rules as the full form (readSki); Row
+ * Level Security keeps the pair, and the skier it names, to this account.
+ */
+export async function quickAddSki(owner: string | null, formData: FormData): Promise<AddedSki> {
+  const { supabase, userId } = await signedIn();
+  if (owner !== null) formData.set("skier_id", owner);
+  else formData.delete("skier_id");
+  const { ski, error } = readSki(formData);
+  if (error !== undefined) return { error };
+  const { data, error: saveError } = await supabase
+    .from("skis")
+    .insert({ ...ski, user_id: userId })
+    .select("id, name, technique, category, skier_id, grind, grip_zone_cm")
+    .single();
+  if (saveError) return { error: `Could not save the skis: ${saveError.message}` };
+  return { ski: data as AddedSki["ski"] };
+}

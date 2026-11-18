@@ -50,6 +50,8 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
   // Today, or for "Repeat this prep" whoever the copied session was for.
   const owner = formOwner(allOptions.skis, source, who.current?.id ?? null);
   const options = { ...allOptions, skis: skisOf(allOptions.skis, owner) };
+  // Whose skis the form lists, by name: "Anna E's Skis".
+  const ownerName = owner ? (who.skiers.find((k) => k.id === owner)?.name ?? who.me) : who.me;
 
   // "Use this session data for today's wax job" (was Use this wax today, and Repeat this prep): the same skis, layers and finish as a past session,
   // planned for now. Ratings, conditions and race details start empty.
@@ -129,6 +131,8 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         me={who.me}
         skierName={who.current?.name ?? null}
         expert={isExpert(who.style)}
+        owner={owner}
+        ownerName={ownerName}
       />
     );
 
@@ -146,6 +150,9 @@ async function Form({ searchParams }: { searchParams: PageProps<"/history/new">[
         initial={initial}
         submitLabel="Save session"
         cancelHref={source ? `/history/${source.id}` : "/history"}
+        skiOwner={owner}
+        skiOwnerName={ownerName}
+        draftName={`new:${owner ?? "me"}:${source?.id ?? "blank"}`}
       />
     </>
   );
@@ -164,6 +171,8 @@ async function Record({
   venue,
   skierName,
   expert,
+  owner,
+  ownerName,
 }: {
   options: FormOptions;
   initial: SessionInitial | undefined;
@@ -172,6 +181,9 @@ async function Record({
   me: string;
   skierName: string | null;
   expert: boolean;
+  /** Whose skis the form lists. */
+  owner: string | null;
+  ownerName: string;
 }) {
   // For the moment the form opens on, as the forecast saved with it will be.
   const forecast = venue ? await forecastFor(venue, { at: new Date().toISOString(), hours: 2 }) : null;
@@ -218,6 +230,9 @@ async function Record({
         initial={start}
         window={forecast?.window ?? null}
         error={forecast?.error ?? null}
+        skiOwner={owner}
+        skiOwnerName={ownerName}
+        draftName={`record:${owner ?? "me"}:${source?.id ?? "blank"}`}
       />
     </>
   );

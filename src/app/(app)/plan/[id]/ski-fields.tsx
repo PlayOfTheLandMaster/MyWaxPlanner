@@ -9,6 +9,8 @@ import {
   type Technique,
 } from "@/lib/skis/input";
 import type { PlanSki } from "@/lib/recommend/load";
+import { AddSkiInline } from "@/components/add-ski-inline";
+import { skisLabel } from "@/lib/skiers/possessive";
 
 const field =
   "min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base";
@@ -40,11 +42,15 @@ export function SkiFields({
   initialTechnique: Technique | null;
   initialGrip: string;
 }) {
+  // Pairs added here (Add a pair of skis…) join the list without leaving the plan.
+  const [added, setAdded] = useState<PlanSki[]>([]);
+  const [adding, setAdding] = useState(false);
+  const allSkis = [...skis, ...added];
   const [skiId, setSkiId] = useState(initialSki);
   const [technique, setTechnique] = useState<Technique | null>(
     initialTechnique,
   );
-  const ski = skis.find((k) => k.id === skiId);
+  const ski = allSkis.find((k) => k.id === skiId);
   // Whose skis: narrows the pair list. "me" = the account holder; "other" =
   // someone with no saved skis, so there is no pair to pick.
   const [owner, setOwner] = useState(
@@ -53,7 +59,7 @@ export function SkiFields({
   const pairs =
     owner === "other"
       ? []
-      : skis.filter((k) =>
+      : allSkis.filter((k) =>
           owner === "me" ? k.skier_id === null : k.skier_id === owner,
         );
 
@@ -83,11 +89,17 @@ export function SkiFields({
       )}
       {pairs.length > 0 && (
         <label className={label}>
-          Skis
+          {skisLabel(owner === "me" ? me : skiers.find((k) => k.id === owner)?.name)}
           <select
             name="ski"
             value={skiId}
-            onChange={(e) => setSkiId(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value === "__add") {
+                setAdding(true);
+                return;
+              }
+              setSkiId(e.target.value);
+            }}
             className={field}
           >
             <option value="">Select ski</option>
@@ -99,8 +111,27 @@ export function SkiFields({
                   : ""}
               </option>
             ))}
+            <option value="__add">Add a pair of skis…</option>
           </select>
         </label>
+      )}
+      {/* No pairs saved yet for this person: offer to add one here rather than in the Wax box. */}
+      {pairs.length === 0 && owner !== "other" && !adding && (
+        <button type="button" onClick={() => setAdding(true)} className="-mt-1 inline-flex min-h-11 items-center self-start text-sm text-link underline">
+          Add a pair of skis
+        </button>
+      )}
+      {adding && (
+        <AddSkiInline
+          owner={owner === "me" ? null : owner}
+          technique={technique}
+          onAdded={(k) => {
+            setAdded((ks) => [...ks, { id: k.id, skier_id: k.skier_id, name: k.name, technique: k.technique, category: k.category as PlanSki["category"], grind: k.grind, grip_zone_cm: k.grip_zone_cm }]);
+            setSkiId(k.id);
+            setAdding(false);
+          }}
+          onCancel={() => setAdding(false)}
+        />
       )}
 
       {ski ? (

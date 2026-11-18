@@ -148,6 +148,13 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   selected. Typing a name for one job only is the last resort. Add a wax and
   this share `lib/wax-box/create.ts`, so one set of rules decides a new wax.
   The panel is not a `<form>`: it sits inside the wax job's form.
+- **Leaving a wax job half done loses nothing.** The wax job form keeps an
+  unsaved draft in the browser (`lib/history/draft.ts`): per device, for the
+  day only, one per form (`record:`, `new:`, `edit:` names), cleared by Save
+  and Cancel, restored with a "Start over" note. Nothing reaches the database
+  before Save. Skis can be added from the skis pull-down (Add a pair of
+  skis…, `components/add-ski-inline.tsx`) on the form and on plan step 2, for
+  whoever the session is for. Drafts on the server were judged not worth it.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself

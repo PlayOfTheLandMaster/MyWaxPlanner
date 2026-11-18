@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { loadFormOptions, loadSession } from "@/lib/history/load";
 import { formOwner, skisOf } from "@/lib/skis/owner";
+import { loadSkierContext } from "@/lib/skiers/current";
 import { SessionForm, type SessionInitial } from "../../session-form";
 import { saveSession } from "../../actions";
 
@@ -35,10 +36,12 @@ async function Edit({
     Boolean,
   );
   const supabase = await createClient();
-  const [session, allOptions] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase)]);
+  const [session, allOptions, who] = await Promise.all([loadSession(supabase, id), loadFormOptions(supabase), loadSkierContext()]);
   if (!session) notFound();
   // Only the skis of the person this session is for.
-  const options = { ...allOptions, skis: skisOf(allOptions.skis, formOwner(allOptions.skis, session, null)) };
+  const owner = formOwner(allOptions.skis, session, null);
+  const ownerName = owner ? (who.skiers.find((k) => k.id === owner)?.name ?? who.me) : who.me;
+  const options = { ...allOptions, skis: skisOf(allOptions.skis, owner) };
 
   const initial: SessionInitial = {
     ...session,
@@ -68,7 +71,7 @@ async function Edit({
           Ratings saved. Now correct {fix.join(" and ")} below, then Save changes.
         </p>
       )}
-      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} />
+      <SessionForm options={options} save={saveSession.bind(null, id)} initial={initial} submitLabel="Save changes" cancelHref={`/history/${id}`} skiOwner={owner} skiOwnerName={ownerName} draftName={`edit:${id}`} />
     </>
   );
 }
