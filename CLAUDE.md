@@ -142,6 +142,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   any of them after the page opened. A recorded wax job counts as waxed.
   Its form has no How it went section: rating is the rating step, on the
   session's page after skiing. Edit this record (same form) keeps it.
+- **A wax missing from the box is added from the layer** (Add a wax… in
+  the layer's pull-down, `history/add-layer-wax.tsx`): catalogue search first,
+  then a quick add by maker, name and type; it goes into the box and is
+  selected. Typing a name for one job only is the last resort. Add a wax and
+  this share `lib/wax-box/create.ts`, so one set of rules decides a new wax.
+  The panel is not a `<form>`: it sits inside the wax job's form.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself

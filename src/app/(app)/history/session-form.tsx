@@ -1,10 +1,11 @@
 "use client";
 
+import { AddLayerWax } from "./add-layer-wax";
 import { startTransition, useActionState, useMemo, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
 import type { SessionFormState } from "./actions";
-import type { FormOptions } from "@/lib/history/load";
+import type { FormOptions, WaxOption } from "@/lib/history/load";
 import { HUMIDITY_LABELS, LAYER_ROLE_LABELS, SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { HUMIDITY_BANDS, SNOW_TYPES } from "@/lib/catalogue/vocab";
 import { TECHNIQUES, TECHNIQUE_LABELS, type Technique } from "@/lib/skis/input";
@@ -130,6 +131,12 @@ export function SessionForm({
   onWhereWhen?: (venueId: string, at: string | null) => void;
 }) {
   const [state, action, pending] = useActionState<SessionFormState, FormData>(save, {});
+  // Waxes added from a layer (Add a wax…) join the box's list for every layer at once.
+  const [addedWaxes, setAddedWaxes] = useState<WaxOption[]>([]);
+  const allOptions: FormOptions = {
+    ...options,
+    waxes: [...options.waxes, ...addedWaxes.filter((a) => !options.waxes.some((w) => w.id === a.id))].sort((a, b) => a.label.localeCompare(b.label)),
+  };
   const [technique, setTechnique] = useState<Technique | "">(initial?.technique ?? "");
   const [skiId, setSkiId] = useState(initial?.ski_id ?? "");
   const [mode, setMode] = useState(initial?.mode ?? "recreational");
@@ -314,7 +321,8 @@ export function SessionForm({
               key={l.key}
               n={i + 1}
               layer={l}
-              options={options}
+              options={allOptions}
+              onWaxAdded={(w) => setAddedWaxes((ws) => (ws.some((x) => x.id === w.id) ? ws : [...ws, w]))}
               first={i === 0}
               last={i === shownLayers.length - 1}
               onChange={(c) => update(l.key, c)}
@@ -333,8 +341,8 @@ export function SessionForm({
             </button>
           )}
         </div>
-        {options.waxes.length === 0 && (
-          <p className="text-sm text-muted">Your wax box is empty, so type each wax&apos;s name. Waxes added to the box can be picked here.</p>
+        {allOptions.waxes.length === 0 && (
+          <p className="text-sm text-muted">Your wax box is empty: choose Add a wax… in a layer to find a wax and put it in your box as you go.</p>
         )}
       </section>
 
@@ -554,6 +562,7 @@ function LayerRow({
   n,
   layer,
   options,
+  onWaxAdded,
   first,
   last,
   onChange,
@@ -563,6 +572,7 @@ function LayerRow({
   n: number;
   layer: LayerDraft;
   options: FormOptions;
+  onWaxAdded: (w: WaxOption) => void;
   first: boolean;
   last: boolean;
   onChange: (c: Partial<LayerDraft>) => void;
@@ -575,8 +585,11 @@ function LayerRow({
   // the other zone's waxes are never offered (the owner's call).
   const own = options.waxes.filter((w) => w.group === layer.zone);
   const other = options.waxes.filter((w) => w.group === "solvent" || w.group === "consumable");
-  const typed = layer.user_product_id === "" && options.waxes.length > 0 ? layer.custom_product !== "" : true;
-  const [typing, setTyping] = useState(typed || options.waxes.length === 0);
+  // A wax typed by name (custom_product) opens as typed; otherwise the pull-down, even with an empty box (Add a wax… is in it).
+  const typed = layer.user_product_id === "" && layer.custom_product !== "";
+  const [typing, setTyping] = useState(typed);
+  // Add a wax…: search the catalogue or add a new one, without leaving the job.
+  const [adding, setAdding] = useState(false);
   const small = "min-h-11 w-full rounded-lg border border-line bg-surface px-2 text-sm";
 
   return (
@@ -605,7 +618,23 @@ function LayerRow({
           </option>
         ))}
       </select>
-      {typing ? (
+      {adding ? (
+        <AddLayerWax
+          zone={layer.zone}
+          onAdded={(w) => {
+            onWaxAdded(w);
+            setAdding(false);
+            setTyping(false);
+            onChange({ user_product_id: w.id, custom_product: "", iron_temp_c: layer.iron_temp_c || (w.iron_temp_c ? String(w.iron_temp_c) : "") });
+          }}
+          onType={() => {
+            setAdding(false);
+            setTyping(true);
+            onChange({ user_product_id: "" });
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      ) : typing ? (
         <div className="flex gap-2">
           <input
             value={layer.custom_product}
@@ -614,19 +643,16 @@ function LayerRow({
             aria-label={`Layer ${n} wax`}
             className={small}
           />
-          {options.waxes.length > 0 && (
-            <button type="button" onClick={() => setTyping(false)} className="min-h-11 shrink-0 rounded-lg border border-line px-3 text-sm">
-              Pick
-            </button>
-          )}
+          <button type="button" onClick={() => setTyping(false)} className="min-h-11 shrink-0 rounded-lg border border-line px-3 text-sm">
+            Pick
+          </button>
         </div>
       ) : (
         <select
           value={layer.user_product_id}
           onChange={(e) => {
-            if (e.target.value === "__type") {
-              setTyping(true);
-              onChange({ user_product_id: "" });
+            if (e.target.value === "__add") {
+              setAdding(true);
               return;
             }
             const wax = options.waxes.find((w) => w.id === e.target.value);
@@ -654,7 +680,7 @@ function LayerRow({
               ))}
             </optgroup>
           )}
-          <option value="__type">Not in my box — type it…</option>
+          <option value="__add">Add a wax…</option>
         </select>
       )}
       <div className="grid grid-cols-3 gap-2">
