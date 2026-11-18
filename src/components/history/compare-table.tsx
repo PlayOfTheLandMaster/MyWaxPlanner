@@ -14,7 +14,9 @@ export function CompareTable({
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-line bg-surface">
-      <table className="w-full min-w-[36rem] border-collapse text-sm">
+      {/* Fixed layout: the label column keeps its width and every session gets an equal share.
+          Left to the browser, the first session's long values took most of the row on iPad. */}
+      <table className="w-full table-fixed border-collapse text-sm" style={{ minWidth: `${8 + sessions.length * 11}rem` }}>
         <thead>
           <tr className="border-b border-line">
             <th scope="col" className="sticky left-0 w-32 bg-surface p-3 text-left font-normal text-muted">
