@@ -1,3 +1,4 @@
+import type React from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { loadSkierContext } from "@/lib/skiers/current";
@@ -14,11 +15,11 @@ const NEXT: Record<string, string> = { wax: "Wax it", ski: "Ready to ski", rate:
 
 /**
  * Planned sessions for everyone the account waxes for, each named, at the
- * top of the Session tab (a coach preps the whole squad's skis at once): "Current sessions" are today's and later ones; "Unrated sessions" are
+ * Sessions tab (a coach preps the whole squad's skis at once): "Current sessions" are today's and later ones; "Unrated sessions" are
  * from an earlier day, skied and never rated. "Today" is the reader's own
  * (lib/reader-zone), not the server's UTC.
  */
-export async function ContinueList() {
+export async function ContinueList({ empty = null }: { empty?: React.ReactNode } = {}) {
   const supabase = await createClient();
   const who = await loadSkierContext();
   const q = supabase
@@ -37,14 +38,12 @@ export async function ContinueList() {
     skier_name: who.skiers.length > 0 ? ((r.skier as unknown as { name: string } | null)?.name ?? who.me) : null,
     venue_name: (r.venue as unknown as { name: string } | null)?.name ?? null,
   }));
-  if (rows.length === 0) return null;
+  if (rows.length === 0) return empty;
 
   const now = new Date();
   const { current, unrated } = splitByDay(rows, now, await readerTimeZone());
   return (
     <>
-      {/* The hairline under Record a wax job (as between the page's other groups). */}
-      <hr className="my-1 border-t-2 border-muted/35" />
       {current.length > 0 && (
         <Group id="current-h" title="Current sessions" note="Today's and coming up. Tap one to open it, or Done Skiing when it's skied." rows={current} now={now} offerDone />
       )}

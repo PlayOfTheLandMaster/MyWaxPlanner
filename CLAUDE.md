@@ -107,10 +107,15 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   "Plan today's wax" while the Session tab said "Plan a wax", and the full form
   had three names. New entry points use these two names.
   The owner has since reworded what a guided waxer sees: Today's main button
-  and the setup note say **Start a wax session**, and the Session tab's heading
-  **Plan a guided wax session**. Expert-facing words and the screens themselves
-  keep "Plan a wax session". Record a wax job offers no way to suggestions: it
-  is for waxing already done.
+  and the setup note say **Start a wax session**, and the planner's heading
+  **Plan a guided wax session**. Expert-facing words keep "Plan a wax
+  session". Record a wax job offers no way to suggestions: it is for waxing
+  already done.
+- **Every wax session starts on Today.** The planner is `/plan/start`, opened
+  only from Today (Start a wax session; What would the app suggest? for an
+  expert). The **Sessions** tab (`/plan`, titled My Sessions) lists sessions
+  under way and starts nothing: it once offered an expert a guided session,
+  which the owner found a disconnect. Venues has no Forecast button.
 - **Guided or expert** (`profiles.waxing_style`) is asked, never guessed from
   behaviour. Null means not chosen and behaves as guided.
 - **Optional checklist steps never keep the checklist open.** `progress().todo`

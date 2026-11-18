@@ -306,7 +306,7 @@ async function Today() {
             </Link>
           )}
           <Link
-            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            href={venue ? `/plan/start?venue=${venue.id}` : "/plan/start"}
             className="-mt-2 inline-flex min-h-11 items-center justify-center self-center text-sm text-link underline"
           >
             What would the app suggest?
@@ -315,7 +315,7 @@ async function Today() {
       ) : (
         <>
           <Link
-            href={venue ? `/plan?venue=${venue.id}` : "/plan"}
+            href={venue ? `/plan/start?venue=${venue.id}` : "/plan/start"}
             className="flex min-h-14 items-center justify-center rounded-xl bg-accent px-4 text-lg font-bold text-on-accent active:opacity-70"
           >
             {who.current ? `Start a wax session for ${who.current.name}` : "Start a wax session"}

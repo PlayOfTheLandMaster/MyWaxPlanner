@@ -36,6 +36,7 @@ export const GUIDE: GuideSection[] = [
       "Read the plan: the waxes from your box and why. Tap Use this plan to save it.",
       "Wax with Start wax-along (one step per screen, with timers), then tap I'm Done Waxing.",
       "After skiing, tap I'm Done Skiing. Rate it now or later.",
+      "Sessions under way are on the Sessions tab; tap one to carry on. New sessions always start on Today.",
     ],
   },
   {
