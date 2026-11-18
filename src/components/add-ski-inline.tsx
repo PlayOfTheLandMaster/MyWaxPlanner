@@ -10,8 +10,8 @@ const choice =
   "flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-tile has-[:checked]:font-semibold";
 
 /**
- * Add a pair of skis… inside a wax job or a plan: name, technique, grip type
- * and maker, saved for whoever the session is for, then picked. The rest of a
+ * Add a pair of skis… inside a wax job or a plan: maker (first, and asked
+ * for: the owner's call), name, technique and grip type, saved for whoever the session is for, then picked. The rest of a
  * pair's details are on its page in the Wax box. Not a <form>: it sits
  * inside the session's own form, and forms cannot nest.
  */
@@ -55,8 +55,17 @@ export function AddSkiInline({
     <div className="flex flex-col gap-2 rounded-lg border border-accent bg-tile p-2">
       <p className="text-sm font-medium">Add a pair of skis</p>
       <label className={label}>
+        Maker
+        <input value={brand} onChange={(e) => setBrand(e.target.value)} list="add-ski-brands" placeholder="e.g. Fischer" autoFocus className={small} />
+        <datalist id="add-ski-brands">
+          {SKI_BRANDS.map((b) => (
+            <option key={b} value={b} />
+          ))}
+        </datalist>
+      </label>
+      <label className={label}>
         Name
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Race classic, Rock skis" autoFocus className={small} />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Race classic, Rock skis" className={small} />
       </label>
       <fieldset className="flex flex-col gap-1">
         <legend className="text-xs font-medium">Technique</legend>
@@ -81,15 +90,6 @@ export function AddSkiInline({
           </select>
         </label>
       )}
-      <label className={label}>
-        Maker (optional)
-        <input value={brand} onChange={(e) => setBrand(e.target.value)} list="add-ski-brands" placeholder="e.g. Fischer" className={small} />
-        <datalist id="add-ski-brands">
-          {SKI_BRANDS.map((b) => (
-            <option key={b} value={b} />
-          ))}
-        </datalist>
-      </label>
       <p className="text-xs text-muted">Grind, flex and the rest can be added later on the pair&apos;s page in the Wax box.</p>
       {error && (
         <p role="alert" className="text-sm text-danger">
