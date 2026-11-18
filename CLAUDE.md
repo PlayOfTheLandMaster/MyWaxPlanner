@@ -259,6 +259,10 @@ every Monday at 7 pm Pacific and pushes a summary to the owner.
 - A `<summary>` styled as a plain row still drew a disclosure triangle in
   Chrome on iPad; `summary.list-none` hides it.
 - Every tap target is at least 44 px (`min-h-11`).
+- The bottom tab bar is fixed to the screen's bottom, and the iPad keyboard
+  left it floating partway up the page after typing. It is put away while a
+  text box has focus (`BottomTabs`) and the page nudged when the keyboard
+  closes.
 - A `required` field the browser cannot show (the Classic/Skate radios are
   `sr-only`) blocks submit with no message at all: Save on Record a wax job
   "did nothing". Forms use `noValidate` and show the server's message instead.

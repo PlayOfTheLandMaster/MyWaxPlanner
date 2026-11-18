@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 
 // The five tabs from the spec's Screens and navigation section. Phone first:
 // waxing happens on a bench with one free hand, so every main screen is one
@@ -88,11 +89,38 @@ export function BottomTabsFallback() {
   return <TabBar pathname={null} />;
 }
 
+// While a text box has the keyboard up, the bar is put away. On iPad the
+// keyboard shifts the screen, and a bar fixed to the bottom was left floating
+// partway up the page once it closed (the owner's screenshot, over a form).
+const TYPED = new Set(["text", "search", "email", "password", "number", "tel", "url", "datetime-local", "date", "time"]);
+function typingNow(): boolean {
+  const el = document.activeElement;
+  if (el instanceof HTMLTextAreaElement) return true;
+  return el instanceof HTMLInputElement && TYPED.has(el.type);
+}
+function subscribeTyping(onChange: () => void) {
+  const out = () => {
+    onChange();
+    // When the keyboard closes, nudge the page so the browser puts fixed things back.
+    setTimeout(() => window.scrollTo(window.scrollX, window.scrollY), 60);
+  };
+  document.addEventListener("focusin", onChange);
+  document.addEventListener("focusout", out);
+  return () => {
+    document.removeEventListener("focusin", onChange);
+    document.removeEventListener("focusout", out);
+  };
+}
+
 function TabBar({ pathname }: { pathname: string | null }) {
+  const typing = useSyncExternalStore(subscribeTyping, typingNow, () => false);
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] print:hidden"
+      // Hidden by moving it off the bottom edge, not removed, so nothing on the page jumps.
+      className={`fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] transition-transform print:hidden ${
+        typing ? "translate-y-full" : ""
+      }`}
     >
       <ul className="mx-auto grid max-w-xl grid-cols-5">
         {TABS.map((tab) => {
