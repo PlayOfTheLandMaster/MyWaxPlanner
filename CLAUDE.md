@@ -269,9 +269,20 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 
 `scripts/android-check.mjs` signs the test account in on an emulated Pixel 7
 at the live site and opens every main screen (sideways scroll, tap targets
-under 44 px, headings, server and script errors). A scheduled task runs it
-every Monday at 7 pm Pacific and pushes a summary to the owner.
+under 44 px, headings, server and script errors). A scheduled task ("Weekly
+Android check" in claude.ai's Scheduled list) runs it every Monday evening and
+pushes a summary to the owner. Its schedule reads 18:41 America/Vancouver, yet
+the server lists the next run at 17:41 PST: read `next_run_at` (get_trigger)
+before telling the owner a time. It fetches the script from `main`
+each time, so a change to it takes effect once merged.
 
+- **The task needs the Supabase connector** attached in its own settings
+  (Advanced settings → Connectors); a connector in this session does not carry
+  over. Without it the run stops before signing in and says so.
+- **What is inside a closed `<details>` is skipped.** Chrome still gives it a
+  size (its `innerText` is empty), so the first run reported the weather
+  card's Open-Meteo credit as a blank 15 px link on Today and the planner.
+  The fold's own summary row is still measured.
 - The test account, `android-test@mywaxplanner.test`, is empty and kept on
   purpose (the owner agreed). Its password is **scrambled between runs**: a
   run sets a fresh random bcrypt hash with an `update auth.users`, signs in,
