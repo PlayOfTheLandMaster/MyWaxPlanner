@@ -67,8 +67,14 @@ for (const [name, path] of SCREENS) {
     const visible = (el) => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
-      return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && !el.closest(".sr-only,[hidden]");
+      return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && !el.closest(".sr-only,[hidden]") && !inClosedFold(el);
     };
+    // Chrome still gives a size to what is inside a closed <details>, but nobody can see or tap it
+    // (its innerText is empty). It flagged the weather card's Open-Meteo credit as a blank 15 px link.
+    function inClosedFold(el) {
+      const d = el.closest("details:not([open])");
+      return !!d && el.closest("summary")?.parentElement !== d;
+    }
     // A link inside a sentence is read, not aimed at; standalone controls must be 44 px.
     const inSentence = (el) => el.tagName === "A" && el.parentElement && ["P", "LI", "SPAN"].includes(el.parentElement.tagName) && el.parentElement.innerText.trim() !== el.innerText.trim();
     const small = [...document.querySelectorAll("a, button, select, input:not([type=hidden]):not([type=radio]):not([type=checkbox]), summary")]
