@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth/current-user";
 import { BottomTabs, BottomTabsFallback } from "@/components/bottom-tabs";
+import { UpdateBar } from "@/components/update-bar";
 
 // Every screen in this group needs a signed-in user. This is the page-level
 // check; Row Level Security is what actually keeps one skier's data from
@@ -23,6 +24,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={<BottomTabsFallback />}>
         <BottomTabs />
       </Suspense>
+      <UpdateBar />
     </>
   );
 }

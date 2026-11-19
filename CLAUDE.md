@@ -231,7 +231,13 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   unchanged for two seconds was tapped again and again.
 - **A deploy while a page is open can freeze it** until it is reloaded; the
   owner hit this on the preview while changes were being pushed. Reloading is
-  the fix, not a code change.
+  the fix, so `UpdateBar` offers it: every five minutes, and whenever the app
+  comes back on screen, it asks `/api/version` which build is live and shows
+  "A new version is ready · Reload" above the tab bar when it differs from the
+  page's own. Both read `NEXT_PUBLIC_BUILD` (the commit, set in
+  `next.config.ts`), so they cannot disagree within one deployment; the route
+  calls `connection()` because the build otherwise prerendered it, and the
+  proxy skips it, as every open page asks it.
 - **Waxing notes are private; the video library is shared.** Both are on
   the Learn tab, but `learn_notes` is each skier's own (owner-only policies)
   while `learn_videos` is written by admins for everyone. Don't merge them.
