@@ -4,7 +4,7 @@ import { AddLayerWax } from "./add-layer-wax";
 import { AddSkiInline } from "@/components/add-ski-inline";
 import { skisLabel } from "@/lib/skiers/possessive";
 import { ironForWax } from "@/lib/history/iron";
-import { draftFields, draftKey, readDraft, type Draft } from "@/lib/history/draft";
+import { draftFields, draftKey, readDraft, worthRestoring, type Draft } from "@/lib/history/draft";
 import { startTransition, useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "@/components/nav-trail";
 import { useIsClient } from "@/components/use-is-client";
@@ -150,7 +150,7 @@ export function SessionForm(props: Omit<SessionFormProps, "draft" | "draftReady"
     }
     // Browser storage can only be read after hydration, so this one read sets state here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(d);
+    setDraft(d && worthRestoring(d) ? d : null);
   }, [draftName]);
   return <SessionFormInner key={draft ? "draft" : "fresh"} {...props} draft={draft ?? null} draftReady={draft !== undefined} />;
 }
@@ -366,7 +366,10 @@ function SessionFormInner({
     >
       {draft && (
         <p role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent bg-tile p-3 text-sm">
-          <span>Your unsaved wax job from earlier today was restored.</span>
+          <span>
+            You started this wax job earlier today and didn&apos;t save it, so it&apos;s back as you left it. It isn&apos;t in My Sessions
+            until you tap Save.
+          </span>
           <button
             type="button"
             onClick={() => {

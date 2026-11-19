@@ -48,3 +48,15 @@ export function draftFields(entries: Iterable<[string, FormDataEntryValue]>, ski
 export function hasContent(fields: Record<string, string | string[]>): boolean {
   return Object.values(fields).some((v) => (Array.isArray(v) ? v.some((x) => x.trim() !== "") : v.trim() !== ""));
 }
+
+/**
+ * Whether a draft holds a wax job someone actually started: a wax on a layer,
+ * a finish step, or something typed. A tap on the technique or the skis alone
+ * is not one, or every visit after a stray tap said "restored" (the owner was
+ * confused by exactly that, with nothing on the Sessions tab).
+ */
+export function worthRestoring(d: Draft): boolean {
+  const layers = Array.isArray(d.state.layers) ? (d.state.layers as { user_product_id?: string; custom_product?: string }[]) : [];
+  const tags = Array.isArray(d.state.tags) ? d.state.tags : [];
+  return layers.some((l) => !!l.user_product_id || !!l.custom_product?.trim()) || tags.length > 0 || hasContent(d.fields);
+}

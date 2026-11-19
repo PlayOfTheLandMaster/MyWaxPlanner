@@ -155,6 +155,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   before Save. Skis can be added from a link under the skis pull-down (+ Add a
   pair of skis, `components/add-ski-inline.tsx`) on the form and on plan step 2, for
   whoever the session is for. Drafts on the server were judged not worth it.
+  A draft is restored only when it holds a started job (a wax, a finish step
+  or typing: `worthRestoring`), and its note says it is not in My Sessions
+  until Save: a stray tap once made every visit say "restored" while the
+  Sessions tab was empty, and the owner was confused.
 - **Record a wax job starts only once Today has a location and Today's Skiing
   Conditions for it, today** (`recordBlocker` in `lib/snow/check.ts`). Today
   shows its Record buttons greyed with the reason; the Record page itself
