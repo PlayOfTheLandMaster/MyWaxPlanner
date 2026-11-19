@@ -229,4 +229,5 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=
 | `src/lib/skis/` | What a ski save may contain |
 | `src/lib/catalogue/` | The rules a wax must pass (shared by *Add a wax* and the CSV loader), the allowed values, and the words shown for them |
 | `scripts/seed-catalogue.mts` | The `npm run seed` command |
+| `src/components/update-bar.tsx` | "A new version is ready" with **Reload**, shown above the tab bar once a newer version is live (it asks `/api/version` every few minutes and when the app comes back on screen) |
 | `scripts/android-check.mjs` | The weekly Android check: signs the test account in on an emulated Pixel 7 at the live site and checks every main screen (sideways scrolling, tap targets, headings, errors). A scheduled task runs it every Monday evening and sends the owner a short report; CLAUDE.md has how it signs in |
