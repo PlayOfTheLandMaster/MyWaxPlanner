@@ -25,7 +25,6 @@ const SCREENS = [
   ["plan-start", "/plan/start"],
   ["record", "/history/new?record=1"],
   ["history", "/history"],
-  ["like-today", "/history/similar"],
   ["wax-box", "/wax-box"],
   ["wax-add", "/wax-box/add"],
   ["learn-notes", "/learn"],
