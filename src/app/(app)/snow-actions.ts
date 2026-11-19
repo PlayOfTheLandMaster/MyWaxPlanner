@@ -29,6 +29,21 @@ export async function saveSnowCheck(_prev: SnowCheckState, form: FormData): Prom
 }
 
 /**
+ * Clears Today's Skiing Conditions, so the card goes back to the forecast's
+ * estimate. Wax jobs already saved keep the conditions they were saved with.
+ */
+export async function clearSnowCheck(): Promise<SnowCheckState> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) redirect("/login");
+  const { error } = await supabase.from("profiles").update({ snow_check: null }).eq("id", data.user.id);
+  if (error) return { error: `Could not clear: ${error.message}` };
+  revalidatePath("/");
+  revalidatePath("/plan");
+  return {};
+}
+
+/**
  * Sets today's location: every wax job for the rest of the reader's day uses
  * it (Today, Plan a wax session, Record a wax job). "home" goes back to the home venue.
  */
