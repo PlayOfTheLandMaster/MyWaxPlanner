@@ -117,6 +117,7 @@ export const GUIDE: GuideSection[] = [
       "Open a past session to Share a summary (a picture or PDF, never with names or skis) or Copy to other skis.",
       "Use this session for today's wax job starts a new wax job from it; Edit this record corrects it.",
       "Compare puts two to four sessions side by side; Insights shows which waxes worked at which temperatures.",
+      "Wax jobs like today lists past wax jobs in snow within 2 °C of today's, with the same snowball result, grouped by location, the closest first (a different snow type counts as a degree further), then the best glide. It uses Today's Skiing Conditions once saved, the forecast until then.",
       "Download as spreadsheet gives you every session as a CSV file.",
     ],
   },

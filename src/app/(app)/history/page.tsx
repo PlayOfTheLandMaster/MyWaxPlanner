@@ -379,6 +379,9 @@ async function History({ searchParams }: { searchParams: PageProps<"/history">["
       </details>
 
       <div className="flex flex-wrap gap-2">
+        <Link href="/history/similar" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
+          Wax jobs like today
+        </Link>
         <Link href="/history/compare" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium active:bg-tile">
           Compare sessions
         </Link>
