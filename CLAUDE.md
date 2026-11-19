@@ -164,6 +164,10 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   shows its Record buttons greyed with the reason; the Record page itself
   refuses too, because a bookmark or the back button skips Today. "Use this
   session for today's wax job" opens the same page, so it waits as well.
+  **Clear today's conditions** sets `profiles.snow_check` to null, so Record
+  waits again until they are saved; wax jobs already saved keep their own
+  copy. Today keys the form on `checked_at`, so Save and Clear remount it with
+  what is now true, and Save folds the card from its action, not an effect.
 - **A wax can have two ranges: new snow and old snow** (`old_*` columns,
   `rangeFor` in `lib/wax-box/old-snow.ts`). Old snow is every snow type but
   falling and fresh_set, wet, dirty and man-made included (the owner's call).

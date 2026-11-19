@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { saveSnowCheck, type SnowCheckState } from "@/app/(app)/snow-actions";
+import { useActionState, useRef, useState, useTransition } from "react";
+import { clearSnowCheck, saveSnowCheck, type SnowCheckState } from "@/app/(app)/snow-actions";
 import { SNOW_TYPE_LABELS } from "@/lib/catalogue/labels";
 import { HUMIDITY_BANDS, SNOW_TYPES, type HumidityBand, type SnowType } from "@/lib/catalogue/vocab";
 import { TRACKS, TRACK_LABELS, type Track } from "@/lib/history/vocab";
@@ -24,17 +24,36 @@ export function SnowCheckForm({
   venueId,
   day,
   initial,
+  saved,
 }: {
   venueId: string;
   day: string;
   initial: SnowInitial;
+  /** True when today's conditions are saved; Clear then removes them. */
+  saved: boolean;
 }) {
-  const [state, action, pending] = useActionState<SnowCheckState, FormData>(saveSnowCheck, {});
   const formRef = useRef<HTMLFormElement>(null);
-  // Saved: fold the card back up. Its title line now shows what was saved.
-  useEffect(() => {
-    if (state.saved) formRef.current?.closest("details")?.removeAttribute("open");
-  }, [state]);
+  // Saved: fold the card back up; its title line now shows what was saved. Done here,
+  // before the page re-renders, because Today gives the form a new key once saved.
+  const [state, action, pending] = useActionState<SnowCheckState, FormData>(async (prev, form) => {
+    const r = await saveSnowCheck(prev, form);
+    if (r.saved) formRef.current?.closest("details")?.removeAttribute("open");
+    return r;
+  }, {});
+  const [clearing, startClear] = useTransition();
+  const [clearError, setClearError] = useState("");
+  // Saved conditions are removed on the server, and the page comes back with the
+  // forecast's estimate. Unsaved changes are only in the form, so it is reset.
+  function clear() {
+    if (!saved) {
+      formRef.current?.reset();
+      return;
+    }
+    startClear(async () => {
+      const r = await clearSnowCheck().catch(() => ({ error: "Could not clear. Reload the page and try again." }));
+      setClearError(r.error ?? "");
+    });
+  }
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-4">
       <input type="hidden" name="venue_id" value={venueId} />
@@ -43,6 +62,11 @@ export function SnowCheckForm({
       {state.error && (
         <p role="alert" className="text-sm text-danger">
           {state.error}
+        </p>
+      )}
+      {clearError && (
+        <p role="alert" className="text-sm text-danger">
+          {clearError}
         </p>
       )}
       {state.saved && (
@@ -57,6 +81,19 @@ export function SnowCheckForm({
       >
         {pending ? "Saving…" : "Save today's conditions"}
       </button>
+      <button
+        type="button"
+        onClick={clear}
+        disabled={pending || clearing}
+        className="min-h-11 rounded-lg border border-line bg-surface px-4 font-semibold active:bg-tile disabled:opacity-50"
+      >
+        {clearing ? "Clearing…" : "Clear today's conditions"}
+      </button>
+      <p className="-mt-2 text-sm text-muted">
+        {saved
+          ? "Clear goes back to the forecast's estimate. Wax jobs already saved keep their conditions."
+          : "Clear puts back the forecast's estimate."}
+      </p>
     </form>
   );
 }

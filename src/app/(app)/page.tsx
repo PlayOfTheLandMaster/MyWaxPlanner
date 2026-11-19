@@ -297,6 +297,9 @@ async function Conditions({ venue }: { venue: VenueRow }) {
               : "Filled in from the forecast. At the trail, a snowball and a glance at the track beat any estimate. Save once; every wax job today uses it."}
           </p>
           <SnowCheckForm
+            // A new key after Save or Clear, so the fields show what is now true.
+            key={check?.checked_at ?? "forecast"}
+            saved={!!check}
             venueId={venue.id}
             day={day}
             initial={
