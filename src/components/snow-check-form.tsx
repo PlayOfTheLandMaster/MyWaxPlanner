@@ -72,7 +72,7 @@ export function SnowFields({ initial }: { initial: SnowInitial }) {
       <label className={label}>
         Snow temperature, °C
         <input name="snow_temp_c" inputMode="decimal" defaultValue={initial.snow_temp_c} className={field} />
-        <span className="font-normal text-muted">Change it if you measured it.</span>
+        <span className="font-normal text-muted">Estimate, change it if you measured it.</span>
       </label>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">Snowball test — squeeze a handful</legend>
