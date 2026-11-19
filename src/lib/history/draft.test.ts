@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { draftFields, draftKey, hasContent, readDraft } from "./draft";
+import { draftFields, draftKey, hasContent, readDraft, worthRestoring, type Draft } from "./draft";
 
 test("only today's well-formed draft is restored", () => {
   const d = JSON.stringify({ v: 1, day: "2026-11-18", state: { technique: "classic" }, fields: { notes: "x" } });
@@ -26,4 +26,12 @@ test("an untouched form is not worth restoring", () => {
   assert.equal(hasContent({ notes: "", sky: "" }), false);
   assert.equal(hasContent({ notes: "", event_name: "Loppet" }), true);
   assert.equal(draftKey("record:me:new"), "mwp-draft:record:me:new");
+});
+
+test("only a wax job somebody started is worth restoring", () => {
+  const d = (state: Record<string, unknown>, fields: Record<string, string> = {}): Draft => ({ v: 1, day: "2026-11-19", state, fields });
+  assert.equal(worthRestoring(d({ technique: "classic", skiId: "x", layers: [{ user_product_id: "", custom_product: "" }], tags: [] })), false);
+  assert.equal(worthRestoring(d({ layers: [{ user_product_id: "w1" }], tags: [] })), true);
+  assert.equal(worthRestoring(d({ layers: [], tags: ["Nylon brush"] })), true);
+  assert.equal(worthRestoring(d({ layers: [], tags: [] }, { finish_notes: "two passes" })), true);
 });
