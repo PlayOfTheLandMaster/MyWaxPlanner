@@ -193,6 +193,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   wax's iron temperature (maker's, else the skier's own) when the wax is
   chosen or changed, replacing the old wax's figure but never a number typed
   by hand (`ironForWax`); it once kept whatever was there first.
+- **"Wax jobs in conditions like today's" is History's Days similar to
+  today** (the first choice in the Filter fold, `similarQuery`): snow within
+  3 °C, the same snowball result, all seasons, best glide first. A separate
+  page grouping such jobs by location was built and withdrawn at the owner's
+  word (#102, closed): "the feature is already there". Extend this filter
+  rather than adding a second way to ask the same question.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
