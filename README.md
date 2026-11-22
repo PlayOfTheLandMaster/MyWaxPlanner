@@ -229,5 +229,7 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=
 | `src/lib/skis/` | What a ski save may contain |
 | `src/lib/catalogue/` | The rules a wax must pass (shared by *Add a wax* and the CSV loader), the allowed values, and the words shown for them |
 | `scripts/seed-catalogue.mts` | The `npm run seed` command |
+| `src/app/icon.svg`, `scripts/make-icons.mjs` | The app icon, a white folder on the app's blue, drawn once. `node scripts/make-icons.mjs` makes every size from it: `src/app/apple-icon.png` (iPad and iPhone home screen), `public/icons/` (the install icons) and `src/app/favicon.ico` (the browser tab) |
+| `src/app/manifest.ts` | What a phone uses to install the app: its name ("Wax Planner" under the icon), the icons, full screen without the browser's bars, and the page colour for the splash screen. The Apple half (Add to Home Screen) is `appleWebApp` in `src/app/layout.tsx` |
 | `src/components/update-bar.tsx` | "A new version is ready" with **Reload**, shown above the tab bar once a newer version is live (it asks `/api/version` every few minutes and when the app comes back on screen) |
 | `scripts/android-check.mjs` | The weekly Android check: signs the test account in on an emulated Pixel 7 at the live site and checks every main screen (sideways scrolling, tap targets, headings, errors). A scheduled task runs it every Monday evening and sends the owner a short report; CLAUDE.md has how it signs in |

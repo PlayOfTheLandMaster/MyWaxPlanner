@@ -256,6 +256,22 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.
 
+## The app icon and installing
+
+- **One drawing, every size.** `src/app/icon.svg` is the icon; change it, then
+  run `node scripts/make-icons.mjs`, which renders the others in the
+  preinstalled Chromium (no image library). iPhone/iPad and Android's
+  maskable icon are full-bleed squares, because the phone cuts its own shape;
+  a rounded one would show blue corners inside the phone's rounding.
+- **`public/icons/` is not fingerprinted**: a redrawn icon keeps its address, and
+  a phone that installed the app may keep the old picture. Next adds a hash
+  to `apple-icon.png`, `icon.svg` and `favicon.ico` itself.
+- **Installed, the app has no reload arrow and no address bar** (`display:
+  standalone`). The update bar is the only way to a new version there, and
+  every screen needs its own way back.
+- The manifest and `/api/version` skip `proxy.ts`: a phone fetches the
+  manifest with no session, and neither needs one.
+
 ## Testing a change in a browser
 
 - **The Vercel preview is behind Vercel's own sign-in**, so a browser run from

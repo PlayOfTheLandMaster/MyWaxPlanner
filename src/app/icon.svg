@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- My Wax Planner: a white folder on the app's wax blue (--accent). -->
+  <rect width="512" height="512" rx="112" fill="#1d4f91"/>
+  <path d="M136 152h84a24 24 0 0 1 17 7l33 33h106a24 24 0 0 1 24 24v152a24 24 0 0 1-24 24H136a24 24 0 0 1-24-24V176a24 24 0 0 1 24-24z" fill="#ffffff"/>
+  <path d="M112 236a24 24 0 0 1 24-24h240a24 24 0 0 1 24 24v132a24 24 0 0 1-24 24H136a24 24 0 0 1-24-24z" fill="#dce8f8"/>
+</svg>

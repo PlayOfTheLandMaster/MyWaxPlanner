@@ -15,6 +15,7 @@ export const GUIDE: GuideSection[] = [
       "Add skiers you wax for, if any. The line under Today's title shows who you're waxing for.",
       "Add your skis in Wax box → Skis. A known maker's logo appears beside each pair.",
       "Add your waxes in Wax box → Add a wax, and tick the tools you own in Wax box → Tools.",
+      "Put the app on your home screen: in Chrome on an iPad or iPhone, tap Share, then Add to Home Screen; on Android, tap ⋮, then Add to Home screen or Install app. It opens like an app, with the blue folder icon.",
     ],
   },
   {
