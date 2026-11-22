@@ -33,6 +33,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Skip static files and images; everything else may need a fresh session.
-  // /api/version is asked every few minutes by every open page and needs no session.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/version|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // /api/version is asked every few minutes by every open page, and the manifest by
+  // a phone installing the app; neither needs a session.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|api/version|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

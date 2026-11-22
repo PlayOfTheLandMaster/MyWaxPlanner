@@ -193,6 +193,12 @@ Run the security advisor (`get_advisors`) after any change to the schema.
   wax's iron temperature (maker's, else the skier's own) when the wax is
   chosen or changed, replacing the old wax's figure but never a number typed
   by hand (`ironForWax`); it once kept whatever was there first.
+- **"Wax jobs in conditions like today's" is History's Days similar to
+  today** (the first choice in the Filter fold, `similarQuery`): snow within
+  3 °C, the same snowball result, all seasons, best glide first. A separate
+  page grouping such jobs by location was built and withdrawn at the owner's
+  word (#102, closed): "the feature is already there". Extend this filter
+  rather than adding a second way to ask the same question.
 - **Temperature ranges read warmer end first** ("−1 to −10 °C"), as wax
   packaging prints them: `formatRange`, the engine's reasons, the forecast
   card and History's filter chip. Entry boxes stay From (colder) / To.
@@ -249,6 +255,22 @@ Run the security advisor (`get_advisors`) after any change to the schema.
 - **The how-to guide is `src/lib/learn/how-to.ts`**, and the shareable Claude
   Docs copy (artifact L54pdhQXd8XPcuqfVHq2Kh) is edited by hand to match.
   Update both when a screen changes.
+
+## The app icon and installing
+
+- **One drawing, every size.** `src/app/icon.svg` is the icon; change it, then
+  run `node scripts/make-icons.mjs`, which renders the others in the
+  preinstalled Chromium (no image library). iPhone/iPad and Android's
+  maskable icon are full-bleed squares, because the phone cuts its own shape;
+  a rounded one would show blue corners inside the phone's rounding.
+- **`public/icons/` is not fingerprinted**: a redrawn icon keeps its address, and
+  a phone that installed the app may keep the old picture. Next adds a hash
+  to `apple-icon.png`, `icon.svg` and `favicon.ico` itself.
+- **Installed, the app has no reload arrow and no address bar** (`display:
+  standalone`). The update bar is the only way to a new version there, and
+  every screen needs its own way back.
+- The manifest and `/api/version` skip `proxy.ts`: a phone fetches the
+  manifest with no session, and neither needs one.
 
 ## Testing a change in a browser
 
